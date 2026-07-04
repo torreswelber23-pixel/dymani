@@ -47,6 +47,12 @@ Status comercial: **ainda sem cliente pagante** (jul/2026). O produto está pron
 - [x] Multitenant na nuvem (Supabase) — cada manicure com seu studio (slug + PIN); trocar de celular não perde nada
 - [x] Publicado no ar (Vercel) e repositório público
 - [x] Testado ponta a ponta (Playwright, 0 erros de JS)
+- [x] **QR code de agendamento no cartão** (gerador próprio, offline — abre o portfólio; testado lendo em leitor de QR nos 4 layouts)
+- [x] **4 layouts de cartão**: Foto inteira, Clássico, Polaroid e Moderno
+- [x] **Câmera dentro do navegador** com molde pra enquadrar a unha (+ botão trocar frente/trás; cai no seletor de arquivo se falhar)
+- [x] **Subir foto da galeria** no atendimento e trocar a foto do cartão no editor
+- [x] Selos de fidelidade agora são **estrelas** (na lista, na ficha e no cartão) no lugar dos pontinhos
+- [x] Corrigido: o menu de baixo não tapa mais os botões (salvar imagem etc.)
 
 ---
 

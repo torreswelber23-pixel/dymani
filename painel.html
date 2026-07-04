@@ -29,7 +29,9 @@
   svg{display:block}
   .wrap{max-width:540px;margin:0 auto;min-height:100vh;position:relative}
   .screen{padding:0 16px calc(96px + env(safe-area-inset-bottom))}
-  .screen.noNav{padding-bottom:40px}
+  /* o menu de baixo é fixo e continua visível também nessas telas,
+     então precisa do mesmo respiro pra não tapar os últimos botões */
+  .screen.noNav{padding-bottom:calc(124px + env(safe-area-inset-bottom))}
 
   /* ---- topo ---- */
   .appbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;
@@ -197,6 +199,22 @@
     background:var(--verde);color:#03240e;font-weight:700;padding:12px 22px;border-radius:30px;z-index:99;
     box-shadow:0 6px 20px rgba(0,0,0,.5);max-width:90vw;text-align:center;font-size:.92rem}
 
+  /* ---- câmera no navegador (com molde do cartão) ---- */
+  .camwrap{position:fixed;inset:0;z-index:999;background:#000}
+  .camwrap video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .cammold{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+  .camframe{width:80%;max-width:440px;aspect-ratio:1/1;border:3px solid rgba(255,255,255,.92);border-radius:28px;
+    box-shadow:0 0 0 4000px rgba(0,0,0,.5)}
+  .camtip{margin-top:20px;color:#fff;font-weight:700;font-size:.98rem;text-shadow:0 1px 6px rgba(0,0,0,.7)}
+  .cambar{position:absolute;left:0;right:0;bottom:calc(30px + env(safe-area-inset-bottom));
+    display:flex;align-items:center;justify-content:space-around;z-index:2}
+  .camx{width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,.18);border:none;color:#fff;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+  .camshot{width:80px;height:80px;border-radius:50%;background:#fff;border:5px solid rgba(255,255,255,.5);cursor:pointer;
+    display:flex;align-items:center;justify-content:center}
+  .camshot span{width:58px;height:58px;border-radius:50%;background:#fff;box-shadow:inset 0 0 0 3px rgba(0,0,0,.18)}
+  .camshot:active{transform:scale(.94)}
+
   /* ---- login ---- */
   .auth{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:24px 20px calc(30px + env(safe-area-inset-bottom))}
   .brand{text-align:center;margin-bottom:22px}
@@ -255,6 +273,8 @@ const IC={
 };
 function ic(n,s){const raw=IC[n]||'';const fill=raw.startsWith('FILL:');
   return `<svg viewBox="0 0 24 24" width="${s||24}" height="${s||24}" fill="${fill?'currentColor':'none'}" stroke="${fill?'none':'currentColor'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${fill?raw.slice(5):raw}</svg>`;}
+// estrela de selo: cheia (dourada) quando conquistada, contorno quando falta
+function estrela(on,s){return `<svg class="star" viewBox="0 0 24 24" width="${s||20}" height="${s||20}" fill="${on?'#fbbf24':'none'}" stroke="#fbbf24" stroke-width="2" stroke-linejoin="round" style="flex-shrink:0;${on?'':'opacity:.5'}"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;}
 
 /* ================= estado ================= */
 const $=s=>document.querySelector(s);
@@ -280,12 +300,41 @@ const iniciais=n=>(n||'?').trim().split(/\s+/).slice(0,2).map(p=>p[0]).join('').
 const primeiro=n=>(n||'').split(' ')[0];
 function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;
   document.body.appendChild(t);setTimeout(()=>t.remove(),2400);}
-function comprimir(file,tam,cb){const img=new Image();img.onload=()=>{const c=document.createElement('canvas');
+function comprimir(file,tam,cb){if(!file)return;const img=new Image();img.onload=()=>{const c=document.createElement('canvas');
   const l=Math.min(img.width,img.height);c.width=c.height=tam;
   c.getContext('2d').drawImage(img,(img.width-l)/2,(img.height-l)/2,l,l,0,0,tam,tam);
   cb(c.toDataURL('image/jpeg',.72));};img.src=URL.createObjectURL(file);}
+// abre a câmera dentro do navegador, com um molde quadrado por cima pra enquadrar a unha.
+// devolve a foto (já quadrada e comprimida) no cb. Se a câmera falhar, cai no seletor de arquivo.
+function abrirCamera(cb){
+  if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)){
+    const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.capture='environment';
+    inp.onchange=()=>comprimir(inp.files[0],720,cb);inp.click();return;}
+  const ov=document.createElement('div');ov.className='camwrap';
+  ov.innerHTML=`<video id="camv" autoplay playsinline muted></video>
+    <div class="cammold"><div class="camframe"></div><div class="camtip">Enquadre a unha aqui ✨</div></div>
+    <div class="cambar">
+      <button class="camx" id="camcancel">${ic('x',22)}</button>
+      <button class="camshot" id="camshot"><span></span></button>
+      <button class="camx" id="camflip">${ic('camera',22)}</button>
+    </div>`;
+  document.body.appendChild(ov);
+  const v=ov.querySelector('#camv');let stream=null,facing='environment';
+  async function start(){try{if(stream)stream.getTracks().forEach(t=>t.stop());
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing},audio:false});v.srcObject=stream;}
+    catch(e){fechar();toast('Não consegui abrir a câmera 😢');}}
+  function fechar(){if(stream)stream.getTracks().forEach(t=>t.stop());ov.remove();}
+  ov.querySelector('#camcancel').onclick=fechar;
+  ov.querySelector('#camflip').onclick=()=>{facing=facing==='environment'?'user':'environment';start();};
+  ov.querySelector('#camshot').onclick=()=>{const vw=v.videoWidth,vh=v.videoHeight;
+    if(!vw){toast('Espera a câmera abrir');return;}
+    const l=Math.min(vw,vh),c=document.createElement('canvas');c.width=c.height=720;
+    c.getContext('2d').drawImage(v,(vw-l)/2,(vh-l)/2,l,l,0,0,720,720);
+    const d=c.toDataURL('image/jpeg',.72);fechar();cb(d);};
+  start();
+}
 function urlPortfolio(){const base=location.href.split('#')[0].split('?')[0].replace(/[^/]*$/,'');return base+'portfolio.html?s='+sessao.slug;}
-function selosMini(c){let h='';const n=selosAt(c),m=meta();for(let i=0;i<m;i++)h+=i<n?'●':'○';return h;}
+function selosMini(c){let h='';const n=selosAt(c),m=meta();for(let i=0;i<m;i++)h+=i<n?'★':'☆';return h;}
 function paraChamar(){return clientes.filter(c=>c.atend.length&&diasDesde(c.atend[c.atend.length-1].d)>=limDias())
   .sort((a,b)=>diasDesde(b.atend[b.atend.length-1].d)-diasDesde(a.atend[a.atend.length-1].d));}
 
@@ -423,14 +472,17 @@ function telaAtendimento(){
       </div>
       <label>Serviço / cor de hoje</label><input id="a-serv" placeholder="Ex: Alongamento fibra + Vermelho Rubi">
       <label>Foto da unha</label>
-      <label class="filebtn">${ic('camera',19)} Tirar / escolher a foto
-        <input type="file" accept="image/*" capture="environment"
-          onchange="comprimir(this.files[0],720,d=>{fotoTemp=d;$('#a-prev').src=d;$('#a-prev').style.display='block';})"></label>
+      <div class="btnrow">
+        <button type="button" class="btn ghost sm" style="margin-top:0" onclick="abrirCamera(setFotoAtend)">${ic('camera',18)} Abrir câmera</button>
+        <label class="btn ghost sm" style="margin-top:0;cursor:pointer">${ic('image',18)} Da galeria
+          <input type="file" accept="image/*" style="display:none" onchange="comprimir(this.files[0],720,setFotoAtend)"></label>
+      </div>
       <img id="a-prev" style="display:none;width:100%;border-radius:13px;margin-top:10px">
     </div>
     <button class="btn" onclick="salvarAtendimento(this)">${ic('sparkle',19)} Salvar e montar o cartão</button>
   </div>`;
 }
+function setFotoAtend(d){fotoTemp=d;const pv=$('#a-prev');if(pv){pv.src=d;pv.style.display='block';}}
 function capFotos(cli){let vistas=0;for(let i=cli.atend.length-1;i>=0;i--){if(cli.atend[i].foto){vistas++;if(vistas>6)delete cli.atend[i].foto;}}}
 async function salvarAtendimento(btn){
   const serv=$('#a-serv').value.trim();
@@ -472,7 +524,15 @@ function telaEditor(idx){
       <label>${ic('layout',15)} &nbsp;Estilo</label>
       <div class="chips">
         <div class="chip ${p.estilo==='foto'?'on':''}" onclick="mudar('estilo','foto')">Foto inteira</div>
-        <div class="chip ${p.estilo==='classico'?'on':''}" onclick="mudar('estilo','classico')">Clássico</div></div>
+        <div class="chip ${p.estilo==='classico'?'on':''}" onclick="mudar('estilo','classico')">Clássico</div>
+        <div class="chip ${p.estilo==='polaroid'?'on':''}" onclick="mudar('estilo','polaroid')">Polaroid</div>
+        <div class="chip ${p.estilo==='moderno'?'on':''}" onclick="mudar('estilo','moderno')">Moderno</div></div>
+      <label>Foto do cartão</label>
+      <div class="btnrow">
+        <button type="button" class="btn ghost sm" style="margin-top:0" onclick="abrirCamera(d=>trocarFotoCartao(${idx},d))">${ic('camera',18)} Câmera</button>
+        <label class="btn ghost sm" style="margin-top:0;cursor:pointer">${ic('image',18)} Galeria
+          <input type="file" accept="image/*" style="display:none" onchange="comprimir(this.files[0],720,d=>trocarFotoCartao(${idx},d))"></label>
+      </div>
       <label>Frase do studio (opcional)</label>
       <input id="e-frase" value="${p.frase||''}" placeholder="Ex: Unhas feitas com amor ✨" oninput="mudar('frase',this.value)">
       ${studio.logo?`<label>Tamanho da logo</label><input type="range" min="100" max="340" value="${p.logoPos.s}" oninput="mudar('logoS',this.value)">`
@@ -494,6 +554,12 @@ function mudar(campo,valor){
   if(campo==='tema'||campo==='estilo'){telaEditor(idx);return;}
   desenharCartao(cli,cli.atend[idx]);
 }
+async function trocarFotoCartao(idx,d){
+  clienteAtual.atend[idx].foto=d;
+  desenharCartao(clienteAtual,clienteAtual.atend[idx]);
+  await salvarCliente(clienteAtual);
+  toast('Foto do cartão atualizada 📸');
+}
 async function marcarPostou(idx){
   clienteAtual.atend[idx].postou=true; clienteAtual.selos++;
   await salvarCliente(clienteAtual); toast('+1 selo pela postagem! ⭐'); telaEditor(idx);
@@ -507,46 +573,183 @@ async function salvarCliente(cli){
   if(!saved.erro)clienteAtual=saved; await recarregarClientes(); return saved;
 }
 
-/* ---- desenho do cartão (canvas) ---- */
+/* ---- gerador de QR (byte mode, nível M, versões 1-10) — sem internet,
+       pra desenhar direto no cartão sem "sujar" o canvas ---- */
+function qrMatrix(str){
+  const EXP=new Array(256),LOG=new Array(256);
+  for(let i=0,v=1;i<255;i++){EXP[i]=v;LOG[v]=i;v<<=1;if(v&0x100)v^=0x11d;}EXP[255]=EXP[0];
+  const mul=(a,b)=>(a===0||b===0)?0:EXP[(LOG[a]+LOG[b])%255];
+  function genPoly(n){let g=[1];for(let i=0;i<n;i++){const ng=new Array(g.length+1).fill(0);
+    for(let j=0;j<g.length;j++){ng[j]^=g[j];ng[j+1]^=mul(g[j],EXP[i]);}g=ng;}return g;}
+  function rsEcc(data,n){const gen=genPoly(n);const res=data.concat(new Array(n).fill(0));
+    for(let i=0;i<data.length;i++){const c=res[i];if(c)for(let j=0;j<gen.length;j++)res[i+j]^=mul(gen[j],c);}
+    return res.slice(data.length);}
+  const RS={1:[10,[[1,16]]],2:[16,[[1,28]]],3:[26,[[1,44]]],4:[18,[[2,32]]],5:[24,[[2,43]]],
+    6:[16,[[4,27]]],7:[18,[[4,31]]],8:[22,[[2,38],[2,39]]],9:[22,[[3,36],[2,37]]],10:[26,[[4,43],[1,44]]]};
+  const ALIGN={1:[],2:[6,18],3:[6,22],4:[6,26],5:[6,30],6:[6,34],7:[6,22,38],8:[6,24,42],9:[6,26,46],10:[6,28,50]};
+  const FORMAT_M=[0x5412,0x5125,0x5E7C,0x5B4B,0x45F9,0x40CE,0x4F97,0x4AA0];
+  const VER_INFO={7:0x07C94,8:0x085BC,9:0x09A99,10:0x0A4D3};
+  const utf8=[];for(const ch of str){let cp=ch.codePointAt(0);
+    if(cp<0x80)utf8.push(cp);else if(cp<0x800)utf8.push(0xC0|cp>>6,0x80|cp&63);
+    else if(cp<0x10000)utf8.push(0xE0|cp>>12,0x80|(cp>>6&63),0x80|cp&63);
+    else utf8.push(0xF0|cp>>18,0x80|(cp>>12&63),0x80|(cp>>6&63),0x80|cp&63);}
+  let ver=0,dataCwTotal=0;
+  for(let vv=1;vv<=10;vv++){const lb=vv<10?8:16,need=4+lb+8*utf8.length,total=RS[vv][1].reduce((s,[q,d])=>s+q*d,0);
+    if(need<=total*8){ver=vv;dataCwTotal=total;break;}}
+  if(!ver)throw new Error('texto grande demais pro QR');
+  const lenBits=ver<10?8:16,bits=[],push=(val,len)=>{for(let i=len-1;i>=0;i--)bits.push((val>>i)&1);};
+  push(0b0100,4);push(utf8.length,lenBits);for(const b of utf8)push(b,8);
+  const cap=dataCwTotal*8,term=Math.min(4,cap-bits.length);for(let i=0;i<term;i++)bits.push(0);
+  while(bits.length%8)bits.push(0);
+  const cw=[];for(let i=0;i<bits.length;i+=8){let v=0;for(let j=0;j<8;j++)v=(v<<1)|bits[i+j];cw.push(v);}
+  const pad=[0xEC,0x11];let pi=0;while(cw.length<dataCwTotal){cw.push(pad[pi&1]);pi++;}
+  const ecPer=RS[ver][0],blocks=[];let idx=0;
+  for(const[qtd,dlen] of RS[ver][1])for(let b=0;b<qtd;b++){const d=cw.slice(idx,idx+dlen);idx+=dlen;blocks.push({d,e:rsEcc(d,ecPer)});}
+  const maxD=Math.max(...blocks.map(b=>b.d.length)),finalCw=[];
+  for(let i=0;i<maxD;i++)for(const b of blocks)if(i<b.d.length)finalCw.push(b.d[i]);
+  for(let i=0;i<ecPer;i++)for(const b of blocks)finalCw.push(b.e[i]);
+  const MASK=[(r,c)=>(r+c)%2===0,(r,c)=>r%2===0,(r,c)=>c%3===0,(r,c)=>(r+c)%3===0,
+    (r,c)=>(Math.floor(r/2)+Math.floor(c/3))%2===0,(r,c)=>((r*c)%2+(r*c)%3)===0,
+    (r,c)=>(((r*c)%2+(r*c)%3)%2)===0,(r,c)=>(((r+c)%2+(r*c)%3)%2)===0];
+  const n=17+4*ver;
+  function build(mask){
+    const m=Array.from({length:n},()=>new Array(n).fill(null));
+    const finder=(r,c)=>{for(let dr=-1;dr<=7;dr++)for(let dc=-1;dc<=7;dc++){const rr=r+dr,cc=c+dc;
+      if(rr<0||rr>=n||cc<0||cc>=n)continue;
+      m[rr][cc]=(dr>=0&&dr<=6&&(dc===0||dc===6))||(dc>=0&&dc<=6&&(dr===0||dr===6))||(dr>=2&&dr<=4&&dc>=2&&dc<=4);}};
+    finder(0,0);finder(0,n-7);finder(n-7,0);
+    for(let i=8;i<n-8;i++){if(m[6][i]===null)m[6][i]=(i%2===0);if(m[i][6]===null)m[i][6]=(i%2===0);}
+    for(const r of ALIGN[ver])for(const c of ALIGN[ver]){
+      if((r<=7&&c<=7)||(r<=7&&c>=n-8)||(r>=n-8&&c<=7))continue;
+      for(let dr=-2;dr<=2;dr++)for(let dc=-2;dc<=2;dc++)m[r+dr][c+dc]=(Math.max(Math.abs(dr),Math.abs(dc))!==1);}
+    m[n-8][8]=true;
+    const fmt=FORMAT_M[mask];
+    for(let i=0;i<15;i++){const bit=((fmt>>i)&1)===1;
+      if(i<6)m[i][8]=bit;else if(i<8)m[i+1][8]=bit;else m[n-15+i][8]=bit;
+      if(i<8)m[8][n-1-i]=bit;else if(i<9)m[8][15-i-1+1]=bit;else m[8][15-i-1]=bit;}
+    if(ver>=7){const vi=VER_INFO[ver];for(let i=0;i<18;i++){const bit=((vi>>i)&1)===1;
+      m[Math.floor(i/3)][i%3+n-8-3]=bit;m[i%3+n-8-3][Math.floor(i/3)]=bit;}}
+    const mf=MASK[mask];let inc=-1,row=n-1,byteIndex=0,bitIndex=7;
+    for(let col=n-1;col>0;col-=2){if(col===6)col--;
+      while(true){for(let c=0;c<2;c++){const cc=col-c;if(m[row][cc]===null){
+        let dark=false;if(byteIndex<finalCw.length)dark=((finalCw[byteIndex]>>>bitIndex)&1)===1;
+        if(mf(row,cc))dark=!dark;m[row][cc]=dark;bitIndex--;if(bitIndex===-1){byteIndex++;bitIndex=7;}}}
+        row+=inc;if(row<0||row>=n){row-=inc;inc=-inc;break;}}}
+    return m;
+  }
+  function penalty(m){let p=0;
+    for(let r=0;r<n;r++)for(let c=0;c<n;c++){let same=0;const d=m[r][c];
+      for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){if(dr===0&&dc===0)continue;const rr=r+dr,cc=c+dc;
+        if(rr<0||rr>=n||cc<0||cc>=n)continue;if(m[rr][cc]===d)same++;}if(same>5)p+=(3+same-5);}
+    for(let r=0;r<n-1;r++)for(let c=0;c<n-1;c++){let cnt=0;if(m[r][c])cnt++;if(m[r+1][c])cnt++;if(m[r][c+1])cnt++;if(m[r+1][c+1])cnt++;if(cnt===0||cnt===4)p+=3;}
+    const pat=(a,b,c2,d,e,f,gg)=>a&&!b&&c2&&d&&e&&!f&&gg;
+    for(let r=0;r<n;r++)for(let c=0;c<n-6;c++)if(pat(m[r][c],m[r][c+1],m[r][c+2],m[r][c+3],m[r][c+4],m[r][c+5],m[r][c+6]))p+=40;
+    for(let c=0;c<n;c++)for(let r=0;r<n-6;r++)if(pat(m[r][c],m[r+1][c],m[r+2][c],m[r+3][c],m[r+4][c],m[r+5][c],m[r+6][c]))p+=40;
+    let dark=0;for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(m[r][c])dark++;
+    p+=Math.floor(Math.abs(100*dark/(n*n)-50)/5)*10;return p;}
+  let best=null,bestP=Infinity;
+  for(let mk=0;mk<8;mk++){const m=build(mk),pp=penalty(m);if(pp<bestP){bestP=pp;best=m;}}
+  return best.map(r=>r.map(v=>!!v));
+}
+function desenharQR(x,texto,cx,cy,size){
+  let m;try{m=qrMatrix(texto);}catch(e){return;}
+  const mods=m.length,cell=size/(mods+8),pad=cell*4,rad=Math.round(size*0.08); // 4 módulos de zona branca
+  x.save();
+  x.fillStyle='#fff';roundRect(x,cx,cy,size,size,rad);x.fill();
+  x.strokeStyle='rgba(0,0,0,.12)';x.lineWidth=2;roundRect(x,cx,cy,size,size,rad);x.stroke();
+  x.fillStyle='#0b0b0b';
+  for(let r=0;r<mods;r++)for(let c=0;c<mods;c++)if(m[r][c])
+    x.fillRect(cx+pad+c*cell,cy+pad+r*cell,Math.ceil(cell),Math.ceil(cell));
+  x.restore();
+}
+
+/* ---- desenho do cartão (canvas) — 4 estilos, com QR de agendamento no canto ---- */
 function desenharCartao(cli,at){
-  const p=prefs(), t=TEMAS[p.tema]||TEMAS.rosa;
+  const p=prefs(), t=TEMAS[p.tema]||TEMAS.rosa, est=p.estilo||'foto';
   const cv=$('#cartao'); if(!cv)return; const x=cv.getContext('2d');
-  const W=1080,H=1350;
+  const W=1080,H=1350, url=urlPortfolio();
+  const cortar=s=>at.serv.length>s?at.serv.slice(0,s-1)+'…':at.serv;
   const g=x.createLinearGradient(0,0,W,H);g.addColorStop(0,t.grad[0]);g.addColorStop(1,t.grad[1]);
   x.fillStyle=g;x.fillRect(0,0,W,H);
   const fim=()=>{if(studio.logo)desenharLogo(x,studio.logo,p.logoPos,()=>{});};
-  if(p.estilo==='foto'){
-    const txt=()=>{
-      const ov=x.createLinearGradient(0,H*.45,0,H);ov.addColorStop(0,'rgba(10,5,15,0)');ov.addColorStop(1,'rgba(10,5,15,.93)');
-      x.fillStyle=ov;x.fillRect(24,24,W-48,H-48);x.textAlign='center';
-      x.fillStyle='#fff';x.font='800 64px sans-serif';x.fillText(cli.nome,W/2,H-388);
-      x.fillStyle=t.acc;x.font='600 40px sans-serif';x.fillText(at.serv.length>38?at.serv.slice(0,36)+'…':at.serv,W/2,H-322);
-      x.fillStyle='rgba(255,255,255,.75)';x.font='400 30px sans-serif';x.fillText(dataBR(at.d)+(p.frase?'  ·  '+p.frase:''),W/2,H-268);
-      desenharSelos(x,cli,t,H-212);
-      x.fillStyle='#fff';x.font='700 40px sans-serif';x.fillText('💅 '+studio.nome,W/2,H-86);
-      x.fillStyle='rgba(255,255,255,.7)';x.font='400 27px sans-serif';x.fillText('Agende: wa.me/'+studio.zap,W/2,H-44);fim();};
-    x.save();roundRect(x,24,24,W-48,H-48,32);x.clip();
-    if(at.foto){const img=new Image();img.onload=()=>{const e=Math.max((W-48)/img.width,(H-48)/img.height);
-      x.drawImage(img,W/2-img.width*e/2,(H-48)/2+24-img.height*e/2,img.width*e,img.height*e);x.restore();txt();};img.src=at.foto;}
-    else{x.fillStyle='#1a0a1e';x.fillRect(24,24,W-48,H-48);x.font='260px sans-serif';x.textAlign='center';x.fillText('💅',W/2,560);x.restore();txt();}
-  }else{
+  const qrCanto=(qx,qy,qs,cor)=>{x.save();x.textAlign='center';x.fillStyle=cor;x.font='700 22px sans-serif';
+    x.fillText('agende aqui 📷',qx+qs/2,qy-12);x.restore();desenharQR(x,url,qx,qy,qs);};
+  // desenha foto cobrindo um retângulo arredondado (com placeholder 💅)
+  const coverInto=(rx,ry,rw,rh,rad,after,borderStyle)=>{
+    const done=()=>{if(borderStyle){x.strokeStyle=borderStyle;x.lineWidth=6;roundRect(x,rx,ry,rw,rh,rad);x.stroke();}after&&after();};
+    if(!at.foto){x.fillStyle='#eadff0';roundRect(x,rx,ry,rw,rh,rad);x.fill();x.textAlign='center';
+      x.fillStyle='rgba(0,0,0,.25)';x.font=Math.round(rh*.4)+'px sans-serif';x.fillText('💅',rx+rw/2,ry+rh/2+rh*.15);done();return;}
+    const img=new Image();img.onload=()=>{x.save();roundRect(x,rx,ry,rw,rh,rad);x.clip();
+      const e=Math.max(rw/img.width,rh/img.height);
+      x.drawImage(img,rx+rw/2-img.width*e/2,ry+rh/2-img.height*e/2,img.width*e,img.height*e);x.restore();done();};
+    img.onerror=done;img.src=at.foto;};
+
+  if(est==='classico'){
     x.fillStyle='#160a1a';roundRect(x,40,40,W-80,H-80,36);x.fill();x.textAlign='center';
     x.fillStyle='#fdf2f8';x.font='700 46px sans-serif';x.fillText('💅 '+studio.nome,W/2,140);
     x.fillStyle=t.acc;x.font='400 30px sans-serif';x.fillText(p.frase||'Clube Dymani',W/2,185);
-    const txt=()=>{x.fillStyle='#fdf2f8';x.font='700 52px sans-serif';x.fillText(cli.nome,W/2,940);
-      x.fillStyle=t.grad[0]==='#fbbf24'?t.acc:t.grad[0];x.font='600 38px sans-serif';x.fillText(at.serv.length>40?at.serv.slice(0,38)+'…':at.serv,W/2,1000);
+    const txt=()=>{x.textAlign='center';x.fillStyle='#fdf2f8';x.font='700 52px sans-serif';x.fillText(cli.nome,W/2,940);
+      x.fillStyle=t.grad[0]==='#fbbf24'?t.acc:t.grad[0];x.font='600 38px sans-serif';x.fillText(cortar(40),W/2,1000);
       x.fillStyle='#c3a0cf';x.font='400 30px sans-serif';x.fillText(dataBR(at.d),W/2,1048);
-      desenharSelos(x,cli,t,1105);x.fillStyle='#c3a0cf';x.font='400 28px sans-serif';x.fillText('Agende: wa.me/'+studio.zap,W/2,1258);fim();};
+      desenharSelos(x,cli,t,1110);
+      qrCanto(W-150-72,H-150-70,150,'#c3a0cf');fim();};
     if(at.foto){const img=new Image();img.onload=()=>{x.save();roundRect(x,140,230,800,640,28);x.clip();
       const e=Math.max(800/img.width,640/img.height);x.drawImage(img,W/2-img.width*e/2,550-img.height*e/2,img.width*e,img.height*e);x.restore();
-      x.strokeStyle=t.grad[0];x.lineWidth=6;roundRect(x,140,230,800,640,28);x.stroke();txt();};img.src=at.foto;}
+      x.strokeStyle=t.grad[0];x.lineWidth=6;roundRect(x,140,230,800,640,28);x.stroke();txt();};img.onerror=()=>txt();img.src=at.foto;}
     else{x.fillStyle='#25102b';roundRect(x,140,230,800,640,28);x.fill();x.font='200px sans-serif';x.fillText('💅',W/2,620);txt();}
   }
+  else if(est==='polaroid'){
+    x.fillStyle='#fff';roundRect(x,54,54,W-108,H-108,44);x.fill();x.textAlign='center';
+    const fs=756,fx=(W-fs)/2,fy=120;
+    const depois=()=>{x.textAlign='center';
+      x.fillStyle='#1c0b20';x.font='800 62px sans-serif';x.fillText(cli.nome,W/2,fy+fs+94);
+      x.fillStyle=t.grad[1]==='#3b82f6'?t.grad[0]:t.grad[1];x.font='600 36px sans-serif';x.fillText(cortar(38),W/2,fy+fs+148);
+      x.fillStyle='#8f76a3';x.font='400 28px sans-serif';x.fillText(dataBR(at.d)+(p.frase?'  ·  '+p.frase:''),W/2,fy+fs+194);
+      desenharSelos(x,cli,t,fy+fs+262);
+      x.textAlign='left';x.fillStyle='#1c0b20';x.font='700 34px sans-serif';x.fillText('💅 '+studio.nome,96,H-92);
+      qrCanto(W-96-140,H-92-152,140,'#8f76a3');fim();};
+    coverInto(fx,fy,fs,fs,26,depois,'#eee');
+  }
+  else if(est==='moderno'){
+    x.fillStyle='#0e0611';roundRect(x,28,28,W-56,H-56,46);x.fill();
+    const gb=x.createLinearGradient(0,0,W,H);gb.addColorStop(0,t.grad[0]);gb.addColorStop(1,t.grad[1]);
+    x.strokeStyle=gb;x.lineWidth=12;roundRect(x,34,34,W-68,H-68,42);x.stroke();
+    x.textAlign='center';x.fillStyle=t.acc;x.font='700 30px sans-serif';
+    x.fillText((p.frase||'Clube Dymani').toUpperCase(),W/2,124);
+    const fy=164,fh=744,fx=80,fw=W-160;
+    const depois=()=>{x.textAlign='center';
+      x.fillStyle='#fff';x.font='800 64px sans-serif';x.fillText(cli.nome,W/2,fy+fh+92);
+      x.fillStyle=t.acc;x.font='600 40px sans-serif';x.fillText(cortar(34),W/2,fy+fh+146);
+      desenharSelos(x,cli,t,fy+fh+222);
+      x.textAlign='left';x.fillStyle='#fff';x.font='700 36px sans-serif';x.fillText('💅 '+studio.nome,66,H-60);
+      qrCanto(W-66-150,H-60-158,150,'rgba(255,255,255,.85)');fim();};
+    coverInto(fx,fy,fw,fh,30,depois,gb);
+  }
+  else{ // foto (padrão) — foto inteira com degradê e textos por cima
+    const txt=()=>{
+      const ov=x.createLinearGradient(0,H*.45,0,H);ov.addColorStop(0,'rgba(10,5,15,0)');ov.addColorStop(1,'rgba(10,5,15,.93)');
+      x.fillStyle=ov;x.fillRect(24,24,W-48,H-48);x.textAlign='center';
+      x.fillStyle='#fff';x.font='800 64px sans-serif';x.fillText(cli.nome,W/2,H-392);
+      x.fillStyle=t.acc;x.font='600 40px sans-serif';x.fillText(cortar(34),W/2,H-326);
+      x.fillStyle='rgba(255,255,255,.75)';x.font='400 30px sans-serif';x.fillText(dataBR(at.d)+(p.frase?'  ·  '+p.frase:''),W/2,H-272);
+      desenharSelos(x,cli,t,H-214);
+      x.textAlign='left';x.fillStyle='#fff';x.font='700 40px sans-serif';x.fillText('💅 '+studio.nome,54,H-54);
+      qrCanto(W-40-150,H-40-150,150,'rgba(255,255,255,.9)');fim();};
+    x.save();roundRect(x,24,24,W-48,H-48,32);x.clip();
+    if(at.foto){const img=new Image();img.onload=()=>{const e=Math.max((W-48)/img.width,(H-48)/img.height);
+      x.drawImage(img,W/2-img.width*e/2,(H-48)/2+24-img.height*e/2,img.width*e,img.height*e);x.restore();txt();};img.onerror=()=>{x.restore();txt();};img.src=at.foto;}
+    else{x.fillStyle='#1a0a1e';x.fillRect(24,24,W-48,H-48);x.font='260px sans-serif';x.textAlign='center';x.fillText('💅',W/2,560);x.restore();txt();}
+  }
 }
+function estrelaPath(x,cx,cy,r){x.beginPath();
+  for(let i=0;i<10;i++){const ang=-Math.PI/2+i*Math.PI/5,rr=i%2?r*0.42:r;
+    const px=cx+Math.cos(ang)*rr,py=cy+Math.sin(ang)*rr;i?x.lineTo(px,py):x.moveTo(px,py);}
+  x.closePath();}
 function desenharSelos(x,cli,t,y){
-  const m=meta(),n=selosAt(cli),esp=m===5?90:50,r=m===5?24:17,x0=540-(m-1)*esp/2;
-  for(let i=0;i<m;i++){x.beginPath();x.arc(x0+i*esp,y,r,0,7);x.fillStyle=i<n?'#fbbf24':'rgba(0,0,0,.45)';x.fill();
-    x.strokeStyle='#fbbf24';x.lineWidth=3;x.stroke();}
+  const m=meta(),n=selosAt(cli),esp=m===5?92:52,r=m===5?27:18,x0=540-(m-1)*esp/2;
+  for(let i=0;i<m;i++){estrelaPath(x,x0+i*esp,y,r);
+    x.fillStyle=i<n?'#fbbf24':'rgba(0,0,0,.42)';x.fill();
+    x.strokeStyle='#fbbf24';x.lineWidth=3;x.lineJoin='round';x.stroke();}
   x.fillStyle='#fbbf24';x.font='700 34px sans-serif';x.textAlign='center';
   x.fillText(temBrinde(cli)?'🎁 PRÓXIMA UNHA GRÁTIS!':`Faltam ${m-n} pra unha grátis 🎁`,540,y+72);
 }
@@ -607,7 +810,7 @@ async function telaCliente(id){
   clienteAtual=cli;
   const fotos=cli.atend.filter(a=>a.foto), ultIdx=cli.atend.length-1, ult=ultIdx>=0?cli.atend[ultIdx]:null;
   const n=selosAt(cli),m=meta();
-  let dotsHTML='';for(let i=0;i<m;i++)dotsHTML+=`<span class="sel ${i<n?'on':''}"></span>`;
+  let dotsHTML='';for(let i=0;i<m;i++)dotsHTML+=estrela(i<n,22);
   app.innerHTML=`<div class="screen noNav">
     <button class="back" onclick="irTab('clientes')">${ic('back',18)} Clientes</button>
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px">
