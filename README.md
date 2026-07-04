@@ -4,6 +4,9 @@
 
 Clube de fidelidade e agendamento em tempo real para manicures e studios de beleza.
 
+> 📖 Contexto completo do projeto — história, visão, modelo de negócio,
+> arquitetura e status atual: **[CLAUDE.md](CLAUDE.md)**
+
 ## Páginas
 
 | Arquivo | O que é |
