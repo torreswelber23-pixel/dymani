@@ -2,366 +2,768 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#140717">
 
-<!-- ============================================================
-     PAINEL DA MANICURE — Clube da Unha
-     Login: nome do link (slug) + PIN.
-     Aqui ela vê a agenda (nome e contato de quem agendou),
-     edita logo, bio, serviços, horários e fotos do portfólio.
-     ============================================================ -->
+<!-- =============================================================
+     DYMANI — Painel do Studio (app completo da manicure)
+     Login: nome do link (slug) + PIN. Tudo na nuvem (Supabase),
+     multitenant: clientes, selos e cartão + agenda, serviços,
+     horários, fotos e perfil. O portfólio público é portfolio.html
+     ============================================================= -->
 
 <title>Dymani — Painel do Studio</title>
 <style>
   :root{
-    --bg:#1a0a1e; --card:#2a1230; --card2:#3a1a42; --border:#552a60;
-    --text:#fdf2f8; --muted:#c9a0d4;
+    --bg:#140717; --bg2:#1e0b23; --surf:#25102b; --surf2:#311539; --line:#4a2455;
+    --line2:#5e2f6b; --text:#fdf2f8; --muted:#c3a0cf; --muted2:#8f76a3;
     --rosa:#ec4899; --rosa-forte:#db2777; --roxo:#7c3aed;
     --gold:#fbbf24; --verde:#22c55e; --verm:#ef4444; --zap:#25d366;
+    --shadow:0 8px 30px rgba(0,0,0,.4); --r:16px;
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  body{background:radial-gradient(1200px 500px at 50% -100px,#3a1245,var(--bg));color:var(--text);font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;line-height:1.5;min-height:100vh}
-  .container{max-width:520px;margin:0 auto;padding:16px 16px 100px}
-  h1{font-size:1.4rem} h2{font-size:1.05rem}
-  .logo{text-align:center;padding:16px 0 4px;font-size:1.45rem;font-weight:800}
-  .logo span{background:linear-gradient(90deg,var(--rosa),var(--roxo));-webkit-background-clip:text;background-clip:text;color:transparent}
-  .tagline{text-align:center;color:var(--muted);font-size:.85rem;margin-bottom:16px}
-  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:14px}
-  label{display:block;font-size:.85rem;color:var(--muted);margin:12px 0 4px;font-weight:600}
-  input,select,textarea{width:100%;background:linear-gradient(180deg,#3a1a42,#321640);border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;color:var(--text);font-size:1rem;font-family:inherit;transition:border-color .2s,box-shadow .2s}
-  input::placeholder{color:#8f76a3}
-  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--rosa);box-shadow:0 0 0 4px rgba(236,72,153,.18)}
-  select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23c9a0d4' stroke-width='2' fill='none'/%3E%3C/svg%3E"),linear-gradient(180deg,#3a1a42,#321640);background-repeat:no-repeat;background-position:right 16px center,0 0}
-  .btn-file{display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(236,72,153,.08);border:1.5px dashed var(--rosa);border-radius:14px;padding:14px;color:var(--text);font-weight:700;cursor:pointer;margin-top:4px;font-size:.95rem}
-  .btn-file:active{background:rgba(236,72,153,.2)}
-  .btn-file input{display:none}
-  .logo-prev{width:64px;height:64px;border-radius:50%;overflow:hidden;border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;background:var(--card2);font-size:1.5rem;flex-shrink:0}
-  .logo-prev img{width:100%;height:100%;object-fit:cover}
-  .btn{display:block;width:100%;background:linear-gradient(90deg,var(--rosa-forte),var(--roxo));color:#fff;border:none;font-weight:700;font-size:1.05rem;padding:15px;border-radius:14px;text-align:center;text-decoration:none;cursor:pointer;margin-top:14px}
-  .btn:active{opacity:.85}
-  .btn.zap{background:var(--zap)}
-  .btn.gold{background:linear-gradient(90deg,var(--gold),#f59e0b);color:#241303}
-  .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text);font-weight:600}
-  .btn.mini{width:auto;display:inline-block;padding:8px 14px;font-size:.82rem;margin:4px 4px 0 0}
-  .tabs{display:flex;gap:6px;margin:12px 0;overflow-x:auto;padding-bottom:4px}
-  .tab{padding:10px 14px;border-radius:20px;border:2px solid var(--border);background:var(--card);font-size:.85rem;font-weight:700;cursor:pointer;white-space:nowrap}
-  .tab.on{border-color:var(--gold);background:rgba(251,191,36,.15)}
-  .ag-dia{color:var(--gold);font-weight:800;margin:16px 0 8px;font-size:.95rem}
-  .ag-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px}
-  .ag-item .h{font-size:1.15rem;font-weight:800;color:var(--rosa)}
-  .ag-item .n{font-weight:700}
-  .ag-item .s{font-size:.78rem;color:var(--muted)}
-  .ag-item .ind{font-size:.75rem;color:var(--gold)}
-  .servico-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
-  .servico-row input:first-child{flex:2} .servico-row input:nth-child(2){flex:1}
-  .x{background:var(--verm);color:#fff;border:none;border-radius:10px;width:42px;height:42px;font-weight:800;cursor:pointer;flex-shrink:0}
-  .foto-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
-  .foto-row .f{position:relative}
-  .foto-row img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;border:1px solid var(--border)}
-  .foto-row .x{position:absolute;top:4px;right:4px;width:30px;height:30px;font-size:.8rem}
-  .link-box{background:var(--card2);border:1px dashed var(--gold);border-radius:12px;padding:12px;font-size:.8rem;word-break:break-all;color:var(--gold);margin-top:10px}
-  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--verde);color:#03240e;font-weight:700;padding:12px 22px;border-radius:30px;z-index:99;box-shadow:0 4px 14px rgba(0,0,0,.5)}
-  .vazio{text-align:center;color:var(--muted);font-size:.9rem;padding:24px 10px}
-  .dica{font-size:.78rem;color:var(--muted);margin-top:6px}
+  html,body{overflow-x:hidden}
+  body{background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+    line-height:1.5;min-height:100vh;-webkit-font-smoothing:antialiased}
+  svg{display:block}
+  .wrap{max-width:540px;margin:0 auto;min-height:100vh;position:relative}
+  .screen{padding:0 16px calc(96px + env(safe-area-inset-bottom))}
+  .screen.noNav{padding-bottom:40px}
+
+  /* ---- topo ---- */
+  .appbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;
+    padding:calc(12px + env(safe-area-inset-top)) 16px 12px;
+    background:linear-gradient(180deg,var(--bg) 60%,rgba(20,7,23,0));margin:0 -16px 6px}
+  .appbar .av{width:42px;height:42px;border-radius:13px;overflow:hidden;flex-shrink:0;
+    background:linear-gradient(135deg,var(--rosa),var(--roxo));display:flex;align-items:center;
+    justify-content:center;border:1.5px solid var(--gold);font-weight:800}
+  .appbar .av img{width:100%;height:100%;object-fit:cover}
+  .appbar .tt{flex:1;min-width:0}
+  .appbar .tt h1{font-size:1.15rem;font-weight:800;letter-spacing:-.2px;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis}
+  .appbar .tt p{font-size:.72rem;color:var(--muted2);letter-spacing:.3px;text-transform:uppercase;font-weight:700}
+  .iconbtn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--surf);
+    color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+  .iconbtn:active{background:var(--surf2)}
+  .back{display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:var(--muted);
+    font-size:.92rem;font-weight:600;cursor:pointer;padding:calc(14px + env(safe-area-inset-top)) 0 8px}
+
+  /* ---- tipografia ---- */
+  h2{font-size:1.05rem;font-weight:800;letter-spacing:-.2px}
+  .eyebrow{font-size:.72rem;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--muted2);margin:20px 2px 10px}
+
+  /* ---- cards ---- */
+  .card{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
+  .card.tap{cursor:pointer;transition:transform .08s}
+  .card.tap:active{transform:scale(.99)}
+
+  /* ---- inputs ---- */
+  label{display:block;font-size:.82rem;color:var(--muted);margin:14px 0 6px;font-weight:700}
+  input,select,textarea{width:100%;background:var(--bg2);border:1.5px solid var(--line);border-radius:13px;
+    padding:14px 15px;color:var(--text);font-size:1rem;font-family:inherit;transition:border-color .15s,box-shadow .15s}
+  input::placeholder{color:var(--muted2)}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--rosa);box-shadow:0 0 0 4px rgba(236,72,153,.16)}
+  select{appearance:none;-webkit-appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23c3a0cf' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 15px center;padding-right:38px}
+  .filebtn{display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(236,72,153,.07);
+    border:1.5px dashed var(--rosa);border-radius:13px;padding:13px;color:var(--text);font-weight:700;cursor:pointer;font-size:.92rem}
+  .filebtn:active{background:rgba(236,72,153,.16)}
+  .filebtn input{display:none}
+
+  /* ---- botões ---- */
+  .btn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;
+    background:linear-gradient(90deg,var(--rosa-forte),var(--roxo));color:#fff;border:none;font-weight:700;
+    font-size:1.02rem;padding:15px;border-radius:14px;text-decoration:none;cursor:pointer;margin-top:12px;
+    box-shadow:0 6px 18px rgba(219,39,119,.32)}
+  .btn:active{transform:translateY(1px);opacity:.92}
+  .btn.zap{background:var(--zap);box-shadow:0 6px 18px rgba(37,211,102,.28)}
+  .btn.gold{background:linear-gradient(90deg,var(--gold),#f59e0b);color:#2a1704;box-shadow:0 6px 18px rgba(251,191,36,.28)}
+  .btn.ghost{background:var(--surf);border:1px solid var(--line);color:var(--text);box-shadow:none}
+  .btn.sm{padding:11px;font-size:.9rem;margin-top:10px}
+  .btn svg{width:19px;height:19px}
+  .btnrow{display:flex;gap:10px}.btnrow .btn{margin-top:12px}
+
+  /* ---- alerta chamar ---- */
+  .alert{display:flex;align-items:center;gap:13px;padding:16px;border-radius:var(--r);cursor:pointer;
+    background:linear-gradient(100deg,rgba(236,72,153,.22),rgba(124,58,237,.22));border:1px solid var(--rosa);
+    margin-bottom:14px;box-shadow:var(--shadow)}
+  .alert .ci{width:44px;height:44px;border-radius:12px;background:rgba(236,72,153,.25);display:flex;
+    align-items:center;justify-content:center;color:#fff;flex-shrink:0}
+  .alert .tx{flex:1}.alert .tx b{font-size:1rem}.alert .tx span{display:block;font-size:.78rem;color:var(--muted)}
+
+  /* ---- lista clientes ---- */
+  .row{display:flex;align-items:center;gap:13px;background:var(--surf);border:1px solid var(--line);
+    border-radius:14px;padding:13px 14px;margin-bottom:9px;cursor:pointer;transition:transform .08s}
+  .row:active{transform:scale(.99)}
+  .row .ava{width:44px;height:44px;border-radius:13px;flex-shrink:0;display:flex;align-items:center;
+    justify-content:center;font-weight:800;font-size:1.05rem;color:#fff;
+    background:linear-gradient(135deg,var(--rosa),var(--roxo))}
+  .row .mid{flex:1;min-width:0}
+  .row .nm{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row .sub{font-size:.76rem;color:var(--muted)}
+  .row .sub.late{color:var(--rosa);font-weight:700}
+  .row .rt{text-align:right;flex-shrink:0}
+  .dots{letter-spacing:1px;font-size:.72rem;color:var(--gold);white-space:nowrap}
+  .chev{color:var(--muted2)}
+  .search{position:relative;margin-bottom:6px}
+  .search svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted2);width:18px;height:18px}
+  .search input{padding-left:42px}
+
+  .empty{text-align:center;color:var(--muted);font-size:.9rem;padding:36px 16px}
+  .empty svg{width:40px;height:40px;color:var(--line2);margin:0 auto 10px}
+
+  /* ---- selos grandes ---- */
+  .selrow{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+  .sel{width:20px;height:20px;border-radius:50%;border:2px solid var(--gold)}
+  .sel.on{background:var(--gold)}
+  .prize{display:flex;align-items:center;gap:10px;background:linear-gradient(90deg,var(--gold),#f59e0b);
+    color:#2a1704;font-weight:800;padding:13px 15px;border-radius:13px;margin-bottom:12px}
+
+  /* ---- galeria / álbum ---- */
+  .gal{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px}
+  .gal img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:11px;border:1px solid var(--line)}
+
+  /* ---- cartão (canvas) ---- */
+  canvas#cartao{width:100%;border-radius:16px;touch-action:none;box-shadow:var(--shadow)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .chip{padding:9px 13px;border-radius:11px;border:2px solid var(--line);background:var(--surf2);color:var(--text);
+    font-size:.84rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+  .chip.on{border-color:var(--gold);background:rgba(251,191,36,.14)}
+  .dot{width:14px;height:14px;border-radius:50%}
+  .hint{font-size:.76rem;color:var(--muted2);text-align:center;margin-top:8px}
+
+  /* ---- segmentado (studio) ---- */
+  .seg{display:flex;background:var(--bg2);border:1px solid var(--line);border-radius:13px;padding:4px;margin-bottom:14px}
+  .seg button{flex:1;border:none;background:none;color:var(--muted);font-weight:700;font-size:.86rem;
+    padding:9px 4px;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+  .seg button svg{width:16px;height:16px}
+  .seg button.on{background:var(--surf2);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+
+  /* ---- serviços / horários rows ---- */
+  .frow{display:flex;gap:8px;margin-bottom:9px;align-items:center}
+  .frow input:first-child{flex:2}.frow input:nth-child(2){flex:1}
+  .del{background:rgba(239,68,68,.12);color:var(--verm);border:1px solid rgba(239,68,68,.4);border-radius:11px;
+    width:46px;height:46px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+  .del svg{width:18px;height:18px}
+
+  /* ---- agenda ---- */
+  .agday{font-size:.78rem;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--gold);margin:18px 2px 8px}
+  .ag{display:flex;align-items:center;gap:13px;background:var(--surf);border:1px solid var(--line);
+    border-radius:14px;padding:13px 14px;margin-bottom:9px}
+  .ag .hr{font-size:1.05rem;font-weight:800;color:var(--rosa);width:52px;flex-shrink:0}
+  .ag .mid{flex:1;min-width:0}
+  .ag .nm{font-weight:700}.ag .sv{font-size:.78rem;color:var(--muted)}
+  .ag .ind{font-size:.74rem;color:var(--gold);margin-top:2px}
+  .ag .acts{display:flex;gap:7px;flex-shrink:0}
+  .miniz{width:40px;height:40px;border-radius:11px;background:var(--zap);color:#fff;display:flex;
+    align-items:center;justify-content:center;text-decoration:none}
+  .miniz svg{width:19px;height:19px}
+
+  /* ---- fotos studio ---- */
+  .frow3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+  .frow3 .fi{position:relative}
+  .frow3 img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:11px;border:1px solid var(--line)}
+  .frow3 .del{position:absolute;top:5px;right:5px;width:30px;height:30px;background:rgba(20,7,23,.8)}
+  .frow3 .del svg{width:15px;height:15px}
+
+  /* ---- link box ---- */
+  .linkbox{background:var(--bg2);border:1px dashed var(--gold);border-radius:13px;padding:13px 14px;margin-top:8px}
+  .linkbox .lb{font-size:.72rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
+  .linkbox .lu{font-size:.8rem;color:var(--gold);word-break:break-all}
+
+  .logoprev{width:66px;height:66px;border-radius:16px;overflow:hidden;border:2px solid var(--gold);
+    display:flex;align-items:center;justify-content:center;background:var(--surf2);flex-shrink:0}
+  .logoprev img{width:100%;height:100%;object-fit:cover}
+
+  /* ---- bottom nav ---- */
+  .nav{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;justify-content:center;
+    padding-bottom:env(safe-area-inset-bottom);pointer-events:none}
+  .nav .inner{pointer-events:auto;width:100%;max-width:540px;display:flex;align-items:flex-end;justify-content:space-around;
+    background:rgba(30,11,35,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border-top:1px solid var(--line);padding:8px 6px 10px}
+  .nav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--muted2);
+    font-size:.66rem;font-weight:700;cursor:pointer;text-decoration:none;padding:4px 0}
+  .nav a svg{width:23px;height:23px}
+  .nav a.on{color:var(--rosa)}
+  .nav a.fab{position:relative;top:-16px;flex:0 0 auto}
+  .nav a.fab .fb{width:56px;height:56px;border-radius:18px;background:linear-gradient(135deg,var(--rosa),var(--roxo));
+    display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 8px 22px rgba(219,39,119,.5)}
+  .nav a.fab .fb svg{width:26px;height:26px}
+  .nav a.fab span{margin-top:2px;color:var(--muted2)}
+
+  .toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);
+    background:var(--verde);color:#03240e;font-weight:700;padding:12px 22px;border-radius:30px;z-index:99;
+    box-shadow:0 6px 20px rgba(0,0,0,.5);max-width:90vw;text-align:center;font-size:.92rem}
+
+  /* ---- login ---- */
+  .auth{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:24px 20px calc(30px + env(safe-area-inset-bottom))}
+  .brand{text-align:center;margin-bottom:22px}
+  .brand .lg{width:190px;max-width:64%;border-radius:18px;margin:0 auto}
+  .brand .wm{font-size:2rem;font-weight:900;letter-spacing:3px;
+    background:linear-gradient(90deg,var(--rosa),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .brand p{color:var(--muted);font-size:.85rem;margin-top:4px}
+  .link{display:block;text-align:center;color:var(--muted);font-size:.9rem;margin-top:16px;cursor:pointer;background:none;border:none;width:100%}
+  .link b{color:var(--rosa)}
 </style>
 </head>
 <body>
-<div class="container" id="app"></div>
+<div class="wrap" id="app"></div>
+<div class="nav" id="nav" style="display:none"></div>
 
 <script>
-const SUPA_URL = 'https://rhveqvlldliccalfsuea.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJodmVxdmxsZGxpY2NhbGZzdWVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMjg5MjMsImV4cCI6MjA5NjcwNDkyM30.NrsH1optDK2IbOl8YUqBwUZaidvEk72lvrA4SEHPrVY';
-async function rpc(fn, args){
-  const r = await fetch(SUPA_URL + '/rest/v1/rpc/' + fn, {
-    method: 'POST',
-    headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify(args)
-  });
-  if (!r.ok) throw new Error('rede');
+/* ================= conexão (Supabase) ================= */
+const SUPA_URL='https://rhveqvlldliccalfsuea.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJodmVxdmxsZGxpY2NhbGZzdWVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMjg5MjMsImV4cCI6MjA5NjcwNDkyM30.NrsH1optDK2IbOl8YUqBwUZaidvEk72lvrA4SEHPrVY';
+async function rpc(fn,args){
+  const r=await fetch(SUPA_URL+'/rest/v1/rpc/'+fn,{method:'POST',
+    headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY,'Content-Type':'application/json'},
+    body:JSON.stringify(args)});
+  if(!r.ok) throw new Error('rede');
   return r.json();
 }
 
-const $ = s => document.querySelector(s);
-const app = $('#app');
-const DIASEMANA = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
-let sessao = JSON.parse(localStorage.getItem('cu_admin') || 'null'); // {slug, pin}
-let studio = null;   // dados carregados
-let agenda = [];
+/* ================= ícones (SVG inline) ================= */
+const IC={
+  users:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  calendar:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+  plus:'<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+  store:'<path d="M3 9l1.5-5h15L21 9"/><path d="M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9"/><path d="M3 9h18"/><path d="M9 20v-6h6v6"/>',
+  user:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  scissors:'<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/>',
+  image:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>',
+  search:'<circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+  star:'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+  gift:'<polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>',
+  bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
+  chev:'<polyline points="9 18 15 12 9 6"/>',
+  back:'<line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>',
+  trash:'<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+  logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
+  copy:'<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  camera:'<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
+  send:'<line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>',
+  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+  check:'<polyline points="20 6 9 17 4 12"/>',
+  sparkle:'<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/>',
+  layout:'<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/>',
+  palette:'<circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path d="M12 2a10 10 0 0 0 0 20 2.5 2.5 0 0 0 2-4 2.5 2.5 0 0 1 2-4h1a4 4 0 0 0 4-4 10 10 0 0 0-9-8z"/>',
+  x:'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+  zap:'FILL:<path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38c1.45.79 3.08 1.21 4.79 1.21 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2zm0 18.15c-1.53 0-3.03-.41-4.34-1.19l-.31-.18-3.12.82.83-3.04-.2-.32a8.2 8.2 0 0 1-1.26-4.36c0-4.54 3.7-8.24 8.24-8.24 2.2 0 4.27.86 5.82 2.42a8.18 8.18 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.12-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.13-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.43-.14-.01-.31-.01-.48-.01-.17 0-.43.06-.66.31-.23.25-.87.85-.87 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.14-1.18-.06-.11-.22-.17-.47-.29z"/>'
+};
+function ic(n,s){const raw=IC[n]||'';const fill=raw.startsWith('FILL:');
+  return `<svg viewBox="0 0 24 24" width="${s||24}" height="${s||24}" fill="${fill?'currentColor':'none'}" stroke="${fill?'none':'currentColor'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${fill?raw.slice(5):raw}</svg>`;}
 
-function toast(msg){
-  const t = document.createElement('div');
-  t.className = 'toast'; t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 2400);
-}
-function comprimir(file, tam, cb){
-  const img = new Image();
-  img.onload = () => {
-    const c = document.createElement('canvas');
-    const lado = Math.min(img.width, img.height);
-    c.width = c.height = tam;
-    c.getContext('2d').drawImage(img, (img.width-lado)/2, (img.height-lado)/2, lado, lado, 0, 0, tam, tam);
-    cb(c.toDataURL('image/jpeg', .7));
-  };
-  img.src = URL.createObjectURL(file);
-}
-const linkPortfolio = () => location.href.replace(/painel\.html.*/, 'portfolio.html?s=' + sessao.slug);
+/* ================= estado ================= */
+const $=s=>document.querySelector(s);
+const app=$('#app'), navEl=$('#nav');
+const DIAS=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+const TEMAS={rosa:{nome:'Rosa',grad:['#ec4899','#7c3aed'],acc:'#f9a8d4'},
+  dourado:{nome:'Dourado',grad:['#fbbf24','#92400e'],acc:'#fde68a'},
+  vermelho:{nome:'Vermelho',grad:['#be123c','#fb7185'],acc:'#fecdd3'},
+  lilas:{nome:'Lilás',grad:['#8b5cf6','#3b82f6'],acc:'#c4b5fd'}};
+let sessao=JSON.parse(localStorage.getItem('cu_admin')||'null'); // {slug,pin}
+let studio=null, clientes=[], agenda=[], clienteAtual=null, tab='clientes', fotoTemp=null;
 
-/* ---------- login / criar studio ---------- */
+/* ================= utils ================= */
+const hoje=()=>new Date().toISOString().slice(0,10);
+const diasDesde=iso=>Math.floor((Date.now()-new Date(iso+'T12:00'))/864e5);
+const dataBR=iso=>{const[a,m,d]=iso.split('-');return `${d}/${m}/${a}`;};
+const soNums=s=>(s||'').replace(/\D/g,'');
+const meta=()=>(studio&&studio.meta)||10;
+const limDias=()=>(studio&&studio.dias)||12;
+const selosAt=c=>c.selos%meta()||(c.selos?meta():0);
+const temBrinde=c=>c.selos>0&&c.selos%meta()===0;
+const iniciais=n=>(n||'?').trim().split(/\s+/).slice(0,2).map(p=>p[0]).join('').toUpperCase();
+const primeiro=n=>(n||'').split(' ')[0];
+function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;
+  document.body.appendChild(t);setTimeout(()=>t.remove(),2400);}
+function comprimir(file,tam,cb){const img=new Image();img.onload=()=>{const c=document.createElement('canvas');
+  const l=Math.min(img.width,img.height);c.width=c.height=tam;
+  c.getContext('2d').drawImage(img,(img.width-l)/2,(img.height-l)/2,l,l,0,0,tam,tam);
+  cb(c.toDataURL('image/jpeg',.72));};img.src=URL.createObjectURL(file);}
+function urlPortfolio(){const base=location.href.split('#')[0].split('?')[0].replace(/[^/]*$/,'');return base+'portfolio.html?s='+sessao.slug;}
+function selosMini(c){let h='';const n=selosAt(c),m=meta();for(let i=0;i<m;i++)h+=i<n?'●':'○';return h;}
+function paraChamar(){return clientes.filter(c=>c.atend.length&&diasDesde(c.atend[c.atend.length-1].d)>=limDias())
+  .sort((a,b)=>diasDesde(b.atend[b.atend.length-1].d)-diasDesde(a.atend[a.atend.length-1].d));}
+
+/* ================= login / criar ================= */
 function telaLogin(criar){
-  app.innerHTML = `
-    <div style="text-align:center;padding:14px 0 4px">
-      <img src="dymani.jpg" alt="Dymani" style="width:200px;border-radius:16px" onerror="this.outerHTML='<div class=logo>💅 <span>DYMANI</span></div>'">
+  navEl.style.display='none';
+  app.innerHTML=`<div class="auth">
+    <div class="brand">
+      <img class="lg" src="dymani.jpg" alt="Dymani" onerror="this.outerHTML='<div class=wm>DYMANI</div>'">
+      <p>Painel do Studio</p>
     </div>
-    <div class="tagline">Painel do Studio</div>
     <div class="card">
-      <h2>${criar ? '✨ Criar meu studio' : 'Entrar no meu painel'}</h2>
-      <label>Nome do seu link (só letras minúsculas e traço) *</label>
-      <input id="l-slug" placeholder="ex: studio-pati-nails" ${sessao && !criar ? `value="${sessao.slug}"` : ''}>
-      <div class="dica">Esse vira o endereço do seu portfólio na internet 💅</div>
-      <label>Senha (PIN de 4+ números) *</label>
+      <h2>${criar?'Criar meu studio':'Entrar no meu painel'}</h2>
+      <label>Nome do meu link (só letras minúsculas e traço)</label>
+      <input id="l-slug" placeholder="ex: studio-pati-nails" autocapitalize="none" value="${sessao&&!criar?sessao.slug:''}">
+      <label>Senha (PIN — 4 números ou mais)</label>
       <input id="l-pin" inputmode="numeric" type="password" placeholder="ex: 2580">
-      ${criar ? `
-        <label>Nome do studio *</label>
-        <input id="l-nome" placeholder="Ex: Studio Pati Nails">
-        <label>Seu WhatsApp (com DDD) *</label>
-        <input id="l-zap" inputmode="numeric" placeholder="Ex: 83999998888">` : ''}
+      ${criar?`
+        <label>Nome do studio</label><input id="l-nome" placeholder="Ex: Studio Pati Nails">
+        <label>Meu WhatsApp (com DDD)</label><input id="l-zap" inputmode="numeric" placeholder="Ex: 83999998888">`:''}
+      <button class="btn" onclick="${criar?'criarStudio()':'entrar()'}">${ic(criar?'sparkle':'check',19)}${criar?'Criar studio':'Entrar'}</button>
     </div>
-    <button class="btn" onclick="${criar ? 'criarStudio()' : 'entrar()'}">${criar ? 'Criar studio 🎉' : 'Entrar 💅'}</button>
-    <button class="btn ghost" onclick="telaLogin(${!criar})">${criar ? 'Já tenho studio — entrar' : '✨ Primeira vez? Criar meu studio'}</button>`;
-}
-function normSlug(){ return $('#l-slug').value.trim().toLowerCase().replace(/\s+/g, '-'); }
-async function entrar(){
-  const slug = normSlug(), pin = $('#l-pin').value.trim();
-  if (!slug || pin.length < 4) { toast('Preencha o link e o PIN 😊'); return; }
-  try {
-    const ag = await rpc('cu_agenda', { p_slug: slug, p_pin: pin });
-    const pub = await rpc('cu_studio_publico', { p_slug: slug });
-    if (!pub) { toast('Studio não existe — crie o seu! ✨'); return; }
-    // PIN errado devolve agenda vazia mesmo com studio existente: valida com um salvar vazio
-    const ok = await rpc('cu_salvar_studio', { p_slug: slug, p_pin: pin, dados: {} });
-    if (ok === 'pin_errado') { toast('PIN errado 🥺'); return; }
-    sessao = { slug, pin };
-    localStorage.setItem('cu_admin', JSON.stringify(sessao));
-    studio = pub; agenda = ag;
-    telaPainel('agenda');
-  } catch(e) { toast('Falha na conexão — tenta de novo'); }
-}
-async function criarStudio(){
-  const slug = normSlug(), pin = $('#l-pin').value.trim();
-  const nome = $('#l-nome').value.trim();
-  const zap = ($('#l-zap').value || '').replace(/\D/g, '');
-  if (!slug || pin.length < 4 || !nome || zap.length < 10) { toast('Preencha tudo direitinho 😊'); return; }
-  try {
-    const existe = await rpc('cu_studio_publico', { p_slug: slug });
-    if (existe) { toast('Esse nome de link já existe — escolha outro'); return; }
-    const res = await rpc('cu_salvar_studio', { p_slug: slug, p_pin: pin, dados: {
-      nome, zap: zap.startsWith('55') ? zap : '55' + zap,
-      servicos: [{ nome: 'Esmaltação em gel', preco: 45 }],
-      horarios: { "2": ["09:00","10:30","14:00","15:30"], "3": ["09:00","10:30","14:00","15:30"],
-                  "4": ["09:00","10:30","14:00","15:30"], "5": ["09:00","10:30","14:00","15:30"],
-                  "6": ["09:00","10:30","14:00"] }
-    }});
-    if (res === 'slug_invalido') { toast('Link inválido: use só letras minúsculas e traço'); return; }
-    if (res !== 'criado' && res !== 'ok') { toast('Não deu: ' + res); return; }
-    sessao = { slug, pin };
-    localStorage.setItem('cu_admin', JSON.stringify(sessao));
-    studio = await rpc('cu_studio_publico', { p_slug: slug });
-    agenda = [];
-    telaPainel('perfil');
-    toast('Studio criado! 🎉 Complete seu perfil');
-  } catch(e) { toast('Falha na conexão — tenta de novo'); }
-}
-function sair(){
-  localStorage.removeItem('cu_admin');
-  sessao = null; studio = null;
-  telaLogin(false);
-}
-
-/* ---------- painel ---------- */
-function telaPainel(aba){
-  app.innerHTML = `
-    <div class="logo">💅 ${studio.nome}</div>
-    <div class="tagline">Painel Dymani</div>
-    <div class="tabs">
-      ${[['agenda','📅 Agenda'],['servicos','💅 Serviços'],['horarios','⏰ Horários'],['fotos','📸 Fotos'],['perfil','⚙️ Perfil']]
-        .map(([k,n]) => `<div class="tab ${aba === k ? 'on' : ''}" onclick="telaPainel('${k}')">${n}</div>`).join('')}
-    </div>
-    <div id="aba"></div>
-    <div class="link-box">🔗 Link do seu portfólio (divulgue!):<br>${linkPortfolio()}</div>
-    <button class="btn ghost mini" onclick="navigator.clipboard.writeText(linkPortfolio()).then(()=>toast('Link copiado! 📋'))">📋 Copiar link</button>
-    <button class="btn ghost mini" onclick="sair()">Sair</button>`;
-  ({ agenda: abaAgenda, servicos: abaServicos, horarios: abaHorarios, fotos: abaFotos, perfil: abaPerfil })[aba]();
-}
-
-/* ---------- aba agenda ---------- */
-async function abaAgenda(){
-  $('#aba').innerHTML = '<div class="vazio">Carregando agenda… 👀</div>';
-  try { agenda = await rpc('cu_agenda', { p_slug: sessao.slug, p_pin: sessao.pin }); } catch(e) {}
-  if (!agenda.length) { $('#aba').innerHTML = '<div class="card vazio">Nenhum agendamento ainda.<br>Divulgue seu link que eles chegam! 💖</div>'; return; }
-  const porDia = {};
-  agenda.forEach(a => (porDia[a.dia] = porDia[a.dia] || []).push(a));
-  const fmt = iso => { const [a,m,d] = iso.split('-'); const dt = new Date(iso + 'T12:00'); return `${DIASEMANA[dt.getDay()]} · ${d}/${m}`; };
-  $('#aba').innerHTML = Object.keys(porDia).sort().map(dia => `
-    <div class="ag-dia">${fmt(dia)}</div>
-    ${porDia[dia].map(a => `
-      <div class="ag-item">
-        <div class="h">${a.hora}</div>
-        <div style="flex:1">
-          <div class="n">${a.nome}</div>
-          <div class="s">${a.servico}</div>
-          ${a.indicou ? `<div class="ind">💖 veio pela ${a.indicou} (dá o ponto pra ela!)</div>` : ''}
-        </div>
-        <div>
-          ${a.zap ? `<a class="btn zap mini" href="https://wa.me/${a.zap}">💬</a>` : ''}
-          <button class="x" onclick="cancelar(${a.id})">✕</button>
-        </div>
-      </div>`).join('')}`).join('');
-}
-async function cancelar(id){
-  if (!confirm('Cancelar esse agendamento? O horário volta a ficar livre.')) return;
-  try {
-    await rpc('cu_cancelar', { p_slug: sessao.slug, p_pin: sessao.pin, p_id: id });
-    toast('Cancelado — horário liberado');
-    abaAgenda();
-  } catch(e) { toast('Falha na conexão'); }
-}
-
-/* ---------- aba serviços ---------- */
-function abaServicos(){
-  const servs = studio.servicos || [];
-  $('#aba').innerHTML = `
-    <div class="card">
-      <h2>Seus serviços e preços</h2>
-      <div id="servs" style="margin-top:10px">
-        ${servs.map((s,i) => servRow(s.nome, s.preco)).join('')}
-      </div>
-      <button class="btn ghost mini" onclick="document.getElementById('servs').insertAdjacentHTML('beforeend', servRow('', ''))">➕ Adicionar serviço</button>
-      <button class="btn" onclick="salvarServicos()">💾 Salvar serviços</button>
-    </div>`;
-}
-function servRow(nome, preco){
-  return `<div class="servico-row">
-    <input placeholder="Serviço" value="${nome}">
-    <input placeholder="R$" inputmode="numeric" value="${preco}">
-    <button class="x" onclick="this.parentElement.remove()">✕</button>
+    <button class="link" onclick="telaLogin(${!criar})">${criar?'Já tenho studio — <b>entrar</b>':'Primeira vez? <b>Criar meu studio</b>'}</button>
   </div>`;
 }
-async function salvarServicos(){
-  const servicos = [...document.querySelectorAll('.servico-row')].map(r => {
-    const [n, p] = r.querySelectorAll('input');
-    return { nome: n.value.trim(), preco: parseFloat(p.value) || 0 };
-  }).filter(s => s.nome);
-  await salvar({ servicos }, 'Serviços salvos! 💅');
+const normSlug=()=>$('#l-slug').value.trim().toLowerCase().replace(/\s+/g,'-');
+async function entrar(){
+  const slug=normSlug(), pin=$('#l-pin').value.trim();
+  if(!slug||pin.length<4){toast('Preencha o link e o PIN');return;}
+  try{
+    const pub=await rpc('cu_studio_publico',{p_slug:slug});
+    if(!pub){toast('Esse studio não existe — crie o seu');return;}
+    const ok=await rpc('cu_salvar_studio',{p_slug:slug,p_pin:pin,dados:{}});
+    if(ok==='pin_errado'){toast('PIN errado');return;}
+    sessao={slug,pin};localStorage.setItem('cu_admin',JSON.stringify(sessao));
+    await carregarTudo(); irTab('clientes');
+  }catch(e){toast('Falha na conexão — tenta de novo');}
+}
+async function criarStudio(){
+  const slug=normSlug(), pin=$('#l-pin').value.trim();
+  const nome=$('#l-nome').value.trim(), zap=soNums($('#l-zap').value);
+  if(!slug||pin.length<4||!nome||zap.length<10){toast('Preencha tudo direitinho');return;}
+  try{
+    if(await rpc('cu_studio_publico',{p_slug:slug})){toast('Esse link já existe — escolha outro');return;}
+    const res=await rpc('cu_salvar_studio',{p_slug:slug,p_pin:pin,dados:{
+      nome,zap:zap.startsWith('55')?zap:'55'+zap,
+      servicos:[{nome:'Esmaltação em gel',preco:45}],
+      horarios:{"2":["09:00","10:30","14:00","15:30"],"3":["09:00","10:30","14:00","15:30"],
+        "4":["09:00","10:30","14:00","15:30"],"5":["09:00","10:30","14:00","15:30"],"6":["09:00","10:30","14:00"]}
+    }});
+    if(res==='slug_invalido'){toast('Link inválido: só minúsculas e traço');return;}
+    if(res!=='criado'&&res!=='ok'){toast('Não deu: '+res);return;}
+    sessao={slug,pin};localStorage.setItem('cu_admin',JSON.stringify(sessao));
+    await carregarTudo(); irTab('studio');
+    toast('Studio criado! 🎉 Configure seu perfil');
+  }catch(e){toast('Falha na conexão — tenta de novo');}
+}
+function sair(){localStorage.removeItem('cu_admin');sessao=null;studio=null;clientes=[];telaLogin(false);}
+
+async function carregarTudo(){
+  studio=await rpc('cu_studio_publico',{p_slug:sessao.slug});
+  try{clientes=await rpc('cu_clientes_listar',{p_slug:sessao.slug,p_pin:sessao.pin});}catch(e){clientes=[];}
+}
+async function recarregarClientes(){try{clientes=await rpc('cu_clientes_listar',{p_slug:sessao.slug,p_pin:sessao.pin});}catch(e){}}
+
+/* ================= navegação ================= */
+function bottomNav(){
+  navEl.style.display='block';
+  const it=(k,i,l)=>`<a class="${tab===k?'on':''}" onclick="irTab('${k}')">${ic(i,23)}<span>${l}</span></a>`;
+  navEl.innerHTML=`<div class="inner">
+    ${it('clientes','users','Clientes')}
+    ${it('agenda','calendar','Agenda')}
+    <a class="fab" onclick="telaAtendimento()"><div class="fb">${ic('plus',26)}</div><span>Novo</span></a>
+    ${it('studio','store','Studio')}
+    ${it('perfil','user','Perfil')}
+  </div>`;
+}
+function appbar(sub){
+  return `<div class="appbar">
+    <div class="av">${studio.logo?`<img src="${studio.logo}">`:iniciais(studio.nome)}</div>
+    <div class="tt"><h1>${studio.nome}</h1><p>${sub||'Painel Dymani'}</p></div>
+  </div>`;
+}
+async function irTab(k){
+  tab=k; bottomNav();
+  if(k==='clientes') return telaClientes();
+  if(k==='agenda') return telaAgenda();
+  if(k==='studio') return telaStudio('servicos');
+  if(k==='perfil') return telaPerfil();
 }
 
-/* ---------- aba horários ---------- */
-function abaHorarios(){
-  const h = studio.horarios || {};
-  $('#aba').innerHTML = `
+/* ================= Clientes (home) ================= */
+function telaClientes(){
+  const chamar=paraChamar();
+  app.innerHTML=appbar('Minhas clientes')+`<div class="screen">
+    ${chamar.length?`<div class="alert" onclick="telaChamar()">
+      <div class="ci">${ic('bell',22)}</div>
+      <div class="tx"><b>${chamar.length} cliente${chamar.length>1?'s':''} na hora de voltar</b>
+        <span>Toque para chamar com 1 clique</span></div>${ic('chev',20)}</div>`:''}
+    <div class="search">${ic('search')}<input placeholder="Buscar cliente..." oninput="filtrar(this.value)"></div>
+    <div id="lista">${listaHTML(clientes)}</div>
+  </div>`;
+}
+function listaHTML(arr){
+  if(!arr.length) return `<div class="empty">${ic('users',40)}Suas clientes aparecem aqui depois do primeiro atendimento.<br>Toque em <b>Novo</b> para começar 💖</div>`;
+  return arr.map(c=>{
+    const ult=c.atend.length?c.atend[c.atend.length-1]:null;
+    const d=ult?diasDesde(ult.d):null, late=d!==null&&d>=limDias();
+    return `<div class="row" onclick="telaCliente(${c.id})">
+      <div class="ava">${iniciais(c.nome)}</div>
+      <div class="mid"><div class="nm">${c.nome}</div>
+        <div class="sub ${late?'late':''}">${ult?(late?`há ${d} dias sem vir`:`última unha há ${d} dia${d===1?'':'s'}`):'sem atendimento'}</div></div>
+      <div class="rt"><div class="dots">${selosMini(c)}</div></div>
+    </div>`;}).join('');
+}
+function filtrar(q){q=q.toLowerCase();$('#lista').innerHTML=listaHTML(clientes.filter(c=>c.nome.toLowerCase().includes(q)));}
+
+/* ================= Novo atendimento ================= */
+function telaAtendimento(){
+  fotoTemp=null; tab=''; bottomNav();
+  app.innerHTML=`<div class="screen noNav">
+    <button class="back" onclick="irTab('clientes')">${ic('back',18)} Início</button>
+    <h2 style="margin-bottom:4px;font-size:1.3rem">Novo atendimento</h2>
+    <p style="color:var(--muted);font-size:.86rem;margin-bottom:6px">Registra a unha e já monta o cartão ✨</p>
     <div class="card">
-      <h2>Horários de atendimento</h2>
-      <div class="dica">Escreva os horários separados por vírgula. Deixe vazio o dia que não atende.</div>
-      ${DIASEMANA.map((d,i) => `
-        <label>${d}</label>
-        <input class="hor-dia" data-dow="${i}" placeholder="não atendo" value="${(h[i] || []).join(', ')}">`).join('')}
-      <button class="btn" onclick="salvarHorarios()">💾 Salvar horários</button>
-    </div>`;
+      <label>Cliente</label>
+      <select id="a-cli" onchange="$('#nova').style.display=this.value==='nova'?'block':'none'">
+        <option value="nova">➕ Cliente nova</option>
+        ${clientes.map(c=>`<option value="${c.id}">${c.nome}</option>`).join('')}
+      </select>
+      <div id="nova">
+        <label>Nome da cliente</label><input id="a-nome" placeholder="Ex: Maria Souza">
+        <label>WhatsApp dela (com DDD)</label><input id="a-zap" inputmode="numeric" placeholder="Ex: 83988887777">
+        <label>Horário de costume (opcional)</label><input id="a-hor" placeholder="Ex: quinta às 14h">
+      </div>
+      <label>Serviço / cor de hoje</label><input id="a-serv" placeholder="Ex: Alongamento fibra + Vermelho Rubi">
+      <label>Foto da unha</label>
+      <label class="filebtn">${ic('camera',19)} Tirar / escolher a foto
+        <input type="file" accept="image/*" capture="environment"
+          onchange="comprimir(this.files[0],720,d=>{fotoTemp=d;$('#a-prev').src=d;$('#a-prev').style.display='block';})"></label>
+      <img id="a-prev" style="display:none;width:100%;border-radius:13px;margin-top:10px">
+    </div>
+    <button class="btn" onclick="salvarAtendimento(this)">${ic('sparkle',19)} Salvar e montar o cartão</button>
+  </div>`;
+}
+function capFotos(cli){let vistas=0;for(let i=cli.atend.length-1;i>=0;i--){if(cli.atend[i].foto){vistas++;if(vistas>6)delete cli.atend[i].foto;}}}
+async function salvarAtendimento(btn){
+  const serv=$('#a-serv').value.trim();
+  if(!serv){toast('Escreva o serviço/cor de hoje');return;}
+  const sel=$('#a-cli').value; let cli;
+  try{
+    if(sel==='nova'){
+      const nome=$('#a-nome').value.trim();
+      if(!nome){toast('Coloque o nome da cliente');return;}
+      const zap=soNums($('#a-zap').value);
+      cli={nome,zap:zap?(zap.startsWith('55')?zap:'55'+zap):'',horario:$('#a-hor').value.trim(),selos:0,atend:[]};
+    }else{
+      cli=await rpc('cu_cliente',{p_slug:sessao.slug,p_pin:sessao.pin,p_id:+sel});
+    }
+    btn.disabled=true;
+    cli.selos++; cli.atend.push({d:hoje(),serv,foto:fotoTemp,postou:false}); capFotos(cli);
+    const saved=await rpc('cu_cliente_salvar',{p_slug:sessao.slug,p_pin:sessao.pin,p_cliente:cli});
+    if(saved.erro){toast('PIN errado');btn.disabled=false;return;}
+    clienteAtual=saved; await recarregarClientes();
+    telaEditor(saved.atend.length-1);
+  }catch(e){toast('Falha na conexão — tenta de novo');btn.disabled=false;}
+}
+
+/* ================= Cartão (editor estilo Canva) ================= */
+function prefs(){return JSON.parse(localStorage.getItem('cu_prefs_'+sessao.slug)||'null')||{tema:'rosa',estilo:'foto',frase:'',logoPos:{x:.5,y:.09,s:200}};}
+function setPrefs(p){localStorage.setItem('cu_prefs_'+sessao.slug,JSON.stringify(p));}
+function telaEditor(idx){
+  const cli=clienteAtual, at=cli.atend[idx], p=prefs(); tab=''; bottomNav();
+  app.innerHTML=`<div class="screen noNav">
+    <button class="back" onclick="telaCliente(${cli.id})">${ic('back',18)} ${cli.nome}</button>
+    <h2 style="font-size:1.25rem;margin-bottom:8px">Cartão da ${primeiro(cli.nome)} ✨</h2>
+    ${temBrinde(cli)?`<div class="prize">${ic('gift',20)} ${meta()} selos — a próxima unha é grátis!</div>`:''}
+    <canvas id="cartao" width="1080" height="1350"></canvas>
+    ${studio.logo?`<div class="hint">Arraste a sua logo para onde quiser no cartão</div>`:''}
+    <div class="card" style="margin-top:12px">
+      <label>${ic('palette',15)} &nbsp;Tema</label>
+      <div class="chips">${Object.entries(TEMAS).map(([k,t])=>`<div class="chip ${p.tema===k?'on':''}" onclick="mudar('tema','${k}')">
+        <span class="dot" style="background:linear-gradient(90deg,${t.grad[0]},${t.grad[1]})"></span>${t.nome}</div>`).join('')}</div>
+      <label>${ic('layout',15)} &nbsp;Estilo</label>
+      <div class="chips">
+        <div class="chip ${p.estilo==='foto'?'on':''}" onclick="mudar('estilo','foto')">Foto inteira</div>
+        <div class="chip ${p.estilo==='classico'?'on':''}" onclick="mudar('estilo','classico')">Clássico</div></div>
+      <label>Frase do studio (opcional)</label>
+      <input id="e-frase" value="${p.frase||''}" placeholder="Ex: Unhas feitas com amor ✨" oninput="mudar('frase',this.value)">
+      ${studio.logo?`<label>Tamanho da logo</label><input type="range" min="100" max="340" value="${p.logoPos.s}" oninput="mudar('logoS',this.value)">`
+        :`<label>Logo do studio</label><label class="filebtn">${ic('camera',18)} Escolher minha logo
+          <input type="file" accept="image/*" onchange="comprimir(this.files[0],300,async d=>{await salvar({logo:d},'Logo salva!');telaEditor(${idx});})"></label>`}
+    </div>
+    <button class="btn" onclick="enviarCartao('${primeiro(cli.nome).replace(/'/g,'')}')">${ic('send',19)} Enviar pra cliente</button>
+    ${!at.postou?`<button class="btn gold" onclick="marcarPostou(${idx})">${ic('star',19)} Ela postou! (+1 selo)</button>`
+      :`<div class="hint">⭐ Selo de postagem já dado nesse atendimento</div>`}
+    <button class="btn ghost" onclick="baixarCartao()">${ic('download',19)} Salvar imagem</button>
+  </div>`;
+  window._edit={idx}; desenharCartao(cli,at); ativarArraste(cli,at);
+}
+function mudar(campo,valor){
+  const p=prefs();
+  if(campo==='logoS')p.logoPos.s=parseInt(valor); else p[campo]=valor;
+  setPrefs(p);
+  const {idx}=window._edit, cli=clienteAtual;
+  if(campo==='tema'||campo==='estilo'){telaEditor(idx);return;}
+  desenharCartao(cli,cli.atend[idx]);
+}
+async function marcarPostou(idx){
+  clienteAtual.atend[idx].postou=true; clienteAtual.selos++;
+  await salvarCliente(clienteAtual); toast('+1 selo pela postagem! ⭐'); telaEditor(idx);
+}
+async function darSeloIndicacao(){
+  clienteAtual.selos++; await salvarCliente(clienteAtual); toast('+1 selo por indicação! 💖'); telaCliente(clienteAtual.id);
+}
+async function salvarCliente(cli){
+  capFotos(cli);
+  const saved=await rpc('cu_cliente_salvar',{p_slug:sessao.slug,p_pin:sessao.pin,p_cliente:cli});
+  if(!saved.erro)clienteAtual=saved; await recarregarClientes(); return saved;
+}
+
+/* ---- desenho do cartão (canvas) ---- */
+function desenharCartao(cli,at){
+  const p=prefs(), t=TEMAS[p.tema]||TEMAS.rosa;
+  const cv=$('#cartao'); if(!cv)return; const x=cv.getContext('2d');
+  const W=1080,H=1350;
+  const g=x.createLinearGradient(0,0,W,H);g.addColorStop(0,t.grad[0]);g.addColorStop(1,t.grad[1]);
+  x.fillStyle=g;x.fillRect(0,0,W,H);
+  const fim=()=>{if(studio.logo)desenharLogo(x,studio.logo,p.logoPos,()=>{});};
+  if(p.estilo==='foto'){
+    const txt=()=>{
+      const ov=x.createLinearGradient(0,H*.45,0,H);ov.addColorStop(0,'rgba(10,5,15,0)');ov.addColorStop(1,'rgba(10,5,15,.93)');
+      x.fillStyle=ov;x.fillRect(24,24,W-48,H-48);x.textAlign='center';
+      x.fillStyle='#fff';x.font='800 64px sans-serif';x.fillText(cli.nome,W/2,H-388);
+      x.fillStyle=t.acc;x.font='600 40px sans-serif';x.fillText(at.serv.length>38?at.serv.slice(0,36)+'…':at.serv,W/2,H-322);
+      x.fillStyle='rgba(255,255,255,.75)';x.font='400 30px sans-serif';x.fillText(dataBR(at.d)+(p.frase?'  ·  '+p.frase:''),W/2,H-268);
+      desenharSelos(x,cli,t,H-212);
+      x.fillStyle='#fff';x.font='700 40px sans-serif';x.fillText('💅 '+studio.nome,W/2,H-86);
+      x.fillStyle='rgba(255,255,255,.7)';x.font='400 27px sans-serif';x.fillText('Agende: wa.me/'+studio.zap,W/2,H-44);fim();};
+    x.save();roundRect(x,24,24,W-48,H-48,32);x.clip();
+    if(at.foto){const img=new Image();img.onload=()=>{const e=Math.max((W-48)/img.width,(H-48)/img.height);
+      x.drawImage(img,W/2-img.width*e/2,(H-48)/2+24-img.height*e/2,img.width*e,img.height*e);x.restore();txt();};img.src=at.foto;}
+    else{x.fillStyle='#1a0a1e';x.fillRect(24,24,W-48,H-48);x.font='260px sans-serif';x.textAlign='center';x.fillText('💅',W/2,560);x.restore();txt();}
+  }else{
+    x.fillStyle='#160a1a';roundRect(x,40,40,W-80,H-80,36);x.fill();x.textAlign='center';
+    x.fillStyle='#fdf2f8';x.font='700 46px sans-serif';x.fillText('💅 '+studio.nome,W/2,140);
+    x.fillStyle=t.acc;x.font='400 30px sans-serif';x.fillText(p.frase||'Clube Dymani',W/2,185);
+    const txt=()=>{x.fillStyle='#fdf2f8';x.font='700 52px sans-serif';x.fillText(cli.nome,W/2,940);
+      x.fillStyle=t.grad[0]==='#fbbf24'?t.acc:t.grad[0];x.font='600 38px sans-serif';x.fillText(at.serv.length>40?at.serv.slice(0,38)+'…':at.serv,W/2,1000);
+      x.fillStyle='#c3a0cf';x.font='400 30px sans-serif';x.fillText(dataBR(at.d),W/2,1048);
+      desenharSelos(x,cli,t,1105);x.fillStyle='#c3a0cf';x.font='400 28px sans-serif';x.fillText('Agende: wa.me/'+studio.zap,W/2,1258);fim();};
+    if(at.foto){const img=new Image();img.onload=()=>{x.save();roundRect(x,140,230,800,640,28);x.clip();
+      const e=Math.max(800/img.width,640/img.height);x.drawImage(img,W/2-img.width*e/2,550-img.height*e/2,img.width*e,img.height*e);x.restore();
+      x.strokeStyle=t.grad[0];x.lineWidth=6;roundRect(x,140,230,800,640,28);x.stroke();txt();};img.src=at.foto;}
+    else{x.fillStyle='#25102b';roundRect(x,140,230,800,640,28);x.fill();x.font='200px sans-serif';x.fillText('💅',W/2,620);txt();}
+  }
+}
+function desenharSelos(x,cli,t,y){
+  const m=meta(),n=selosAt(cli),esp=m===5?90:50,r=m===5?24:17,x0=540-(m-1)*esp/2;
+  for(let i=0;i<m;i++){x.beginPath();x.arc(x0+i*esp,y,r,0,7);x.fillStyle=i<n?'#fbbf24':'rgba(0,0,0,.45)';x.fill();
+    x.strokeStyle='#fbbf24';x.lineWidth=3;x.stroke();}
+  x.fillStyle='#fbbf24';x.font='700 34px sans-serif';x.textAlign='center';
+  x.fillText(temBrinde(cli)?'🎁 PRÓXIMA UNHA GRÁTIS!':`Faltam ${m-n} pra unha grátis 🎁`,540,y+72);
+}
+function desenharLogo(x,logo,pos){const img=new Image();img.onload=()=>{const s=pos.s,lx=pos.x*1080,ly=pos.y*1350;
+  x.save();x.beginPath();x.arc(lx,ly+s/2,s/2+8,0,7);x.fillStyle='rgba(255,255,255,.9)';x.fill();
+  x.beginPath();x.arc(lx,ly+s/2,s/2,0,7);x.clip();x.drawImage(img,lx-s/2,ly,s,s);x.restore();};img.src=logo;}
+function roundRect(x,a,b,w,h,r){x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);
+  x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath();}
+function ativarArraste(cli,at){
+  const cv=$('#cartao');let arr=false;
+  const coord=e=>{const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height};};
+  cv.onpointerdown=e=>{if(!studio.logo)return;const p=prefs(),c=coord(e);
+    const dx=Math.abs(c.x-p.logoPos.x)*1080,dy=Math.abs(c.y*1350-(p.logoPos.y*1350+p.logoPos.s/2));
+    if(dx<p.logoPos.s&&dy<p.logoPos.s){arr=true;cv.setPointerCapture(e.pointerId);}};
+  cv.onpointermove=e=>{if(!arr)return;const p=prefs(),c=coord(e);
+    p.logoPos.x=Math.min(.92,Math.max(.08,c.x));p.logoPos.y=Math.min(.85,Math.max(.02,c.y-p.logoPos.s/2/1350));
+    setPrefs(p);desenharCartao(cli,at);};
+  cv.onpointerup=()=>{arr=false;};
+}
+function baixarCartao(){const a=document.createElement('a');a.download='cartao-dymani.jpg';
+  a.href=$('#cartao').toDataURL('image/jpeg',.9);a.click();toast('Imagem salva! 💅');}
+async function enviarCartao(nome){
+  const cv=$('#cartao');
+  try{const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',.9));
+    const file=new File([blob],'cartao.jpg',{type:'image/jpeg'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],text:`Suas unhas ficaram lindas, ${nome}! 💅✨ Posta no status e ganha +1 selo!`});return;}
+  }catch(e){}
+  baixarCartao();
+}
+
+/* ================= Quem chamar hoje ================= */
+function telaChamar(){
+  const lista=paraChamar(); tab=''; bottomNav();
+  app.innerHTML=`<div class="screen noNav">
+    <button class="back" onclick="irTab('clientes')">${ic('back',18)} Início</button>
+    <h2 style="font-size:1.3rem">Quem chamar hoje 🔔</h2>
+    <p style="color:var(--muted);font-size:.86rem;margin:4px 0 12px">Clientes há ${limDias()}+ dias sem vir. Um toque e a mensagem sai pronta.</p>
+    ${lista.map(c=>{const d=diasDesde(c.atend[c.atend.length-1].d);
+      const msg=`Oi ${primeiro(c.nome)}! 💅 Suas unhas já estão pedindo socorro… ${c.horario?'Quer teu horário de sempre, '+c.horario+'?':'Quer marcar um horário essa semana?'}`;
+      return `<div class="row" style="cursor:default">
+        <div class="ava">${iniciais(c.nome)}</div>
+        <div class="mid"><div class="nm">${c.nome}</div><div class="sub late">há ${d} dias sem vir</div></div>
+        ${c.zap?`<a class="miniz" href="https://wa.me/${c.zap}?text=${encodeURIComponent(msg)}" target="_blank">${ic('zap',19)}</a>`
+          :`<span class="sub" style="flex-shrink:0">sem zap</span>`}
+      </div>`;}).join('')||`<div class="empty">${ic('check',40)}Ninguém atrasada — suas clientes estão em dia! 🎉</div>`}
+  </div>`;
+}
+
+/* ================= Ficha da cliente ================= */
+async function telaCliente(id){
+  tab=''; bottomNav();
+  app.innerHTML=`<div class="screen noNav"><button class="back" onclick="irTab('clientes')">${ic('back',18)} Clientes</button>
+    <div class="empty">Carregando…</div></div>`;
+  let cli;
+  try{cli=await rpc('cu_cliente',{p_slug:sessao.slug,p_pin:sessao.pin,p_id:id});}catch(e){toast('Falha na conexão');return;}
+  if(!cli){toast('Cliente não encontrada');irTab('clientes');return;}
+  clienteAtual=cli;
+  const fotos=cli.atend.filter(a=>a.foto), ultIdx=cli.atend.length-1, ult=ultIdx>=0?cli.atend[ultIdx]:null;
+  const n=selosAt(cli),m=meta();
+  let dotsHTML='';for(let i=0;i<m;i++)dotsHTML+=`<span class="sel ${i<n?'on':''}"></span>`;
+  app.innerHTML=`<div class="screen noNav">
+    <button class="back" onclick="irTab('clientes')">${ic('back',18)} Clientes</button>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px">
+      <div class="ava" style="width:60px;height:60px;border-radius:18px;font-size:1.4rem">${iniciais(cli.nome)}</div>
+      <div><h2 style="font-size:1.35rem">${cli.nome}</h2>
+        <div style="color:var(--muted);font-size:.82rem">${cli.atend.length} unha${cli.atend.length===1?'':'s'} · ${cli.atend.filter(a=>a.postou).length} ⭐ postagens${cli.horario?' · '+cli.horario:''}</div></div>
+    </div>
+    ${temBrinde(cli)?`<div class="prize">${ic('gift',20)} ${m} selos — próxima unha grátis!</div>`:''}
+    <div class="card">
+      <div class="selrow">${dotsHTML}<b style="margin-left:6px;color:var(--gold)">${n}/${m}</b></div>
+      <div class="btnrow">
+        ${cli.zap?`<a class="btn zap sm" href="https://wa.me/${cli.zap}" target="_blank">${ic('zap',18)} WhatsApp</a>`:''}
+        ${ult?`<button class="btn ghost sm" onclick="telaEditor(${ultIdx})">${ic('sparkle',18)} Último cartão</button>`:''}
+      </div>
+      <div class="btnrow">
+        ${ult&&!ult.postou?`<button class="btn gold sm" onclick="marcarPostouFicha(${ultIdx})">${ic('star',18)} Ela postou (+1)</button>`:''}
+        <button class="btn ghost sm" onclick="darSeloIndicacao()">${ic('users',18)} Trouxe amiga (+1)</button>
+      </div>
+      <button class="btn ghost sm" style="color:var(--verm)" onclick="apagarCliente(${cli.id})">${ic('trash',17)} Apagar cliente</button>
+    </div>
+    ${fotos.length?`<div class="eyebrow">Álbum</div><div class="gal">${fotos.slice(-9).reverse().map(a=>`<img src="${a.foto}">`).join('')}</div>`:''}
+    <div class="eyebrow">Histórico</div>
+    <div class="card">${cli.atend.slice().reverse().map(a=>`<div style="display:flex;justify-content:space-between;padding:9px 0;border-top:1px solid var(--line);font-size:.92rem">
+      <span>${a.serv} ${a.postou?'⭐':''}</span><span style="color:var(--muted2);font-size:.8rem">${dataBR(a.d)}</span></div>`).join('')||'<div class="empty">Nada ainda</div>'}</div>
+  </div>`;
+}
+async function marcarPostouFicha(idx){clienteAtual.atend[idx].postou=true;clienteAtual.selos++;
+  await salvarCliente(clienteAtual);toast('+1 selo pela postagem! ⭐');telaCliente(clienteAtual.id);}
+async function apagarCliente(id){
+  if(!confirm('Apagar essa cliente e todo o histórico dela?'))return;
+  try{await rpc('cu_cliente_apagar',{p_slug:sessao.slug,p_pin:sessao.pin,p_id:id});
+    await recarregarClientes();toast('Cliente apagada');irTab('clientes');}catch(e){toast('Falha na conexão');}
+}
+
+/* ================= Agenda ================= */
+async function telaAgenda(){
+  app.innerHTML=appbar('Agenda')+`<div class="screen"><div class="empty">Carregando agenda…</div></div>`;
+  try{agenda=await rpc('cu_agenda',{p_slug:sessao.slug,p_pin:sessao.pin});}catch(e){agenda=[];}
+  let body;
+  if(!agenda.length){body=`<div class="empty">${ic('calendar',40)}Nenhum agendamento ainda.<br>Divulgue seu link que eles chegam! 💖</div>`;}
+  else{const porDia={};agenda.forEach(a=>(porDia[a.dia]=porDia[a.dia]||[]).push(a));
+    const fmt=iso=>{const[a,m,d]=iso.split('-'),dt=new Date(iso+'T12:00');return `${DIAS[dt.getDay()]} · ${d}/${m}`;};
+    body=Object.keys(porDia).sort().map(dia=>`<div class="agday">${fmt(dia)}</div>
+      ${porDia[dia].map(a=>`<div class="ag"><div class="hr">${a.hora}</div>
+        <div class="mid"><div class="nm">${a.nome}</div><div class="sv">${a.servico}</div>
+          ${a.indicou?`<div class="ind">💖 veio pela ${a.indicou} (dá o ponto pra ela!)</div>`:''}</div>
+        <div class="acts">${a.zap?`<a class="miniz" href="https://wa.me/${a.zap}" target="_blank">${ic('zap',19)}</a>`:''}
+          <button class="del" onclick="cancelar(${a.id})">${ic('x',18)}</button></div></div>`).join('')}`).join('');}
+  app.innerHTML=appbar('Agenda')+`<div class="screen">${body}</div>`;
+}
+async function cancelar(id){
+  if(!confirm('Cancelar esse agendamento? O horário volta a ficar livre.'))return;
+  try{await rpc('cu_cancelar',{p_slug:sessao.slug,p_pin:sessao.pin,p_id:id});toast('Cancelado — horário liberado');telaAgenda();}
+  catch(e){toast('Falha na conexão');}
+}
+
+/* ================= Studio (serviços / horários / fotos) ================= */
+function telaStudio(sub){
+  const seg=(k,i,l)=>`<button class="${sub===k?'on':''}" onclick="telaStudio('${k}')">${ic(i,16)}${l}</button>`;
+  app.innerHTML=appbar('Meu studio')+`<div class="screen">
+    <div class="seg">${seg('servicos','scissors','Serviços')}${seg('horarios','clock','Horários')}${seg('fotos','image','Fotos')}</div>
+    <div id="sub"></div></div>`;
+  ({servicos:subServicos,horarios:subHorarios,fotos:subFotos})[sub]();
+}
+function subServicos(){
+  const s=studio.servicos||[];
+  $('#sub').innerHTML=`<div class="card"><h2>Serviços e preços</h2>
+    <div id="servs" style="margin-top:12px">${s.map(x=>servRow(x.nome,x.preco)).join('')}</div>
+    <button class="btn ghost sm" onclick="document.getElementById('servs').insertAdjacentHTML('beforeend',servRow('',''))">${ic('plus',17)} Adicionar serviço</button>
+    <button class="btn" onclick="salvarServicos()">${ic('check',18)} Salvar serviços</button></div>`;
+}
+function servRow(n,p){return `<div class="frow"><input placeholder="Serviço" value="${n}"><input placeholder="R$" inputmode="numeric" value="${p}">
+  <button class="del" onclick="this.parentElement.remove()">${ic('trash',17)}</button></div>`;}
+async function salvarServicos(){
+  const servicos=[...document.querySelectorAll('#servs .frow')].map(r=>{const[n,p]=r.querySelectorAll('input');
+    return{nome:n.value.trim(),preco:parseFloat(p.value)||0};}).filter(s=>s.nome);
+  await salvar({servicos},'Serviços salvos! 💅');
+}
+function subHorarios(){
+  const h=studio.horarios||{};
+  $('#sub').innerHTML=`<div class="card"><h2>Horários de atendimento</h2>
+    <p style="color:var(--muted2);font-size:.8rem;margin-top:4px">Separe por vírgula. Deixe vazio o dia que não atende.</p>
+    ${DIAS.map((d,i)=>`<label>${d}</label><input class="hor" data-dow="${i}" placeholder="não atendo" value="${(h[i]||[]).join(', ')}">`).join('')}
+    <button class="btn" onclick="salvarHorarios()">${ic('check',18)} Salvar horários</button></div>`;
 }
 async function salvarHorarios(){
-  const horarios = {};
-  document.querySelectorAll('.hor-dia').forEach(inp => {
-    const horas = inp.value.split(',').map(s => s.trim()).filter(s => /^\d{1,2}:\d{2}$/.test(s));
-    if (horas.length) horarios[inp.dataset.dow] = horas;
-  });
-  await salvar({ horarios }, 'Horários salvos! ⏰');
+  const horarios={};document.querySelectorAll('.hor').forEach(inp=>{
+    const hs=inp.value.split(',').map(s=>s.trim()).filter(s=>/^\d{1,2}:\d{2}$/.test(s));if(hs.length)horarios[inp.dataset.dow]=hs;});
+  await salvar({horarios},'Horários salvos! ⏰');
 }
-
-/* ---------- aba fotos ---------- */
-function abaFotos(){
-  const fotos = studio.fotos || [];
-  $('#aba').innerHTML = `
-    <div class="card">
-      <h2>Fotos do portfólio (até 12)</h2>
-      <label class="btn-file">📷 Adicionar foto de trabalho
-        <input type="file" accept="image/*" onchange="addFoto(this)">
-      </label>
-      <div class="foto-row">
-        ${fotos.map((f,i) => `<div class="f"><img src="${f.img}"><button class="x" onclick="delFoto(${i})">✕</button></div>`).join('')}
-      </div>
-      ${fotos.length ? '<button class="btn" onclick="salvar({fotos: studio.fotos}, \'Fotos salvas! 📸\')">💾 Salvar fotos</button>' : ''}
-    </div>`;
+function subFotos(){
+  const f=studio.fotos||[];
+  $('#sub').innerHTML=`<div class="card"><h2>Fotos do portfólio (até 12)</h2>
+    <label class="filebtn" style="margin-top:12px">${ic('camera',18)} Adicionar foto de trabalho<input type="file" accept="image/*" onchange="addFoto(this)"></label>
+    <div class="frow3">${f.map((x,i)=>`<div class="fi"><img src="${x.img}"><button class="del" onclick="delFoto(${i})">${ic('x',15)}</button></div>`).join('')}</div>
+    ${f.length?`<button class="btn" onclick="salvar({fotos:studio.fotos},'Fotos salvas! 📸')">${ic('check',18)} Salvar fotos</button>`:''}</div>`;
 }
 function addFoto(inp){
-  if ((studio.fotos || []).length >= 12) { toast('Máximo de 12 fotos — apague uma primeiro'); return; }
-  comprimir(inp.files[0], 480, d => {
-    const leg = prompt('Legenda da foto (ex: Vermelho Rubi em gel):') || '';
-    studio.fotos = studio.fotos || [];
-    studio.fotos.push({ img: d, leg });
-    salvar({ fotos: studio.fotos }, 'Foto adicionada! 📸').then(abaFotos);
-  });
+  if((studio.fotos||[]).length>=12){toast('Máximo de 12 fotos — apague uma antes');return;}
+  comprimir(inp.files[0],480,d=>{const leg=prompt('Legenda (ex: Vermelho Rubi em gel):')||'';
+    studio.fotos=studio.fotos||[];studio.fotos.push({img:d,leg});salvar({fotos:studio.fotos},'Foto adicionada! 📸').then(()=>telaStudio('fotos'));});
 }
-function delFoto(i){
-  studio.fotos.splice(i, 1);
-  salvar({ fotos: studio.fotos }, 'Foto removida').then(abaFotos);
-}
+function delFoto(i){studio.fotos.splice(i,1);salvar({fotos:studio.fotos},'Foto removida').then(()=>telaStudio('fotos'));}
 
-/* ---------- aba perfil ---------- */
-function abaPerfil(){
-  $('#aba').innerHTML = `
+/* ================= Perfil ================= */
+function telaPerfil(){
+  const url=urlPortfolio();
+  app.innerHTML=appbar('Perfil')+`<div class="screen">
     <div class="card">
       <h2>Perfil do studio</h2>
-      <label>Nome do studio</label>
-      <input id="p-nome" value="${studio.nome}">
-      <label>Frase de apresentação</label>
-      <input id="p-bio" value="${studio.bio || ''}" placeholder="Unhas feitas com amor ✨ · Centro">
-      <label>WhatsApp</label>
-      <input id="p-zap" inputmode="numeric" value="${studio.zap}">
-      <label>👑 Logo do studio</label>
-      <div style="display:flex;align-items:center;gap:12px">
-        <div class="logo-prev" id="p-logoprev">${studio.logo ? `<img src="${studio.logo}">` : '💅'}</div>
-        <label class="btn-file" style="flex:1;margin:0">📷 ${studio.logo ? 'Trocar minha logo' : 'Escolher minha logo'}
-          <input type="file" accept="image/*" onchange="comprimir(this.files[0], 300, d => { window._logoNova = d; document.getElementById('p-logoprev').innerHTML = '<img src=&quot;' + d + '&quot;>'; toast('Logo linda! Agora salve o perfil 👑'); })">
-        </label>
+      <div style="display:flex;align-items:center;gap:14px;margin-top:12px">
+        <div class="logoprev" id="lprev">${studio.logo?`<img src="${studio.logo}">`:'💅'}</div>
+        <label class="filebtn" style="flex:1;margin:0">${ic('camera',18)} ${studio.logo?'Trocar logo':'Escolher logo'}
+          <input type="file" accept="image/*" onchange="comprimir(this.files[0],300,d=>{window._logo=d;document.getElementById('lprev').innerHTML='<img src=&quot;'+d+'&quot;>';toast('Logo linda! Salve o perfil 👑');})"></label>
       </div>
-      <label>🎁 Brinde: unha grátis a cada quantos pontos?</label>
-      <select id="p-meta">
-        <option value="5" ${studio.meta == 5 ? 'selected' : ''}>5 pontos</option>
-        <option value="10" ${studio.meta == 10 ? 'selected' : ''}>10 pontos</option>
-      </select>
-      <button class="btn" onclick="salvarPerfil()">💾 Salvar perfil</button>
-    </div>`;
+      <label>Nome do studio</label><input id="p-nome" value="${studio.nome}">
+      <label>Frase de apresentação</label><input id="p-bio" value="${studio.bio||''}" placeholder="Unhas feitas com amor ✨ · Centro">
+      <label>WhatsApp</label><input id="p-zap" inputmode="numeric" value="${studio.zap}">
+      <label>Brinde: unha grátis a cada quantos selos?</label>
+      <select id="p-meta"><option value="5" ${studio.meta==5?'selected':''}>5 selos</option><option value="10" ${studio.meta==10?'selected':''}>10 selos</option></select>
+      <label>Avisar quando a cliente sumir há quantos dias?</label>
+      <select id="p-dias">${[10,12,15,20].map(d=>`<option value="${d}" ${limDias()==d?'selected':''}>${d} dias${d===12?' (recomendado)':''}</option>`).join('')}</select>
+      <button class="btn" onclick="salvarPerfil()">${ic('check',18)} Salvar perfil</button>
+    </div>
+    <div class="eyebrow">Divulgação</div>
+    <div class="card">
+      <div style="font-weight:700;font-size:.92rem">Link do seu portfólio público</div>
+      <p style="color:var(--muted2);font-size:.8rem;margin-top:2px">É esse link que você manda pras clientes agendarem.</p>
+      <div class="linkbox"><div class="lb">Seu link</div><div class="lu">${url}</div></div>
+      <div class="btnrow">
+        <button class="btn ghost sm" onclick="navigator.clipboard.writeText('${url}').then(()=>toast('Link copiado! 📋'))">${ic('copy',17)} Copiar</button>
+        <a class="btn ghost sm" href="${url}" target="_blank">${ic('store',17)} Ver portfólio</a>
+      </div>
+    </div>
+    <button class="btn ghost" style="color:var(--muted)" onclick="sair()">${ic('logout',18)} Sair</button>
+  </div>`;
 }
 async function salvarPerfil(){
-  const zap = $('#p-zap').value.replace(/\D/g, '');
-  await salvar({
-    nome: $('#p-nome').value.trim(),
-    bio: $('#p-bio').value.trim(),
-    zap: zap.startsWith('55') ? zap : '55' + zap,
-    meta: parseInt($('#p-meta').value),
-    ...(window._logoNova ? { logo: window._logoNova } : {})
-  }, 'Perfil salvo! ✨');
-  window._logoNova = null;
+  const zap=soNums($('#p-zap').value);
+  await salvar({nome:$('#p-nome').value.trim(),bio:$('#p-bio').value.trim(),
+    zap:zap.startsWith('55')?zap:'55'+zap,meta:parseInt($('#p-meta').value),dias:parseInt($('#p-dias').value),
+    ...(window._logo?{logo:window._logo}:{})},'Perfil salvo! ✨');
+  window._logo=null; telaPerfil();
 }
 
-/* ---------- salvar genérico ---------- */
-async function salvar(dados, msg){
-  try {
-    const res = await rpc('cu_salvar_studio', { p_slug: sessao.slug, p_pin: sessao.pin, dados });
-    if (res !== 'ok') { toast('Não deu: ' + res); return; }
-    studio = await rpc('cu_studio_publico', { p_slug: sessao.slug });
-    toast(msg);
-  } catch(e) { toast('Falha na conexão — tenta de novo'); }
+/* ================= salvar genérico (studio) ================= */
+async function salvar(dados,msg){
+  try{const res=await rpc('cu_salvar_studio',{p_slug:sessao.slug,p_pin:sessao.pin,dados});
+    if(res!=='ok'){toast('Não deu: '+res);return;}
+    studio=await rpc('cu_studio_publico',{p_slug:sessao.slug});toast(msg);
+  }catch(e){toast('Falha na conexão — tenta de novo');}
 }
 
-/* ---------- início ---------- */
+/* ================= início ================= */
 (async function(){
-  if (sessao) {
-    try {
-      studio = await rpc('cu_studio_publico', { p_slug: sessao.slug });
-      if (studio) { telaPainel('agenda'); return; }
-    } catch(e) {}
-  }
+  if(sessao){try{await carregarTudo();if(studio){irTab('clientes');return;}}catch(e){}}
   telaLogin(false);
 })();
 </script>

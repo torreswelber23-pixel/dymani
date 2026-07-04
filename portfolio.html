@@ -2,69 +2,112 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#140717">
 
-<!-- ============================================================
-     PORTFÓLIO + AGENDAMENTO EM TEMPO REAL — Clube Dymani
-     Cada manicure tem sua página: portfolio.html?s=slug-do-studio
-     (sem ?s= abre o studio de demonstração)
-     A manicure edita tudo no painel: painel.html
+<!-- =============================================================
+     DYMANI — Portfólio público + agendamento em tempo real
+     portfolio.html?s=slug-do-studio  (sem ?s= abre a demo)
      Link de indicação: ...&ind=NomeDaCliente
-     ============================================================ -->
+     A manicure edita tudo em painel.html
+     ============================================================= -->
 
-<title>Dymani Link — Portfólio e Agendamento</title>
+<title>Dymani — Portfólio e Agendamento</title>
 <meta name="description" content="Veja os trabalhos, agende seu horário e ganhe pontos no Clube Dymani.">
 <style>
   :root{
-    --bg:#1a0a1e; --card:#2a1230; --card2:#3a1a42; --border:#552a60;
-    --text:#fdf2f8; --muted:#c9a0d4;
-    --rosa:#ec4899; --rosa-forte:#db2777; --roxo:#7c3aed;
-    --gold:#fbbf24; --verde:#22c55e; --zap:#25d366;
+    --bg:#140717; --bg2:#1e0b23; --surf:#25102b; --surf2:#311539; --line:#4a2455; --line2:#5e2f6b;
+    --text:#fdf2f8; --muted:#c3a0cf; --muted2:#8f76a3;
+    --rosa:#ec4899; --rosa-forte:#db2777; --roxo:#7c3aed; --gold:#fbbf24; --verde:#22c55e; --zap:#25d366;
+    --shadow:0 8px 30px rgba(0,0,0,.4); --r:16px;
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  body{background:radial-gradient(1200px 500px at 50% -100px,#3a1245,var(--bg));color:var(--text);font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;line-height:1.5;min-height:100vh}
-  .container{max-width:520px;margin:0 auto;padding:16px 16px 90px}
-  .perfil{display:flex;align-items:center;gap:16px;padding:12px 0}
-  .avatar{width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,var(--rosa),var(--roxo));display:flex;align-items:center;justify-content:center;font-size:2rem;border:3px solid var(--gold);flex-shrink:0;overflow:hidden;box-shadow:0 4px 20px rgba(236,72,153,.35)}
+  html,body{overflow-x:hidden}
+  body{background:radial-gradient(1200px 480px at 50% -120px,#37123f,var(--bg)) fixed;color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;line-height:1.5;min-height:100vh;-webkit-font-smoothing:antialiased}
+  svg{display:block}
+  .container{max-width:540px;margin:0 auto;padding:20px 16px calc(30px + env(safe-area-inset-bottom))}
+
+  .perfil{display:flex;align-items:center;gap:16px;padding:6px 0 4px}
+  .avatar{width:92px;height:92px;border-radius:26px;background:linear-gradient(135deg,var(--rosa),var(--roxo));
+    display:flex;align-items:center;justify-content:center;font-size:2.1rem;border:3px solid var(--gold);
+    flex-shrink:0;overflow:hidden;box-shadow:0 8px 26px rgba(236,72,153,.38)}
   .avatar img{width:100%;height:100%;object-fit:cover}
-  .perfil h1{font-size:1.3rem}
-  .perfil .bio{color:var(--muted);font-size:.85rem}
-  .stats{display:flex;gap:18px;margin-top:4px;font-size:.8rem;color:var(--muted)}
-  .stats b{color:var(--gold)}
-  .btn{display:block;width:100%;background:linear-gradient(90deg,var(--rosa-forte),var(--roxo));color:#fff;border:none;font-weight:700;font-size:1.05rem;padding:15px;border-radius:14px;text-align:center;text-decoration:none;cursor:pointer;margin-top:10px;box-shadow:0 4px 14px rgba(219,39,119,.3)}
-  .btn:active{opacity:.85}
-  .btn.zap{background:var(--zap);box-shadow:0 4px 14px rgba(37,211,102,.25)}
-  .btn.gold{background:linear-gradient(90deg,var(--gold),#f59e0b);color:#241303;box-shadow:0 4px 14px rgba(251,191,36,.25)}
-  .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text);font-weight:600;box-shadow:none}
-  .pontos-banner{background:linear-gradient(90deg,rgba(251,191,36,.16),rgba(236,72,153,.16));border:1px solid var(--gold);border-radius:14px;padding:13px;text-align:center;font-size:.88rem;margin:10px 0}
-  h2{font-size:1.1rem;margin:24px 0 10px}
-  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
-  .grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;cursor:pointer}
-  .servico{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+  .perfil h1{font-size:1.4rem;letter-spacing:-.3px}
+  .perfil .bio{color:var(--muted);font-size:.86rem}
+  .stats{display:flex;gap:8px;margin-top:8px}
+  .pill{display:inline-flex;align-items:center;gap:5px;background:var(--surf);border:1px solid var(--line);
+    border-radius:20px;padding:5px 11px;font-size:.74rem;color:var(--muted);font-weight:700}
+  .pill svg{width:13px;height:13px;color:var(--gold)}
+
+  .banner{display:flex;align-items:center;gap:12px;background:linear-gradient(100deg,rgba(251,191,36,.15),rgba(236,72,153,.15));
+    border:1px solid var(--gold);border-radius:var(--r);padding:13px 15px;margin:16px 0;font-size:.85rem}
+  .banner .bi{width:38px;height:38px;border-radius:11px;background:rgba(251,191,36,.2);color:var(--gold);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .banner b{color:var(--gold)}
+
+  .btn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;
+    background:linear-gradient(90deg,var(--rosa-forte),var(--roxo));color:#fff;border:none;font-weight:700;
+    font-size:1.02rem;padding:15px;border-radius:14px;text-decoration:none;cursor:pointer;margin-top:10px;
+    box-shadow:0 6px 18px rgba(219,39,119,.32)}
+  .btn:active{transform:translateY(1px);opacity:.92}
+  .btn.zap{background:var(--zap);box-shadow:0 6px 18px rgba(37,211,102,.28)}
+  .btn.gold{background:linear-gradient(90deg,var(--gold),#f59e0b);color:#2a1704;box-shadow:0 6px 18px rgba(251,191,36,.28)}
+  .btn.ghost{background:var(--surf);border:1px solid var(--line);color:var(--text);box-shadow:none}
+  .btn svg{width:19px;height:19px}
+  .cta{display:flex;gap:10px;margin-top:14px}.cta .btn{margin-top:0}
+
+  .eyebrow{display:flex;align-items:center;gap:8px;font-size:.75rem;font-weight:800;letter-spacing:.7px;
+    text-transform:uppercase;color:var(--muted2);margin:26px 2px 12px}
+  .eyebrow svg{width:15px;height:15px;color:var(--rosa)}
+
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px;cursor:pointer;border:1px solid var(--line)}
+
+  .servico{display:flex;justify-content:space-between;align-items:center;background:var(--surf);
+    border:1px solid var(--line);border-radius:13px;padding:14px 16px;margin-bottom:8px}
   .servico .preco{color:var(--gold);font-weight:800}
-  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 16px}
-  .chip{padding:10px 14px;border-radius:12px;border:2px solid var(--border);background:var(--card);font-size:.85rem;font-weight:700;cursor:pointer;text-align:center}
-  .chip .sub{display:block;font-size:.7rem;color:var(--muted);font-weight:400}
-  .chip.on{border-color:var(--rosa);background:rgba(236,72,153,.18)}
-  .chip.ocupado{opacity:.35;text-decoration:line-through;pointer-events:none}
-  .lightbox,.modal-bg{position:fixed;inset:0;background:rgba(10,4,14,.95);z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
-  .lightbox img{width:100%;max-width:480px;border-radius:16px}
-  .lightbox .leg{color:var(--muted);margin:12px 0;text-align:center}
-  .fechar{position:absolute;top:16px;right:20px;font-size:2rem;color:#fff;background:none;border:none;cursor:pointer}
-  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px}
-  .modal{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px;width:100%;max-width:440px}
-  label{display:block;font-size:.85rem;color:var(--muted);margin:12px 0 4px;font-weight:600}
-  input{width:100%;background:linear-gradient(180deg,#3a1a42,#321640);border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;color:var(--text);font-size:1rem;transition:border-color .2s,box-shadow .2s}
-  input::placeholder{color:#8f76a3}
-  input:focus{outline:none;border-color:var(--rosa);box-shadow:0 0 0 4px rgba(236,72,153,.18)}
-  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--gold);color:#241303;font-weight:700;padding:12px 22px;border-radius:30px;z-index:99;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.4)}
-  .sucesso{text-align:center;padding:10px}
-  .sucesso .emoji{font-size:4rem}
-  .sucesso h2{margin:8px 0}
-  .sucesso p{color:var(--muted);font-size:.92rem;margin:6px 0}
+
+  .card{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:12px;box-shadow:var(--shadow)}
+  .step{display:flex;align-items:center;gap:9px;font-size:.9rem;font-weight:700;margin:16px 0 9px}
+  .step:first-child{margin-top:0}
+  .step .n{width:22px;height:22px;border-radius:50%;background:var(--rosa);color:#fff;display:flex;
+    align-items:center;justify-content:center;font-size:.76rem;flex-shrink:0}
+  .chips{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{padding:10px 14px;border-radius:12px;border:2px solid var(--line);background:var(--surf2);font-size:.85rem;
+    font-weight:700;cursor:pointer;text-align:center;transition:transform .08s}
+  .chip:active{transform:scale(.97)}
+  .chip .sub{display:block;font-size:.68rem;color:var(--muted2);font-weight:600}
+  .chip.on{border-color:var(--rosa);background:rgba(236,72,153,.2)}
+  .chip.ocupado{opacity:.32;text-decoration:line-through;pointer-events:none}
+
+  .lightbox,.modal-bg{position:fixed;inset:0;background:rgba(8,3,11,.94);z-index:50;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+  .lightbox img{width:100%;max-width:460px;border-radius:18px}
+  .lightbox .leg{color:var(--muted);margin:14px 0;text-align:center}
+  .fechar{position:absolute;top:14px;right:16px;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.1);
+    color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .fechar svg{width:22px;height:22px}
+  .modal{background:var(--surf);border:1px solid var(--line2);border-radius:22px;padding:22px;width:100%;max-width:440px;box-shadow:var(--shadow)}
+  label{display:block;font-size:.82rem;color:var(--muted);margin:12px 0 5px;font-weight:700}
+  input{width:100%;background:var(--bg2);border:1.5px solid var(--line);border-radius:13px;padding:14px 15px;
+    color:var(--text);font-size:1rem;transition:border-color .15s,box-shadow .15s}
+  input::placeholder{color:var(--muted2)}
+  input:focus{outline:none;border-color:var(--rosa);box-shadow:0 0 0 4px rgba(236,72,153,.16)}
+  .sucesso{text-align:center}
+  .sucesso .big{width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,var(--verde),#16a34a);
+    display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
+  .sucesso .big svg{width:40px;height:40px;color:#fff}
+  .sucesso h2{margin:6px 0}.sucesso p{color:var(--muted);font-size:.92rem;margin:6px 0}
   .sucesso .destaque{color:var(--gold);font-weight:700}
-  footer{text-align:center;color:var(--muted);font-size:.75rem;padding:26px 0 10px}
-  .carregando{text-align:center;padding:80px 20px;color:var(--muted)}
+
+  footer{text-align:center;color:var(--muted2);font-size:.76rem;padding:30px 0 4px}
+  footer .badge{display:inline-flex;align-items:center;gap:7px;background:var(--surf);border:1px solid var(--line);
+    border-radius:20px;padding:7px 14px;margin-top:10px;color:var(--muted);font-weight:700}
+  footer .badge b{background:linear-gradient(90deg,var(--rosa),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:1px}
+  .carregando{text-align:center;padding:90px 20px;color:var(--muted)}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--gold);color:#2a1704;
+    font-weight:700;padding:12px 22px;border-radius:30px;z-index:99;box-shadow:0 6px 20px rgba(0,0,0,.4);max-width:90vw;text-align:center}
   #confete{position:fixed;inset:0;pointer-events:none;z-index:60}
 </style>
 </head>
@@ -73,250 +116,170 @@
 <div class="container" id="app"><div class="carregando">💅<br>Carregando o studio…</div></div>
 
 <script>
-/* ---------- conexão (tempo real via Supabase) ---------- */
-const SUPA_URL = 'https://rhveqvlldliccalfsuea.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJodmVxdmxsZGxpY2NhbGZzdWVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMjg5MjMsImV4cCI6MjA5NjcwNDkyM30.NrsH1optDK2IbOl8YUqBwUZaidvEk72lvrA4SEHPrVY';
-async function rpc(fn, args){
-  const r = await fetch(SUPA_URL + '/rest/v1/rpc/' + fn, {
-    method: 'POST',
-    headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify(args)
-  });
-  if (!r.ok) throw new Error('rede');
-  return r.json();
+const SUPA_URL='https://rhveqvlldliccalfsuea.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJodmVxdmxsZGxpY2NhbGZzdWVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMjg5MjMsImV4cCI6MjA5NjcwNDkyM30.NrsH1optDK2IbOl8YUqBwUZaidvEk72lvrA4SEHPrVY';
+async function rpc(fn,args){
+  const r=await fetch(SUPA_URL+'/rest/v1/rpc/'+fn,{method:'POST',
+    headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY,'Content-Type':'application/json'},body:JSON.stringify(args)});
+  if(!r.ok) throw new Error('rede'); return r.json();
 }
+const IC={
+  calendar:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+  star:'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+  scissors:'<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/>',
+  image:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>',
+  gift:'<polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>',
+  check:'<polyline points="20 6 9 17 4 12"/>',
+  x:'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/>',
+  work:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>',
+  zap:'FILL:<path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38c1.45.79 3.08 1.21 4.79 1.21 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2zm0 18.15c-1.53 0-3.03-.41-4.34-1.19l-.31-.18-3.12.82.83-3.04-.2-.32a8.2 8.2 0 0 1-1.26-4.36c0-4.54 3.7-8.24 8.24-8.24 2.2 0 4.27.86 5.82 2.42a8.18 8.18 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.12-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.13-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.43-.14-.01-.31-.01-.48-.01-.17 0-.43.06-.66.31-.23.25-.87.85-.87 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.14-1.18-.06-.11-.22-.17-.47-.29z"/>'
+};
+function ic(n,s){const raw=IC[n]||'',f=raw.startsWith('FILL:');
+  return `<svg viewBox="0 0 24 24" width="${s||24}" height="${s||24}" fill="${f?'currentColor':'none'}" stroke="${f?'none':'currentColor'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${f?raw.slice(5):raw}</svg>`;}
 
-const $ = s => document.querySelector(s);
-const params = new URLSearchParams(location.search);
-const slug = params.get('s') || 'studio-demo';
-const ind = params.get('ind') || '';
-const DIAS = ['dom','seg','ter','qua','qui','sex','sáb'];
-let studio = null;
-let sel = { servico: null, dia: null, hora: null };
+const $=s=>document.querySelector(s);
+const params=new URLSearchParams(location.search);
+const slug=params.get('s')||'studio-demo';
+const ind=params.get('ind')||'';
+const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
+let studio=null, sel={servico:null,dia:null,hora:null};
 
-function fotoSrc(f, i){
-  if (f && f.img) return f.img;
-  const cores = [['#7a2048','#c94f7c'],['#f5d0dc','#e8a0b8'],['#d4a373','#f5e6d3'],['#e75480','#ffb6c1'],['#4a1942','#9b4d8f'],['#5b8db8','#a8d0e6']];
-  const [a,b] = cores[i % cores.length];
-  return 'data:image/svg+xml,' + encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="400" height="400" fill="url(#g)"/><text x="200" y="245" font-size="130" text-anchor="middle">💅</text></svg>`);
+function fotoSrc(f,i){
+  if(f&&f.img) return f.img;
+  const cores=[['#7a2048','#c94f7c'],['#f5d0dc','#e8a0b8'],['#d4a373','#f5e6d3'],['#e75480','#ffb6c1'],['#4a1942','#9b4d8f'],['#5b8db8','#a8d0e6']];
+  const[a,b]=cores[i%cores.length];
+  return 'data:image/svg+xml,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="400" height="400" fill="url(#g)"/><text x="200" y="245" font-size="130" text-anchor="middle">💅</text></svg>`);
 }
-function toast(msg){
-  const t = document.createElement('div');
-  t.className = 'toast'; t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 2600);
-}
+function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2600);}
 
-/* ---------- carga ---------- */
 async function carregar(){
-  try {
-    studio = await rpc('cu_studio_publico', { p_slug: slug });
-    if (!studio) throw new Error('nao_existe');
-    render();
-  } catch(e) {
-    $('#app').innerHTML = `<div class="carregando">😕 Não encontrei esse studio.<br><br>
-      Confira o link ou fale com quem te enviou.</div>`;
-  }
+  try{studio=await rpc('cu_studio_publico',{p_slug:slug});if(!studio)throw 0;render();}
+  catch(e){$('#app').innerHTML=`<div class="carregando">😕 Não encontrei esse studio.<br><br>Confira o link ou fale com quem te enviou.</div>`;}
 }
-
 function render(){
-  const fotos = (studio.fotos && studio.fotos.length) ? studio.fotos
-    : [0,1,2,3,4,5].map(i => ({ img: null, leg: 'Trabalho do studio 💅' }));
-  $('#app').innerHTML = `
+  const fotos=(studio.fotos&&studio.fotos.length)?studio.fotos:[0,1,2,3,4,5].map(i=>({img:null,leg:'Trabalho do studio 💅'}));
+  $('#app').innerHTML=`
     <div class="perfil">
-      <div class="avatar">${studio.logo ? `<img src="${studio.logo}">` : '💅'}</div>
-      <div>
-        <h1>${studio.nome}</h1>
-        <div class="bio">${studio.bio || ''}</div>
-        <div class="stats"><span><b>${fotos.length}</b> trabalhos</span><span><b>⭐</b> Clube Dymani</span></div>
-      </div>
+      <div class="avatar">${studio.logo?`<img src="${studio.logo}">`:'💅'}</div>
+      <div><h1>${studio.nome}</h1><div class="bio">${studio.bio||''}</div>
+        <div class="stats"><span class="pill">${ic('work',13)} ${fotos.length} trabalhos</span><span class="pill">${ic('star',13)} Clube Dymani</span></div></div>
     </div>
-    ${ind
-      ? `<div class="pontos-banner">💖 Você veio pela <b>${ind}</b>! Agendando por aqui <b>vocês duas ganham pontos</b> no Clube Dymani — junte ${studio.meta} e a unha é grátis! 🎁</div>`
-      : `<div class="pontos-banner">⭐ <b>Agendou, pontuou!</b> Cada visita vale ponto no Clube Dymani — junte ${studio.meta} e ganhe uma unha grátis 🎁</div>`}
-    <a class="btn zap" href="#agendar" onclick="document.getElementById('agendar').scrollIntoView({behavior:'smooth'});return false">📅 Agendar agora</a>
-    <button class="btn gold" onclick="divulgar()">⭐ Divulgar e ganhar pontos</button>
-
-    <h2>Trabalhos 📸</h2>
-    <div class="grid">
-      ${fotos.map((f,i) => `<img src="${fotoSrc(f,i)}" alt="" onclick="abrirFoto(${i})">`).join('')}
+    ${ind?`<div class="banner"><div class="bi">${ic('gift',20)}</div><div>Você veio pela <b>${ind}</b>! Agendando por aqui <b>vocês duas ganham pontos</b> — junte ${studio.meta} e a unha é grátis 🎁</div></div>`
+      :`<div class="banner"><div class="bi">${ic('star',20)}</div><div><b>Agendou, pontuou!</b> Cada visita vale ponto no Clube Dymani — junte ${studio.meta} e ganhe uma unha grátis 🎁</div></div>`}
+    <div class="cta">
+      <a class="btn zap" onclick="document.getElementById('agendar').scrollIntoView({behavior:'smooth'})">${ic('calendar',19)} Agendar</a>
+      <button class="btn gold" onclick="divulgar()">${ic('star',19)} Divulgar</button>
     </div>
 
-    <h2>Serviços 💅</h2>
-    ${(studio.servicos || []).map(s => `
-      <div class="servico"><span>${s.nome}</span><span class="preco">R$ ${s.preco}</span></div>`).join('')}
+    <div class="eyebrow">${ic('image')} Trabalhos</div>
+    <div class="grid">${fotos.map((f,i)=>`<img src="${fotoSrc(f,i)}" alt="" onclick="abrirFoto(${i})">`).join('')}</div>
 
-    <h2 id="agendar">Agendar horário 🗓️</h2>
+    <div class="eyebrow">${ic('scissors')} Serviços</div>
+    ${(studio.servicos||[]).map(s=>`<div class="servico"><span>${s.nome}</span><span class="preco">R$ ${s.preco}</span></div>`).join('')}
+
+    <div class="eyebrow" id="agendar">${ic('calendar')} Agendar horário</div>
     <div class="card">
-      <b style="font-size:.9rem">1. Escolha o serviço</b>
-      <div class="chips" id="c-serv">
-        ${(studio.servicos || []).map((s,i) => `<div class="chip" onclick="escolherServ(${i},this)">${s.nome}</div>`).join('')}
-      </div>
-      <b style="font-size:.9rem">2. Escolha o dia</b>
+      <div class="step"><span class="n">1</span> Escolha o serviço</div>
+      <div class="chips" id="c-serv">${(studio.servicos||[]).map((s,i)=>`<div class="chip" onclick="escolherServ(${i},this)">${s.nome}</div>`).join('')}</div>
+      <div class="step"><span class="n">2</span> Escolha o dia</div>
       <div class="chips" id="c-dias">${diasHTML()}</div>
-      <b style="font-size:.9rem">3. Escolha o horário</b>
-      <div class="chips" id="c-horas"><span style="color:var(--muted);font-size:.85rem">Escolha um dia primeiro 😊</span></div>
-      <button class="btn" onclick="abrirConfirmacao()">✨ Agendar e ganhar meu ponto</button>
+      <div class="step"><span class="n">3</span> Escolha o horário</div>
+      <div class="chips" id="c-horas"><span style="color:var(--muted2);font-size:.85rem">Escolha um dia primeiro 😊</span></div>
+      <button class="btn" onclick="abrirConfirmacao()">${ic('star',19)} Agendar e ganhar meu ponto</button>
     </div>
 
     <footer>💅 ${studio.nome}<br>
-      <img src="dymani.jpg" alt="Dymani" style="width:130px;border-radius:12px;margin:10px 0 4px" onerror="this.style.display='none'"><br>
-      Tecnologia · Conexão · Resultados</footer>`;
-  window._fotos = fotos;
+      <span class="badge">${ic('star',14)} <b>DYMANI</b> · Tecnologia · Conexão · Resultados</span></footer>`;
+  window._fotos=fotos;
 }
-
 function diasHTML(){
-  let html = '';
-  for (let i = 0; i < 10; i++) {
-    const d = new Date(Date.now() + i * 864e5);
-    if (!studio.horarios || !studio.horarios[d.getDay()]) continue;
-    const iso = new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0,10);
-    html += `<div class="chip" data-iso="${iso}" data-dow="${d.getDay()}" onclick="escolherDia(this)">
-      ${i === 0 ? 'Hoje' : i === 1 ? 'Amanhã' : DIAS[d.getDay()]}<span class="sub">${d.getDate()}/${d.getMonth()+1}</span></div>`;
-  }
-  return html || '<span style="color:var(--muted)">Consulte os horários no WhatsApp 😊</span>';
+  let html='';
+  for(let i=0;i<10;i++){const d=new Date(Date.now()+i*864e5);
+    if(!studio.horarios||!studio.horarios[d.getDay()])continue;
+    const iso=new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+    html+=`<div class="chip" data-iso="${iso}" data-dow="${d.getDay()}" onclick="escolherDia(this)">
+      ${i===0?'Hoje':i===1?'Amanhã':DIAS[d.getDay()]}<span class="sub">${d.getDate()}/${d.getMonth()+1}</span></div>`;}
+  return html||'<span style="color:var(--muted2)">Consulte os horários no WhatsApp 😊</span>';
 }
-function escolherServ(i, el){
-  sel.servico = i;
-  el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
-  el.classList.add('on');
-}
+function escolherServ(i,el){sel.servico=i;el.parentElement.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');}
 async function escolherDia(el){
-  sel.dia = el.dataset.iso;
-  sel.hora = null;
-  el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
-  el.classList.add('on');
-  $('#c-horas').innerHTML = '<span style="color:var(--muted);font-size:.85rem">Vendo horários livres… 👀</span>';
-  let ocupados = [];
-  try { ocupados = await rpc('cu_ocupados', { p_slug: slug, p_dia: sel.dia }); } catch(e) {}
-  const horas = (studio.horarios && studio.horarios[el.dataset.dow]) || [];
-  $('#c-horas').innerHTML = horas.map(h => {
-    const ocup = ocupados.includes(h);
-    return `<div class="chip ${ocup ? 'ocupado' : ''}" onclick="escolherHora('${h}',this)">${h}${ocup ? '<span class="sub">ocupado</span>' : ''}</div>`;
-  }).join('') || '<span style="color:var(--muted)">Sem horários nesse dia 😕</span>';
+  sel.dia=el.dataset.iso;sel.hora=null;
+  el.parentElement.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');
+  $('#c-horas').innerHTML='<span style="color:var(--muted2);font-size:.85rem">Vendo horários livres… 👀</span>';
+  let ocupados=[];try{ocupados=await rpc('cu_ocupados',{p_slug:slug,p_dia:sel.dia});}catch(e){}
+  const horas=(studio.horarios&&studio.horarios[el.dataset.dow])||[];
+  $('#c-horas').innerHTML=horas.map(h=>{const o=ocupados.includes(h);
+    return `<div class="chip ${o?'ocupado':''}" onclick="escolherHora('${h}',this)">${h}${o?'<span class="sub">ocupado</span>':''}</div>`;}).join('')
+    ||'<span style="color:var(--muted2)">Sem horários nesse dia 😕</span>';
 }
-function escolherHora(h, el){
-  sel.hora = h;
-  el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
-  el.classList.add('on');
-}
+function escolherHora(h,el){sel.hora=h;el.parentElement.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');}
 
-/* ---------- confirmação ---------- */
 function abrirConfirmacao(){
-  if (sel.servico === null || !sel.dia || !sel.hora) { toast('Escolha serviço, dia e horário 😊'); return; }
-  const s = studio.servicos[sel.servico];
-  const [a,m,d] = sel.dia.split('-');
-  const bg = document.createElement('div');
-  bg.className = 'modal-bg';
-  bg.innerHTML = `
-    <div class="modal">
-      <h2 style="margin:0">Quase lá! 💅</h2>
-      <p style="color:var(--muted);font-size:.88rem;margin-top:4px">${s.nome} · ${d}/${m} às ${sel.hora}</p>
-      <label>Seu nome *</label>
-      <input id="m-nome" placeholder="Como você se chama?">
-      <label>Seu WhatsApp *</label>
-      <input id="m-zap" inputmode="numeric" placeholder="Com DDD, ex: 83988887777">
-      <button class="btn" onclick="confirmarAgendamento(this)">🎉 Confirmar agendamento</button>
-      <button class="btn ghost" onclick="this.closest('.modal-bg').remove()">Voltar</button>
-    </div>`;
-  bg.onclick = e => { if (e.target === bg) bg.remove(); };
-  document.body.appendChild(bg);
+  if(sel.servico===null||!sel.dia||!sel.hora){toast('Escolha serviço, dia e horário 😊');return;}
+  const s=studio.servicos[sel.servico],[a,m,d]=sel.dia.split('-');
+  const bg=document.createElement('div');bg.className='modal-bg';
+  bg.innerHTML=`<div class="modal"><h2 style="margin:0">Quase lá! 💅</h2>
+    <p style="color:var(--muted);font-size:.88rem;margin-top:4px">${s.nome} · ${d}/${m} às ${sel.hora}</p>
+    <label>Seu nome</label><input id="m-nome" placeholder="Como você se chama?">
+    <label>Seu WhatsApp</label><input id="m-zap" inputmode="numeric" placeholder="Com DDD, ex: 83988887777">
+    <button class="btn" onclick="confirmarAgendamento(this)">${ic('check',19)} Confirmar agendamento</button>
+    <button class="btn ghost" onclick="this.closest('.modal-bg').remove()">Voltar</button></div>`;
+  bg.onclick=e=>{if(e.target===bg)bg.remove();};document.body.appendChild(bg);
 }
 async function confirmarAgendamento(btn){
-  const nome = $('#m-nome').value.trim();
-  const zap = ($('#m-zap').value || '').replace(/\D/g, '');
-  if (nome.length < 2 || zap.length < 10) { toast('Preencha seu nome e WhatsApp 😊'); return; }
-  btn.disabled = true; btn.textContent = 'Agendando… ✨';
-  const s = studio.servicos[sel.servico];
-  let res = 'erro';
-  try {
-    res = await rpc('cu_agendar', {
-      p_slug: slug, p_servico: s.nome, p_dia: sel.dia, p_hora: sel.hora,
-      p_nome: nome, p_zap: zap.startsWith('55') ? zap : '55' + zap, p_indicou: ind
-    });
-  } catch(e) {}
-  if (res === 'ok') { telaSucesso(nome, s); return; }
-  btn.disabled = false; btn.textContent = '🎉 Confirmar agendamento';
-  if (res === 'ocupado') {
-    toast('Ih, esse horário acabou de ser pego! Escolha outro 🥺');
-    document.querySelector('.modal-bg').remove();
-    const diaEl = document.querySelector('#c-dias .chip.on');
-    if (diaEl) escolherDia(diaEl);
-  } else {
-    toast('Falha na conexão — tenta de novo 😊');
-  }
+  const nome=$('#m-nome').value.trim(), zap=($('#m-zap').value||'').replace(/\D/g,'');
+  if(nome.length<2||zap.length<10){toast('Preencha seu nome e WhatsApp 😊');return;}
+  btn.disabled=true;btn.innerHTML='Agendando… ✨';
+  const s=studio.servicos[sel.servico];let res='erro';
+  try{res=await rpc('cu_agendar',{p_slug:slug,p_servico:s.nome,p_dia:sel.dia,p_hora:sel.hora,
+    p_nome:nome,p_zap:zap.startsWith('55')?zap:'55'+zap,p_indicou:ind});}catch(e){}
+  if(res==='ok'){telaSucesso(nome,s);return;}
+  btn.disabled=false;btn.innerHTML=ic('check',19)+' Confirmar agendamento';
+  if(res==='ocupado'){toast('Ih, esse horário acabou de ser pego! Escolha outro 🥺');
+    document.querySelector('.modal-bg').remove();const de=document.querySelector('#c-dias .chip.on');if(de)escolherDia(de);}
+  else toast('Falha na conexão — tenta de novo 😊');
 }
-function telaSucesso(nome, s){
-  const [a,m,d] = sel.dia.split('-');
-  const bg = document.querySelector('.modal-bg');
-  bg.innerHTML = `
-    <div class="modal sucesso">
-      <div class="emoji">🎉</div>
-      <h2>Agendado, ${nome.split(' ')[0]}!</h2>
-      <p><b>${s.nome}</b><br>${d}/${m} às ${sel.hora}</p>
-      <p class="destaque">⭐ +1 ponto no Clube Dymani!<br>Junte ${studio.meta} e sua unha é grátis 🎁</p>
-      ${ind ? `<p>💖 A ${ind} também pontuou por te indicar!</p>` : ''}
-      <a class="btn zap" href="https://wa.me/${studio.zap}?text=${encodeURIComponent(`Oi! Acabei de agendar pelo site 🎉\n✨ ${s.nome}\n🗓️ ${d}/${m} às ${sel.hora}\n— ${nome}${ind ? ' (vim pela ' + ind + ' 💖)' : ''}`)}">💬 Avisar no WhatsApp</a>
-      <button class="btn gold" onclick="this.closest('.modal-bg').remove(); divulgar()">⭐ Divulgar e ganhar mais pontos</button>
-      <button class="btn ghost" onclick="this.closest('.modal-bg').remove()">Fechar</button>
-    </div>`;
+function telaSucesso(nome,s){
+  const[a,m,d]=sel.dia.split('-'),bg=document.querySelector('.modal-bg');
+  bg.innerHTML=`<div class="modal sucesso"><div class="big">${ic('check',40)}</div>
+    <h2>Agendado, ${nome.split(' ')[0]}!</h2>
+    <p><b>${s.nome}</b><br>${d}/${m} às ${sel.hora}</p>
+    <p class="destaque">⭐ +1 ponto no Clube Dymani!<br>Junte ${studio.meta} e sua unha é grátis 🎁</p>
+    ${ind?`<p>💖 A ${ind} também pontuou por te indicar!</p>`:''}
+    <a class="btn zap" href="https://wa.me/${studio.zap}?text=${encodeURIComponent(`Oi! Acabei de agendar pelo site 🎉\n✨ ${s.nome}\n🗓️ ${d}/${m} às ${sel.hora}\n— ${nome}${ind?' (vim pela '+ind+' 💖)':''}`)}" target="_blank">${ic('zap',19)} Avisar no WhatsApp</a>
+    <button class="btn gold" onclick="this.closest('.modal-bg').remove();divulgar()">${ic('star',19)} Divulgar e ganhar mais pontos</button>
+    <button class="btn ghost" onclick="this.closest('.modal-bg').remove()">Fechar</button></div>`;
   confete();
 }
-
-/* ---------- confete 🎊 ---------- */
 function confete(){
-  const cv = $('#confete'), x = cv.getContext('2d');
-  cv.width = innerWidth; cv.height = innerHeight;
-  const cores = ['#ec4899','#7c3aed','#fbbf24','#22c55e','#f472b6','#fff'];
-  const pecas = Array.from({length: 160}, () => ({
-    x: Math.random() * cv.width, y: -20 - Math.random() * cv.height * .5,
-    w: 8 + Math.random() * 8, h: 6 + Math.random() * 6,
-    cor: cores[Math.floor(Math.random() * cores.length)],
-    vy: 2.5 + Math.random() * 3.5, vx: -1.5 + Math.random() * 3,
-    rot: Math.random() * 6.3, vr: -.15 + Math.random() * .3
-  }));
-  let quadros = 0;
-  (function anima(){
-    x.clearRect(0, 0, cv.width, cv.height);
-    pecas.forEach(p => {
-      p.x += p.vx; p.y += p.vy; p.rot += p.vr;
-      x.save(); x.translate(p.x, p.y); x.rotate(p.rot);
-      x.fillStyle = p.cor; x.fillRect(-p.w/2, -p.h/2, p.w, p.h);
-      x.restore();
-    });
-    if (++quadros < 240) requestAnimationFrame(anima);
-    else x.clearRect(0, 0, cv.width, cv.height);
-  })();
+  const cv=$('#confete'),x=cv.getContext('2d');cv.width=innerWidth;cv.height=innerHeight;
+  const cores=['#ec4899','#7c3aed','#fbbf24','#22c55e','#f472b6','#fff'];
+  const pecas=Array.from({length:160},()=>({x:Math.random()*cv.width,y:-20-Math.random()*cv.height*.5,
+    w:8+Math.random()*8,h:6+Math.random()*6,cor:cores[Math.floor(Math.random()*cores.length)],
+    vy:2.5+Math.random()*3.5,vx:-1.5+Math.random()*3,rot:Math.random()*6.3,vr:-.15+Math.random()*.3}));
+  let q=0;(function anima(){x.clearRect(0,0,cv.width,cv.height);
+    pecas.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.rot+=p.vr;x.save();x.translate(p.x,p.y);x.rotate(p.rot);
+      x.fillStyle=p.cor;x.fillRect(-p.w/2,-p.h/2,p.w,p.h);x.restore();});
+    if(++q<240)requestAnimationFrame(anima);else x.clearRect(0,0,cv.width,cv.height);})();
 }
-
-/* ---------- lightbox ---------- */
 function abrirFoto(i){
-  const f = window._fotos[i];
-  const bg = document.createElement('div');
-  bg.className = 'lightbox';
-  bg.innerHTML = `
-    <button class="fechar" onclick="this.parentElement.remove()">✕</button>
-    <img src="${fotoSrc(f,i)}">
-    <div class="leg">${f.leg || ''}</div>
-    <button class="btn" style="max-width:480px" onclick="this.closest('.lightbox').remove(); document.getElementById('agendar').scrollIntoView({behavior:'smooth'})">💅 Quero igual — agendar</button>`;
-  bg.onclick = e => { if (e.target === bg) bg.remove(); };
-  document.body.appendChild(bg);
+  const f=window._fotos[i],bg=document.createElement('div');bg.className='lightbox';
+  bg.innerHTML=`<button class="fechar" onclick="this.parentElement.remove()">${ic('x',22)}</button>
+    <img src="${fotoSrc(f,i)}"><div class="leg">${f.leg||''}</div>
+    <button class="btn" style="max-width:460px" onclick="this.closest('.lightbox').remove();document.getElementById('agendar').scrollIntoView({behavior:'smooth'})">${ic('star',19)} Quero igual — agendar</button>`;
+  bg.onclick=e=>{if(e.target===bg)bg.remove();};document.body.appendChild(bg);
 }
-
-/* ---------- divulgação (link de pontos da cliente) ---------- */
 async function divulgar(){
-  const nome = prompt('Seu nome (pra você ganhar os pontos das amigas que agendarem):');
-  if (!nome) return;
-  const url = location.origin + location.pathname + '?s=' + encodeURIComponent(slug) + '&ind=' + encodeURIComponent(nome.trim());
-  const texto = `💅 Gente, olha os trabalhos de ${studio.nome}! Amei o meu 😍\nAgenda pelo meu link que a gente ganha pontos e unha grátis: ${url}`;
-  try { if (navigator.share) { await navigator.share({ text: texto }); return; } } catch(e) {}
-  try { await navigator.clipboard.writeText(texto); toast('Copiado! Cola no seu status 💖'); }
-  catch(e) { prompt('Copie o texto:', texto); }
+  const nome=prompt('Seu nome (pra você ganhar os pontos das amigas que agendarem):');
+  if(!nome)return;
+  const url=location.origin+location.pathname+'?s='+encodeURIComponent(slug)+'&ind='+encodeURIComponent(nome.trim());
+  const texto=`💅 Gente, olha os trabalhos de ${studio.nome}! Amei o meu 😍\nAgenda pelo meu link que a gente ganha pontos e unha grátis: ${url}`;
+  try{if(navigator.share){await navigator.share({text:texto});return;}}catch(e){}
+  try{await navigator.clipboard.writeText(texto);toast('Copiado! Cola no seu status 💖');}
+  catch(e){prompt('Copie o texto:',texto);}
 }
-
 carregar();
 </script>
-</div>
 </body>
 </html>

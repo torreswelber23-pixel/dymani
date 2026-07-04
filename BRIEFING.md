@@ -97,8 +97,10 @@ O ciclo completo: cliente posta o link → amiga vê o portfólio → agenda →
 
 ## 5. Arquitetura
 
-- **App de selos (`index.html`):** local, no celular da manicure — cartões, fotos, selos.
-- **Portfólio (`portfolio.html`) + Painel (`painel.html`):** conectados ao **Supabase (plano grátis, servidor no Brasil)** — agendamento em tempo real, agenda com contatos, tudo protegido por PIN. As páginas rodam no GitHub Pages; o banco é o projeto `colow` (tabelas `cu_*`).
+- **Vitrine (`index.html`):** página pública de vendas com o preço — atrai manicures novas e leva pro painel/demo.
+- **Painel (`painel.html`):** o app completo da manicure (visual de aplicativo, navegação inferior) — clientes, selos e Cartão da Unha, agenda, serviços, horários, fotos e perfil. **Tudo na nuvem, multitenant** (mesmo sistema serve várias manicures; login = slug + PIN).
+- **Portfólio (`portfolio.html`):** a página pública que a cliente compartilha — trabalhos, serviços e agendamento em tempo real.
+- **Supabase (plano grátis):** agendamento em tempo real, agenda com contatos, fidelidade e tudo protegido por PIN (tabelas `cu_*`, funções `security definer`). Trocar de celular não perde nada.
 - Custo de infraestrutura: **R$0**. Sua margem nos R$29/mês é 100%.
 - Experiência: confete 🎊 no agendamento, mensagem de pontos pra quem agenda ("Agendou, pontuou!") e pra quem indica ("vocês duas ganham").
 

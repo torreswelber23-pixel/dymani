@@ -100,25 +100,39 @@ para quem divulga.
 
 ## 5. Arquitetura técnica
 
+> ⚠️ **Reformulado em 2026-07-04** (a pedido do dono: "layout igual de app,
+> mais profissional, ícones profissionais, parte da manicure toda dentro do
+> painel, multitenant, e mostrar o preço"). Antes o `index.html` era o app de
+> selos em `localStorage`; agora os selos vivem na nuvem dentro do painel e o
+> `index.html` virou a vitrine de vendas. As três páginas compartilham um
+> design system (mesma paleta rosa/roxo/dourado, ícones SVG inline, navegação
+> inferior estilo app no painel).
+
 | Arquivo | Função | Onde vivem os dados |
 |---|---|---|
-| `index.html` | App de selos / Cartão da Unha (editor estilo Canva) | `localStorage` do celular da manicure — sem servidor |
+| `index.html` | **Vitrine de vendas** do Dymani (pública): benefícios, preço R$29/mês, CTA para criar studio / ver demo | estático, sem backend |
 | `portfolio.html` | Página pública (estilo Instagram) + agendamento | Supabase (tempo real) |
-| `painel.html` | Painel administrativo da manicure | Supabase (tempo real) |
+| `painel.html` | **App completo da manicure**: clientes/selos/Cartão da Unha (editor Canva) + agenda + serviços + horários + fotos + perfil | Supabase (tempo real, multitenant) |
 
 **Backend (Supabase, plano grátis, projeto `rhveqvlldliccalfsuea`, o mesmo
 projeto onde mora o "Site de Promoções" do dono — projetos diferentes,
 mesmo banco, tabelas isoladas por prefixo `cu_`):**
 
 - Tabelas: `cu_studios` (perfil, PIN, serviços, horários, fotos, meta de
-  pontos), `cu_agendamentos` (studio, serviço, dia, hora, nome, zap,
-  indicou — com `unique(studio, dia, hora)` que impede double-booking)
+  pontos, `dias` = limiar do lembrete), `cu_agendamentos` (studio, serviço,
+  dia, hora, nome, zap, indicou — com `unique(studio, dia, hora)` que impede
+  double-booking), **`cu_clientes`** (studio, nome, zap, horário, selos,
+  `atend` jsonb = histórico de atendimentos com foto/serviço/data/postou) —
+  a fidelidade que antes era `localStorage`, agora na nuvem e multitenant.
 - RLS habilitado, **sem policies diretas** — todo acesso passa por funções
   `security definer`: `cu_studio_publico` (perfil sem o PIN),
   `cu_ocupados` (horários do dia), `cu_agendar` (cria agendamento, devolve
   `'ocupado'` se o horário já foi tomado), `cu_agenda` (lista completa,
   exige PIN certo), `cu_salvar_studio` (cria/atualiza, exige PIN),
-  `cu_cancelar` (exige PIN)
+  `cu_cancelar` (exige PIN), **`cu_clientes_listar`** (lista leve, sem as
+  fotos base64, pra abrir rápido), **`cu_cliente`** (uma cliente completa com
+  fotos), **`cu_cliente_salvar`** (upsert, devolve a cliente com id),
+  **`cu_cliente_apagar`** — todas validam o PIN internamente.
 - Login da manicure = **slug do link + PIN numérico**, sem cadastro/e-mail
 - Chave pública (`anon key`) embutida no HTML — isso é esperado e seguro:
   toda escrita sensível passa pelas funções acima, que validam o PIN
@@ -150,10 +164,15 @@ foi verificado exaustivamente.
 
 ## 7. Status atual (no momento em que este arquivo foi escrito)
 
-- ✅ Código completo e testado (Playwright, sem erros de JS) nas 3 páginas
+- ✅ Reformulação de 2026-07-04: visual de app + navegação inferior + ícones
+  SVG, `index.html` virou vitrine com preço, selos/clientes/cartão migrados
+  pra nuvem (multitenant). Testado ponta a ponta com Playwright/Chromium
+  (login demo, criar atendimento, desenhar o cartão, listar/apagar cliente,
+  agendamento em tempo real) — **0 erros de JS**
 - ✅ Marca Dymani aplicada (logos, nomenclatura)
-- ✅ Backend Supabase criado, testado via SQL direto (criar studio, agendar,
-  conflito de horário, PIN certo/errado — tudo validado)
+- ✅ Backend Supabase testado via SQL direto e via navegador (criar studio,
+  agendar, conflito de horário, PIN certo/errado, CRUD de clientes) — validado.
+  Migrations aplicadas: `cu_clientes_fidelidade`, `cu_studios_dias_lembrete`
 - ✅ Repositório próprio criado e com o primeiro push feito
 - ⏳ Repositório está **privado** — precisa virar público (o dono faz manualmente,
   ver Settings → Danger Zone → Change visibility)

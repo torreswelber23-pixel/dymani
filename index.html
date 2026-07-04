@@ -2,553 +2,220 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dymani Clube — Suas clientes sempre de volta</title>
-<meta name="description" content="Sistema de bolso para manicures: cartão personalizado com sua logo, selos por visita e por postagem, e lembrete de retorno na hora certa.">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#140717">
+
+<!-- =============================================================
+     DYMANI — Vitrine (página de vendas do sistema)
+     Alvo: manicures/nail designers (quem paga).
+     CTA principal → painel.html (criar studio).  Demo → portfolio.html
+     ============================================================= -->
+
+<title>Dymani — Clientes sempre de volta, e exibindo suas unhas por aí</title>
+<meta name="description" content="Sistema de bolso para manicures: cartão da unha que a cliente exibe, selos de fidelidade, portfólio e agendamento em tempo real. R$29/mês.">
 <style>
   :root{
-    --bg:#1a0a1e; --card:#2a1230; --card2:#3a1a42; --border:#552a60;
-    --text:#fdf2f8; --muted:#c9a0d4;
-    --rosa:#ec4899; --rosa-forte:#db2777; --roxo:#7c3aed;
-    --gold:#fbbf24; --verde:#22c55e; --zap:#25d366;
+    --bg:#140717; --bg2:#1e0b23; --surf:#25102b; --surf2:#311539; --line:#4a2455; --line2:#5e2f6b;
+    --text:#fdf2f8; --muted:#c3a0cf; --muted2:#8f76a3;
+    --rosa:#ec4899; --rosa-forte:#db2777; --roxo:#7c3aed; --gold:#fbbf24; --verde:#22c55e; --zap:#25d366;
+    --shadow:0 8px 30px rgba(0,0,0,.4); --r:18px;
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  body{background:var(--bg);color:var(--text);font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;line-height:1.5;min-height:100vh}
-  .container{max-width:520px;margin:0 auto;padding:16px 16px 100px}
-  h1{font-size:1.45rem} h2{font-size:1.15rem}
-  .logo{text-align:center;padding:16px 0 4px;font-size:1.45rem;font-weight:800}
-  .logo span{background:linear-gradient(90deg,var(--rosa),var(--roxo));-webkit-background-clip:text;background-clip:text;color:transparent}
-  .tagline{text-align:center;color:var(--muted);font-size:.85rem;margin-bottom:16px}
-  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px}
-  label{display:block;font-size:.85rem;color:var(--muted);margin:12px 0 4px;font-weight:600}
-  input,select{width:100%;background:linear-gradient(180deg,#3a1a42,#321640);border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;color:var(--text);font-size:1rem;font-family:inherit;transition:border-color .2s,box-shadow .2s}
-  input::placeholder{color:#8f76a3}
-  input:focus,select:focus{outline:none;border-color:var(--rosa);box-shadow:0 0 0 4px rgba(236,72,153,.18)}
-  select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23c9a0d4' stroke-width='2' fill='none'/%3E%3C/svg%3E"),linear-gradient(180deg,#3a1a42,#321640);background-repeat:no-repeat;background-position:right 16px center,0 0}
-  input[type=range]{padding:0;accent-color:var(--rosa);border:none;background:none;box-shadow:none}
-  .btn-file{display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(236,72,153,.08);border:1.5px dashed var(--rosa);border-radius:14px;padding:14px;color:var(--text);font-weight:700;cursor:pointer;margin-top:4px;font-size:.95rem}
-  .btn-file:active{background:rgba(236,72,153,.2)}
-  .btn-file input{display:none}
-  .btn{display:block;width:100%;background:linear-gradient(90deg,var(--rosa-forte),var(--roxo));color:#fff;border:none;font-weight:700;font-size:1.05rem;padding:15px;border-radius:12px;text-align:center;text-decoration:none;cursor:pointer;margin-top:14px}
-  .btn:active{opacity:.85}
-  .btn.zap{background:var(--zap)}
-  .btn.star{background:linear-gradient(90deg,var(--gold),#f59e0b);color:#241303}
-  .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text);font-weight:600}
-  .btn.mini{width:auto;display:inline-block;padding:9px 16px;font-size:.85rem;margin:6px 6px 0 0}
-  .alerta{background:linear-gradient(90deg,rgba(236,72,153,.25),rgba(124,58,237,.25));border:1px solid var(--rosa);border-radius:14px;padding:16px;margin-bottom:14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
-  .alerta .t{font-weight:700}
-  .alerta .s{font-size:.8rem;color:var(--muted)}
-  .cliente-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px}
-  .cliente-item .nome{font-weight:700}
-  .cliente-item .info{font-size:.78rem;color:var(--muted)}
-  .selos{letter-spacing:2px;font-size:.8rem;color:var(--gold);white-space:nowrap}
-  .atrasada{color:var(--rosa);font-weight:700}
-  .voltar{background:none;border:none;color:var(--muted);font-size:.9rem;cursor:pointer;padding:6px 0;margin-bottom:6px}
-  .foto-preview{width:100%;border-radius:12px;margin-top:10px;display:none}
-  .galeria{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
-  .galeria img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;border:1px solid var(--border)}
-  .hist-item{border-top:1px solid var(--border);padding:10px 0;font-size:.9rem}
-  .hist-item .d{color:var(--muted);font-size:.78rem}
-  canvas{width:100%;border-radius:14px;margin-top:10px;touch-action:none}
-  .gratis{background:linear-gradient(90deg,var(--gold),#f59e0b);color:#241303;font-weight:800;text-align:center;padding:12px;border-radius:12px;margin-bottom:12px}
-  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--verde);color:#03240e;font-weight:700;padding:12px 22px;border-radius:30px;z-index:99;box-shadow:0 4px 14px rgba(0,0,0,.5)}
-  .vazio{text-align:center;color:var(--muted);font-size:.9rem;padding:24px 10px}
-  /* editor */
-  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
-  .chip{padding:9px 14px;border-radius:20px;border:2px solid var(--border);background:var(--card2);color:var(--text);font-size:.85rem;font-weight:700;cursor:pointer}
-  .chip.on{border-color:var(--gold);background:rgba(251,191,36,.15)}
-  .tema-dot{display:inline-block;width:14px;height:14px;border-radius:50%;vertical-align:-2px;margin-right:6px}
-  .dica{font-size:.78rem;color:var(--muted);margin-top:8px;text-align:center}
+  html{scroll-behavior:smooth}
+  html,body{overflow-x:hidden}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+    line-height:1.55;min-height:100vh;-webkit-font-smoothing:antialiased}
+  svg{display:block}
+  .wrap{max-width:560px;margin:0 auto;padding:0 18px calc(40px + env(safe-area-inset-bottom))}
+  a{color:inherit;text-decoration:none}
+
+  /* topo */
+  .top{display:flex;align-items:center;justify-content:space-between;padding:calc(16px + env(safe-area-inset-top)) 2px 8px}
+  .top .brand{display:flex;align-items:center;gap:9px;font-weight:900;letter-spacing:1.5px}
+  .top .brand .m{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--rosa),var(--roxo));
+    display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+  .top .brand span{background:linear-gradient(90deg,var(--rosa),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .top a.enter{font-size:.82rem;color:var(--muted);font-weight:700;border:1px solid var(--line);padding:8px 13px;border-radius:11px}
+
+  /* hero */
+  .hero{text-align:center;padding:22px 4px 8px}
+  .tagpill{display:inline-flex;align-items:center;gap:7px;background:var(--surf);border:1px solid var(--line);
+    border-radius:30px;padding:7px 14px;font-size:.76rem;color:var(--gold);font-weight:700;margin-bottom:16px}
+  .tagpill svg{width:14px;height:14px}
+  .hero h1{font-size:2.05rem;line-height:1.12;letter-spacing:-.7px;font-weight:900}
+  .hero h1 em{font-style:normal;background:linear-gradient(90deg,var(--rosa),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p{color:var(--muted);font-size:1rem;margin:14px auto 0;max-width:420px}
+  .hero .ctas{margin-top:22px}
+
+  .btn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;
+    background:linear-gradient(90deg,var(--rosa-forte),var(--roxo));color:#fff;border:none;font-weight:800;
+    font-size:1.05rem;padding:16px;border-radius:15px;cursor:pointer;box-shadow:0 8px 22px rgba(219,39,119,.4)}
+  .btn:active{transform:translateY(1px);opacity:.93}
+  .btn.ghost{background:var(--surf);border:1px solid var(--line);color:var(--text);box-shadow:none;font-weight:700;margin-top:10px}
+  .btn.gold{background:linear-gradient(90deg,var(--gold),#f59e0b);color:#2a1704;box-shadow:0 8px 22px rgba(251,191,36,.35)}
+  .btn svg{width:20px;height:20px}
+
+  /* mockup card */
+  .mock{background:linear-gradient(160deg,var(--surf2),var(--surf));border:1px solid var(--line2);border-radius:24px;
+    padding:20px;margin:26px 0 6px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .mock:before{content:"";position:absolute;top:-40px;right:-40px;width:150px;height:150px;border-radius:50%;
+    background:radial-gradient(circle,rgba(236,72,153,.28),transparent 70%)}
+  .mock .nail{width:100%;aspect-ratio:4/5;border-radius:16px;background:linear-gradient(150deg,var(--rosa),var(--roxo));
+    display:flex;align-items:flex-end;padding:16px;position:relative}
+  .mock .nail .emoji{position:absolute;top:0;left:0;right:0;bottom:60px;display:flex;align-items:center;justify-content:center;font-size:5rem}
+  .mock .nail .lbl{position:relative;color:#fff}
+  .mock .nail .lbl b{font-size:1.15rem;display:block}
+  .mock .nail .lbl .dots{color:var(--gold);letter-spacing:3px;font-size:.9rem;margin-top:3px}
+  .mock .cap{text-align:center;color:var(--muted);font-size:.82rem;margin-top:14px}
+
+  /* seções */
+  .eyebrow{text-align:center;font-size:.75rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--gold);margin:44px 0 6px}
+  .sechead{text-align:center;font-size:1.5rem;font-weight:900;letter-spacing:-.4px;margin-bottom:20px}
+
+  .feat{display:flex;gap:14px;background:var(--surf);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:12px}
+  .feat .fi{width:46px;height:46px;border-radius:13px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,rgba(236,72,153,.22),rgba(124,58,237,.22));color:var(--rosa)}
+  .feat .fi svg{width:23px;height:23px}
+  .feat h3{font-size:1.02rem;font-weight:800}
+  .feat p{color:var(--muted);font-size:.87rem;margin-top:2px}
+
+  /* passos */
+  .step{display:flex;gap:14px;align-items:flex-start;margin-bottom:16px}
+  .step .n{width:34px;height:34px;border-radius:11px;background:var(--surf2);border:1px solid var(--line2);
+    display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--gold);flex-shrink:0}
+  .step h3{font-size:1rem;font-weight:800}
+  .step p{color:var(--muted);font-size:.87rem;margin-top:1px}
+
+  /* preço */
+  .price{background:linear-gradient(160deg,var(--surf2),var(--surf));border:1.5px solid var(--gold);border-radius:24px;
+    padding:26px 22px;text-align:center;box-shadow:0 10px 34px rgba(251,191,36,.14);margin-top:8px}
+  .price .k{font-size:.78rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--gold)}
+  .price .v{font-size:3.1rem;font-weight:900;letter-spacing:-1.5px;margin:6px 0 0;line-height:1}
+  .price .v small{font-size:1rem;font-weight:700;color:var(--muted)}
+  .price .free{display:inline-block;background:rgba(34,197,94,.16);color:#4ade80;border:1px solid rgba(34,197,94,.4);
+    border-radius:20px;padding:5px 13px;font-size:.78rem;font-weight:800;margin-top:12px}
+  .price ul{list-style:none;text-align:left;margin:20px auto 0;max-width:340px;display:flex;flex-direction:column;gap:11px}
+  .price li{display:flex;align-items:flex-start;gap:11px;font-size:.92rem}
+  .price li svg{width:20px;height:20px;color:var(--verde);flex-shrink:0;margin-top:1px}
+  .price .btn{margin-top:22px}
+  .price .note{color:var(--muted2);font-size:.78rem;margin-top:12px}
+
+  /* depoimento */
+  .quote{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);padding:20px;margin-top:8px}
+  .quote p{font-size:1rem;font-style:italic;color:var(--text)}
+  .quote .who{display:flex;align-items:center;gap:11px;margin-top:14px}
+  .quote .who .av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--rosa),var(--roxo));
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem}
+  .quote .who b{font-size:.88rem}.quote .who span{display:block;font-size:.76rem;color:var(--muted2)}
+
+  /* cta final */
+  .final{text-align:center;background:linear-gradient(160deg,rgba(236,72,153,.16),rgba(124,58,237,.16));
+    border:1px solid var(--line2);border-radius:24px;padding:30px 22px;margin-top:44px}
+  .final h2{font-size:1.5rem;font-weight:900;letter-spacing:-.4px}
+  .final p{color:var(--muted);font-size:.92rem;margin:8px 0 20px}
+
+  footer{text-align:center;color:var(--muted2);font-size:.78rem;padding:34px 10px 0}
+  footer .wm{font-weight:900;letter-spacing:1.5px;background:linear-gradient(90deg,var(--rosa),var(--gold));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
 </style>
 </head>
 <body>
-<div class="container" id="app"></div>
+<div class="wrap">
+
+  <div class="top">
+    <div class="brand"><span class="m">💅</span><span>DYMANI</span></div>
+    <a class="enter" href="painel.html">Entrar</a>
+  </div>
+
+  <div class="hero">
+    <div class="tagpill" id="ic-pill"></div>
+    <h1>Suas clientes <em>sempre de volta</em> — e exibindo suas unhas por aí.</h1>
+    <p>O Dymani transforma cada unha que você faz em propaganda, e cada cliente em cliente fiel. Tudo pelo celular, sem instalar nada pra sua cliente.</p>
+    <div class="ctas">
+      <a class="btn" href="painel.html">Criar meu studio grátis</a>
+      <a class="btn ghost" href="portfolio.html?s=studio-demo">Ver uma demonstração</a>
+    </div>
+  </div>
+
+  <div class="mock">
+    <div class="nail">
+      <div class="emoji">💅</div>
+      <div class="lbl"><b>Maria Souza</b>Alongamento + Vermelho Rubi<div class="dots">●●●●●○○○○○</div></div>
+    </div>
+    <div class="cap">O Cartão da Unha que a cliente ama postar no status ✨</div>
+  </div>
+
+  <div class="eyebrow">Por que funciona</div>
+  <div class="sechead">Feito pra quem vive de retorno</div>
+  <div id="feats"></div>
+
+  <div class="eyebrow">Simples assim</div>
+  <div class="sechead">Como funciona no seu dia</div>
+  <div id="steps"></div>
+
+  <div class="eyebrow">Investimento</div>
+  <div class="sechead">Um preço que cabe no bolso</div>
+  <div class="price">
+    <div class="k">Plano Dymani</div>
+    <div class="v">R$29<small>/mês</small></div>
+    <div class="free">✓ Sem taxa de implantação</div>
+    <ul id="inclui"></ul>
+    <a class="btn gold" href="painel.html">Quero meu studio</a>
+    <div class="note">Menos que um atendimento seu paga 2 meses. Cancele quando quiser.</div>
+  </div>
+
+  <div class="eyebrow">Quem usa, ama</div>
+  <div class="sechead">A dona do studio no comando</div>
+  <div class="quote">
+    <p>"Minhas clientes começaram a postar a unha marcando o studio. Virei assunto no bairro sem gastar com anúncio — e o sistema ainda me avisa quem tá sumida."</p>
+    <div class="who"><div class="av">PN</div><div><b>Studio Pati Nails</b><span>Nail designer</span></div></div>
+  </div>
+
+  <div class="final">
+    <h2>Bora encher sua agenda? 💖</h2>
+    <p>Cria o seu studio em 1 minuto e já sai divulgando seu link hoje.</p>
+    <a class="btn" href="painel.html">Criar meu studio grátis</a>
+  </div>
+
+  <footer>
+    <div class="wm">DYMANI</div>
+    Tecnologia · Conexão · Resultados<br>
+    <span style="opacity:.7">Clube de fidelidade e agendamento para studios de beleza</span>
+  </footer>
+</div>
 
 <script>
-/* ============ Clube da Unha — sem servidor ============
-   Tudo fica no celular da manicure (localStorage).
-   O Cartão da Unha tem editor: temas, estilo, frase e a
-   LOGO do studio arrastável sobre a foto (estilo Canva).
-   Selos por visita E por postagem no status/Instagram.
-   ====================================================== */
-
-const $ = s => document.querySelector(s);
-const app = $('#app');
-const DB = {
-  cfg: () => JSON.parse(localStorage.getItem('cu_cfg') || 'null'),
-  setCfg: c => localStorage.setItem('cu_cfg', JSON.stringify(c)),
-  cli: () => JSON.parse(localStorage.getItem('cu_cli') || '[]'),
-  setCli: c => localStorage.setItem('cu_cli', JSON.stringify(c))
+const IC={
+  sparkle:'<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/>',
+  camera:'<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
+  share:'<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>',
+  bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
+  calendar:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+  gift:'<polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>',
+  check:'<polyline points="20 6 9 17 4 12"/>'
 };
-let clientes = DB.cli();
-let fotoTemp = null;
+function ic(n,s){return `<svg viewBox="0 0 24 24" width="${s||24}" height="${s||24}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${IC[n]||''}</svg>`;}
+document.getElementById('ic-pill').innerHTML=ic('sparkle',14)+' Feito para manicures e nail designers';
 
-const TEMAS = {
-  rosa:     { nome: 'Rosa',     grad: ['#ec4899', '#7c3aed'], acc: '#f9a8d4' },
-  dourado:  { nome: 'Dourado',  grad: ['#fbbf24', '#92400e'], acc: '#fde68a' },
-  vermelho: { nome: 'Vermelho', grad: ['#be123c', '#fb7185'], acc: '#fecdd3' },
-  lilas:    { nome: 'Lilás',    grad: ['#8b5cf6', '#3b82f6'], acc: '#c4b5fd' }
-};
+const feats=[
+  ['camera','O Cartão da Unha','Monte um cartão lindo com sua logo sobre a foto (estilo Canva). A cliente posta no status por vaidade — e você aparece de graça.'],
+  ['share','Selo por divulgar','A cliente ganha selo por fazer a unha E por postar o cartão. Ela quer o brinde, então divulga seu studio correndo.'],
+  ['bell','Quem chamar hoje','O sistema mostra quem sumiu há dias e já monta a mensagem pronta. Um toque e a agenda enche de novo.'],
+  ['calendar','Agenda em tempo real','Seu portfólio público recebe agendamentos. Horário ocupado risca na hora — duas clientes nunca pegam o mesmo.']
+];
+document.getElementById('feats').innerHTML=feats.map(([i,t,p])=>
+  `<div class="feat"><div class="fi">${ic(i,23)}</div><div><h3>${t}</h3><p>${p}</p></div></div>`).join('');
 
-const hoje = () => new Date().toISOString().slice(0,10);
-const diasDesde = iso => Math.floor((Date.now() - new Date(iso + 'T12:00')) / 864e5);
-const dataBR = iso => { const [a,m,d] = iso.split('-'); return `${d}/${m}/${a}`; };
-const soNums = s => (s || '').replace(/\D/g, '');
-const meta = () => (DB.cfg() && DB.cfg().meta) || 10;
-const selosAtuais = c => c.selos % meta() || (c.selos ? meta() : 0);
-const selosStr = c => '●'.repeat(selosAtuais(c)).padEnd(meta(), '○');
-const temBrinde = c => c.selos > 0 && c.selos % meta() === 0;
+const steps=[
+  ['Terminou a unha?','Registra a cliente e tira a foto — em 30 segundos sai o Cartão da Unha pronto.'],
+  ['Manda pra cliente','Ela adora, posta no status marcando você e ganha um selo. Seu studio vira assunto.'],
+  ['Cliente sumiu?','O Dymani te avisa e você chama com um toque. Selos cheios = unha grátis, e ela volta feliz.']
+];
+document.getElementById('steps').innerHTML=steps.map(([t,p],i)=>
+  `<div class="step"><div class="n">${i+1}</div><div><h3>${t}</h3><p>${p}</p></div></div>`).join('');
 
-function toast(msg){
-  const t = document.createElement('div');
-  t.className = 'toast'; t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 2200);
-}
-function comprimir(file, tam, cb){
-  const img = new Image();
-  img.onload = () => {
-    const c = document.createElement('canvas');
-    const lado = Math.min(img.width, img.height);
-    c.width = c.height = tam;
-    c.getContext('2d').drawImage(img, (img.width-lado)/2, (img.height-lado)/2, lado, lado, 0, 0, tam, tam);
-    cb(c.toDataURL('image/jpeg', .72));
-  };
-  img.src = URL.createObjectURL(file);
-}
-function paraChamar(){
-  const cfg = DB.cfg();
-  return clientes
-    .filter(c => c.atend.length && diasDesde(c.atend[c.atend.length-1].d) >= (cfg.dias || 12))
-    .sort((a,b) => diasDesde(b.atend[b.atend.length-1].d) - diasDesde(a.atend[a.atend.length-1].d));
-}
-
-/* ---------- Tela 0: configuração inicial ---------- */
-function telaSetup(){
-  const cfg = DB.cfg() || {};
-  app.innerHTML = `
-    <div style="text-align:center;padding:14px 0 2px"><img src="dymani.jpg" alt="Dymani" style="width:190px;border-radius:16px" onerror="this.parentElement.innerHTML='💅 DYMANI'"></div>
-    <div class="tagline">Suas clientes sempre de volta — e exibindo suas unhas por aí.</div>
-    <div class="card">
-      <h2>${cfg.studio ? '⚙️ Configurações' : 'Vamos configurar seu clube (1 minuto)'}</h2>
-      <label>Nome do seu studio *</label>
-      <input id="s-studio" value="${cfg.studio || ''}" placeholder="Ex: Studio Pati Nails">
-      <label>Seu WhatsApp (com DDD) *</label>
-      <input id="s-zap" inputmode="numeric" value="${cfg.zap || ''}" placeholder="Ex: 83999998888">
-      <label>Sua LOGO (aparece nos cartões) 👑</label>
-      <label class="btn-file">📷 Escolher minha logo
-        <input type="file" id="s-logo" accept="image/*" onchange="comprimir(this.files[0], 300, d => { window._logoTemp = d; toast('Logo carregada! 👑'); })">
-      </label>
-      ${cfg.logo ? '<div class="dica">Você já tem uma logo salva — só envie outra se quiser trocar.</div>' : ''}
-      <label>Brinde a cada quantas unhas?</label>
-      <select id="s-meta">
-        <option value="5" ${cfg.meta == 5 ? 'selected' : ''}>5 unhas = 1 grátis</option>
-        <option value="10" ${!cfg.meta || cfg.meta == 10 ? 'selected' : ''}>10 unhas = 1 grátis</option>
-      </select>
-      <label>Avisar quando a cliente estiver há quantos dias sem vir?</label>
-      <select id="s-dias">
-        ${[10,12,15,20].map(d => `<option value="${d}" ${(cfg.dias || 12) == d ? 'selected' : ''}>${d} dias${d === 12 ? ' (recomendado)' : ''}</option>`).join('')}
-      </select>
-    </div>
-    <button class="btn" onclick="salvarSetup()">${cfg.studio ? 'Salvar' : 'Criar meu clube 💅'}</button>
-    <p class="tagline" style="margin-top:10px">Sem cadastro, sem senha. Tudo fica só no seu celular.</p>`;
-}
-function salvarSetup(){
-  const antigo = DB.cfg() || {};
-  const studio = $('#s-studio').value.trim();
-  const zap = soNums($('#s-zap').value);
-  if (!studio || zap.length < 10) { alert('Preencha o nome do studio e um WhatsApp válido.'); return; }
-  DB.setCfg({ ...antigo, studio, zap: zap.startsWith('55') ? zap : '55' + zap,
-    meta: parseInt($('#s-meta').value), dias: parseInt($('#s-dias').value),
-    logo: window._logoTemp || antigo.logo || null });
-  window._logoTemp = null;
-  telaInicio();
-}
-
-/* ---------- Tela 1: início ---------- */
-function telaInicio(){
-  const cfg = DB.cfg();
-  const chamar = paraChamar();
-  app.innerHTML = `
-    <div style="text-align:center;padding:14px 0 2px"><img src="dymani.jpg" alt="Dymani" style="width:190px;border-radius:16px" onerror="this.parentElement.innerHTML='💅 DYMANI'"></div>
-    <div class="tagline">${cfg.studio}</div>
-    ${chamar.length ? `
-      <div class="alerta" onclick="telaChamar()">
-        <div><div class="t">🔔 ${chamar.length} cliente${chamar.length > 1 ? 's' : ''} na hora de voltar</div>
-        <div class="s">Toque pra chamar com 1 clique</div></div>
-        <div style="font-size:1.4rem">›</div>
-      </div>` : ''}
-    <button class="btn" onclick="telaAtendimento()">➕ Novo atendimento</button>
-    <input style="margin-top:14px" placeholder="🔍 Buscar cliente..." oninput="filtrar(this.value)">
-    <div id="lista" style="margin-top:12px">${listaHTML(clientes)}</div>
-    <button class="btn ghost" onclick="telaSetup()" style="margin-top:20px">⚙️ Configurações</button>`;
-}
-function listaHTML(arr){
-  if (!arr.length) return '<div class="vazio">Suas clientes aparecem aqui depois do primeiro atendimento 💖</div>';
-  return arr.map(c => {
-    const ult = c.atend.length ? c.atend[c.atend.length-1] : null;
-    const dias = ult ? diasDesde(ult.d) : null;
-    const atras = dias !== null && dias >= (DB.cfg().dias || 12);
-    return `<div class="cliente-item" onclick="telaCliente(${c.id})">
-      <div><div class="nome">${c.nome}</div>
-      <div class="info">${ult ? (atras ? `<span class="atrasada">há ${dias} dias sem vir 😢</span>` : `última unha há ${dias} dia${dias === 1 ? '' : 's'}`) : 'sem atendimento'}</div></div>
-      <div class="selos">${selosStr(c)}</div>
-    </div>`;
-  }).join('');
-}
-function filtrar(q){
-  q = q.toLowerCase();
-  $('#lista').innerHTML = listaHTML(clientes.filter(c => c.nome.toLowerCase().includes(q)));
-}
-
-/* ---------- Tela 2: novo atendimento ---------- */
-function telaAtendimento(){
-  fotoTemp = null;
-  app.innerHTML = `
-    <button class="voltar" onclick="telaInicio()">‹ Início</button>
-    <h1>Novo atendimento</h1>
-    <div class="card">
-      <label>Cliente</label>
-      <select id="a-cliente" onchange="$('#nova-area').style.display = this.value === 'nova' ? 'block' : 'none'">
-        <option value="nova">➕ Cliente nova</option>
-        ${clientes.map(c => `<option value="${c.id}">${c.nome}</option>`).join('')}
-      </select>
-      <div id="nova-area">
-        <label>Nome da cliente *</label>
-        <input id="a-nome" placeholder="Ex: Maria Souza">
-        <label>WhatsApp dela (com DDD)</label>
-        <input id="a-zap" inputmode="numeric" placeholder="Ex: 83988887777">
-        <label>Horário de costume (opcional)</label>
-        <input id="a-horario" placeholder="Ex: quinta às 14h">
-      </div>
-      <label>Serviço / cor de hoje *</label>
-      <input id="a-serv" placeholder="Ex: Alongamento fibra + Vermelho Rubi">
-      <label>📸 Foto da unha</label>
-      <label class="btn-file">📷 Tirar/escolher a foto
-        <input type="file" id="a-foto" accept="image/*" capture="environment"
-          onchange="comprimir(this.files[0], 720, d => { fotoTemp = d; $('#a-preview').src = d; $('#a-preview').style.display = 'block'; })">
-      </label>
-      <img class="foto-preview" id="a-preview">
-    </div>
-    <button class="btn" onclick="salvarAtendimento()">Salvar e montar o Cartão ✨</button>`;
-}
-function salvarAtendimento(){
-  const serv = $('#a-serv').value.trim();
-  if (!serv) { alert('Escreva o serviço/cor de hoje.'); return; }
-  let cli;
-  const sel = $('#a-cliente').value;
-  if (sel === 'nova') {
-    const nome = $('#a-nome').value.trim();
-    if (!nome) { alert('Coloque o nome da cliente.'); return; }
-    const zap = soNums($('#a-zap').value);
-    cli = { id: Date.now(), nome, zap: zap ? (zap.startsWith('55') ? zap : '55' + zap) : '',
-            horario: $('#a-horario').value.trim(), selos: 0, atend: [] };
-    clientes.push(cli);
-  } else {
-    cli = clientes.find(c => c.id == sel);
-  }
-  cli.selos++;
-  cli.atend.push({ d: hoje(), serv, foto: fotoTemp, postou: false });
-  if (cli.atend.length > 12) cli.atend.filter(a => a.foto).slice(0, -10).forEach(a => delete a.foto);
-  salvarClientes();
-  telaEditor(cli.id, cli.atend.length - 1);
-}
-function salvarClientes(){
-  try { DB.setCli(clientes); } catch(e) {
-    clientes.forEach(c => c.atend.slice(0, -3).forEach(a => delete a.foto));
-    DB.setCli(clientes);
-  }
-}
-
-/* ---------- Tela 3: EDITOR do Cartão (estilo Canva) ---------- */
-function prefs(){
-  const cfg = DB.cfg();
-  return cfg.prefs || { tema: 'rosa', estilo: 'foto', frase: '', logoPos: { x: .5, y: .09, s: 200 } };
-}
-function setPrefs(p){
-  const cfg = DB.cfg(); cfg.prefs = p; DB.setCfg(cfg);
-}
-function telaEditor(id, idx){
-  const cli = clientes.find(c => c.id == id);
-  const at = cli.atend[idx];
-  const p = prefs();
-  app.innerHTML = `
-    <button class="voltar" onclick="telaInicio()">‹ Início</button>
-    <h1>Cartão da ${cli.nome.split(' ')[0]} ✨</h1>
-    ${temBrinde(cli) ? `<div class="gratis">🎁 ${meta()} SELOS — A PRÓXIMA UNHA É GRÁTIS!</div>` : ''}
-    <canvas id="cartao" width="1080" height="1350"></canvas>
-    ${DB.cfg().logo ? '<div class="dica">👆 Arraste a sua logo pra onde quiser no cartão</div>' : ''}
-    <div class="card" style="margin-top:12px">
-      <label>🎨 Tema</label>
-      <div class="chips" id="e-temas">
-        ${Object.entries(TEMAS).map(([k,t]) =>
-          `<div class="chip ${p.tema === k ? 'on' : ''}" onclick="mudar('tema','${k}')">
-            <span class="tema-dot" style="background:linear-gradient(90deg,${t.grad[0]},${t.grad[1]})"></span>${t.nome}</div>`).join('')}
-      </div>
-      <label>🖼️ Estilo</label>
-      <div class="chips">
-        <div class="chip ${p.estilo === 'foto' ? 'on' : ''}" onclick="mudar('estilo','foto')">Foto inteira</div>
-        <div class="chip ${p.estilo === 'classico' ? 'on' : ''}" onclick="mudar('estilo','classico')">Clássico</div>
-      </div>
-      <label>💬 Frase do studio (opcional)</label>
-      <input id="e-frase" value="${p.frase || ''}" placeholder="Ex: Unhas feitas com amor ✨" oninput="mudar('frase', this.value)">
-      ${DB.cfg().logo ? `
-        <label>👑 Tamanho da logo</label>
-        <input type="range" min="100" max="340" value="${p.logoPos.s}" oninput="mudar('logoS', this.value)">`
-      : `<label>👑 Logo do studio</label>
-        <label class="btn-file">📷 Escolher minha logo
-          <input type="file" accept="image/*" onchange="comprimir(this.files[0], 300, d => { const c = DB.cfg(); c.logo = d; DB.setCfg(c); telaEditor(${id}, ${idx}); })">
-        </label>`}
-    </div>
-    <button class="btn" onclick="compartilharCartao('${cli.nome.split(' ')[0]}')">💌 Enviar pra cliente</button>
-    ${!at.postou ? `<button class="btn star" onclick="marcarPostou(${id}, ${idx})">⭐ Ela postou! (+1 selo)</button>` : '<div class="dica">⭐ Selo de postagem já dado nesse atendimento</div>'}
-    <button class="btn ghost" onclick="baixarCartao()">⬇️ Salvar imagem</button>`;
-  window._edit = { id, idx };
-  desenharCartao(cli, at);
-  ativarArraste(cli, at);
-}
-function mudar(campo, valor){
-  const p = prefs();
-  if (campo === 'logoS') p.logoPos.s = parseInt(valor);
-  else p[campo] = valor;
-  setPrefs(p);
-  const { id, idx } = window._edit;
-  const cli = clientes.find(c => c.id == id);
-  if (campo === 'tema' || campo === 'estilo') { telaEditor(id, idx); return; }
-  desenharCartao(cli, cli.atend[idx]);
-}
-function darSeloIndicacao(id){
-  const cli = clientes.find(c => c.id == id);
-  cli.selos++;
-  salvarClientes();
-  toast('+1 selo por indicação! 💖');
-  telaCliente(id);
-}
-function marcarPostou(id, idx){
-  const cli = clientes.find(c => c.id == id);
-  cli.atend[idx].postou = true;
-  cli.selos++;
-  salvarClientes();
-  toast('+1 selo pela postagem! ⭐');
-  telaEditor(id, idx);
-}
-
-/* ---------- desenho do cartão ---------- */
-function desenharCartao(cli, at){
-  const cfg = DB.cfg();
-  const p = prefs();
-  const t = TEMAS[p.tema] || TEMAS.rosa;
-  const cv = $('#cartao'), x = cv.getContext('2d');
-  const W = 1080, H = 1350;
-  const g = x.createLinearGradient(0, 0, W, H);
-  g.addColorStop(0, t.grad[0]); g.addColorStop(1, t.grad[1]);
-  x.fillStyle = g; x.fillRect(0, 0, W, H);
-
-  const fim = () => { if (cfg.logo) desenharLogo(x, cfg.logo, p.logoPos, () => {}); };
-
-  if (p.estilo === 'foto') {
-    // FOTO INTEIRA: imagem cobre o cartão, textos sobre ela
-    const desenharTextos = () => {
-      const ov = x.createLinearGradient(0, H*.45, 0, H);
-      ov.addColorStop(0, 'rgba(10,5,15,0)'); ov.addColorStop(1, 'rgba(10,5,15,.93)');
-      x.fillStyle = ov; x.fillRect(24, 24, W-48, H-48);
-      x.textAlign = 'center';
-      x.fillStyle = '#ffffff'; x.font = '800 64px sans-serif';
-      x.fillText(cli.nome, W/2, H - 388);
-      x.fillStyle = t.acc; x.font = '600 40px sans-serif';
-      x.fillText(at.serv.length > 38 ? at.serv.slice(0,36) + '…' : at.serv, W/2, H - 322);
-      x.fillStyle = 'rgba(255,255,255,.75)'; x.font = '400 30px sans-serif';
-      x.fillText(dataBR(at.d) + (p.frase ? '  ·  ' + p.frase : ''), W/2, H - 268);
-      desenharSelos(x, cli, t, H - 212);
-      x.fillStyle = '#ffffff'; x.font = '700 40px sans-serif';
-      x.fillText('💅 ' + cfg.studio, W/2, H - 86);
-      x.fillStyle = 'rgba(255,255,255,.7)'; x.font = '400 27px sans-serif';
-      x.fillText('Agende: wa.me/' + cfg.zap, W/2, H - 44);
-      fim();
-    };
-    x.save(); roundRect(x, 24, 24, W-48, H-48, 32); x.clip();
-    if (at.foto) {
-      const img = new Image();
-      img.onload = () => {
-        const esc = Math.max((W-48) / img.width, (H-48) / img.height);
-        x.drawImage(img, W/2 - img.width*esc/2, (H-48)/2 + 24 - img.height*esc/2, img.width*esc, img.height*esc);
-        x.restore(); desenharTextos();
-      };
-      img.src = at.foto;
-    } else {
-      x.fillStyle = '#1a0a1e'; x.fillRect(24, 24, W-48, H-48);
-      x.font = '260px sans-serif'; x.textAlign = 'center'; x.fillText('💅', W/2, 560);
-      x.restore(); desenharTextos();
-    }
-  } else {
-    // CLÁSSICO: moldura, foto em janela, textos abaixo
-    x.fillStyle = '#1a0a1e'; roundRect(x, 40, 40, W-80, H-80, 36); x.fill();
-    x.textAlign = 'center';
-    x.fillStyle = '#fdf2f8'; x.font = '700 46px sans-serif';
-    x.fillText('💅 ' + cfg.studio, W/2, 140);
-    x.fillStyle = t.acc; x.font = '400 30px sans-serif';
-    x.fillText(p.frase || 'Clube Dymani', W/2, 185);
-    const desenharTextos = () => {
-      x.fillStyle = '#fdf2f8'; x.font = '700 52px sans-serif';
-      x.fillText(cli.nome, W/2, 940);
-      x.fillStyle = t.grad[0] === '#fbbf24' ? t.acc : t.grad[0]; x.font = '600 38px sans-serif';
-      x.fillText(at.serv.length > 40 ? at.serv.slice(0,38) + '…' : at.serv, W/2, 1000);
-      x.fillStyle = '#c9a0d4'; x.font = '400 30px sans-serif';
-      x.fillText(dataBR(at.d), W/2, 1048);
-      desenharSelos(x, cli, t, 1105);
-      x.fillStyle = '#c9a0d4'; x.font = '400 28px sans-serif';
-      x.fillText('Agende: wa.me/' + cfg.zap, W/2, 1258);
-      fim();
-    };
-    if (at.foto) {
-      const img = new Image();
-      img.onload = () => {
-        x.save(); roundRect(x, 140, 230, 800, 640, 28); x.clip();
-        const esc = Math.max(800 / img.width, 640 / img.height);
-        x.drawImage(img, W/2 - img.width*esc/2, 550 - img.height*esc/2, img.width*esc, img.height*esc);
-        x.restore();
-        x.strokeStyle = t.grad[0]; x.lineWidth = 6;
-        roundRect(x, 140, 230, 800, 640, 28); x.stroke();
-        desenharTextos();
-      };
-      img.src = at.foto;
-    } else {
-      x.fillStyle = '#2a1230'; roundRect(x, 140, 230, 800, 640, 28); x.fill();
-      x.font = '200px sans-serif'; x.fillText('💅', W/2, 620);
-      desenharTextos();
-    }
-  }
-}
-function desenharSelos(x, cli, t, y){
-  const m = meta(), n = selosAtuais(cli);
-  const esp = m === 5 ? 90 : 50, r = m === 5 ? 24 : 17;
-  const x0 = 540 - (m - 1) * esp / 2;
-  for (let i = 0; i < m; i++) {
-    x.beginPath();
-    x.arc(x0 + i * esp, y, r, 0, 7);
-    x.fillStyle = i < n ? '#fbbf24' : 'rgba(0,0,0,.45)';
-    x.fill();
-    x.strokeStyle = '#fbbf24'; x.lineWidth = 3; x.stroke();
-  }
-  x.fillStyle = '#fbbf24'; x.font = '700 34px sans-serif';
-  x.fillText(temBrinde(cli) ? '🎁 PRÓXIMA UNHA GRÁTIS!' : `Faltam ${m - n} pra unha grátis 🎁`, 540, y + 72);
-}
-function desenharLogo(x, logo, pos, cb){
-  const img = new Image();
-  img.onload = () => {
-    const s = pos.s, lx = pos.x * 1080, ly = pos.y * 1350;
-    x.save();
-    x.beginPath(); x.arc(lx, ly + s/2, s/2 + 8, 0, 7);
-    x.fillStyle = 'rgba(255,255,255,.9)'; x.fill();
-    x.beginPath(); x.arc(lx, ly + s/2, s/2, 0, 7); x.clip();
-    x.drawImage(img, lx - s/2, ly, s, s);
-    x.restore();
-    cb();
-  };
-  img.src = logo;
-}
-function roundRect(x, a, b, w, h, r){
-  x.beginPath();
-  x.moveTo(a+r, b); x.arcTo(a+w, b, a+w, b+h, r); x.arcTo(a+w, b+h, a, b+h, r);
-  x.arcTo(a, b+h, a, b, r); x.arcTo(a, b, a+w, b, r); x.closePath();
-}
-
-/* ---------- arrastar a logo (estilo Canva) ---------- */
-function ativarArraste(cli, at){
-  const cv = $('#cartao');
-  let arrastando = false;
-  const coord = e => {
-    const r = cv.getBoundingClientRect();
-    return { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height };
-  };
-  cv.onpointerdown = e => {
-    if (!DB.cfg().logo) return;
-    const p = prefs(), c = coord(e);
-    const dx = Math.abs(c.x - p.logoPos.x) * 1080;
-    const dy = Math.abs(c.y * 1350 - (p.logoPos.y * 1350 + p.logoPos.s / 2));
-    if (dx < p.logoPos.s && dy < p.logoPos.s) { arrastando = true; cv.setPointerCapture(e.pointerId); }
-  };
-  cv.onpointermove = e => {
-    if (!arrastando) return;
-    const p = prefs(), c = coord(e);
-    p.logoPos.x = Math.min(.92, Math.max(.08, c.x));
-    p.logoPos.y = Math.min(.85, Math.max(.02, c.y - p.logoPos.s / 2 / 1350));
-    setPrefs(p);
-    desenharCartao(cli, at);
-  };
-  cv.onpointerup = () => { arrastando = false; };
-}
-
-function baixarCartao(){
-  const a = document.createElement('a');
-  a.download = 'cartao-dymani.jpg';
-  a.href = $('#cartao').toDataURL('image/jpeg', .9);
-  a.click();
-  toast('Imagem salva! 💅');
-}
-async function compartilharCartao(nome){
-  const cv = $('#cartao');
-  try {
-    const blob = await new Promise(r => cv.toBlob(r, 'image/jpeg', .9));
-    const file = new File([blob], 'cartao.jpg', { type: 'image/jpeg' });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], text: `Suas unhas ficaram lindas, ${nome}! 💅✨ Posta no status e ganha +1 selo!` });
-      return;
-    }
-  } catch(e) {}
-  baixarCartao();
-}
-
-/* ---------- Tela 4: quem chamar hoje ---------- */
-function telaChamar(){
-  const cfg = DB.cfg();
-  const lista = paraChamar();
-  app.innerHTML = `
-    <button class="voltar" onclick="telaInicio()">‹ Início</button>
-    <h1>🔔 Quem chamar hoje</h1>
-    <p class="tagline" style="text-align:left">Clientes há ${cfg.dias}+ dias sem vir. Um toque e a mensagem sai pronta.</p>
-    ${lista.map(c => {
-      const dias = diasDesde(c.atend[c.atend.length-1].d);
-      const msg = `Oi ${c.nome.split(' ')[0]}! 💅 Suas unhas já estão pedindo socorro… ${c.horario ? 'Quer teu horário de sempre, ' + c.horario + '?' : 'Quer marcar um horário essa semana?'}`;
-      return `<div class="cliente-item">
-        <div><div class="nome">${c.nome}</div><div class="info atrasada">há ${dias} dias sem vir</div></div>
-        ${c.zap ? `<a class="btn zap mini" href="https://wa.me/${c.zap}?text=${encodeURIComponent(msg)}">💬 Chamar</a>`
-                : '<span class="info">sem zap 😕</span>'}
-      </div>`;
-    }).join('') || '<div class="vazio">Ninguém atrasada — suas clientes estão em dia! 🎉</div>'}`;
-}
-
-/* ---------- Tela 5: ficha da cliente ---------- */
-function telaCliente(id){
-  const cli = clientes.find(c => c.id == id);
-  const fotos = cli.atend.filter(a => a.foto);
-  const ultIdx = cli.atend.length - 1;
-  const ult = ultIdx >= 0 ? cli.atend[ultIdx] : null;
-  app.innerHTML = `
-    <button class="voltar" onclick="telaInicio()">‹ Início</button>
-    <h1>${cli.nome}</h1>
-    ${temBrinde(cli) ? `<div class="gratis">🎁 ${meta()} SELOS — PRÓXIMA UNHA GRÁTIS!</div>` : ''}
-    <div class="card">
-      <div class="selos" style="font-size:1.1rem">${selosStr(cli)} &nbsp;${selosAtuais(cli)}/${meta()}</div>
-      <div class="info" style="color:var(--muted);font-size:.85rem;margin-top:4px">
-        ${cli.atend.length} unha${cli.atend.length === 1 ? '' : 's'} feitas
-        · ${cli.atend.filter(a => a.postou).length} postagens ⭐
-        ${cli.horario ? ' · costuma vir ' + cli.horario : ''}</div>
-      ${cli.zap ? `<a class="btn zap" href="https://wa.me/${cli.zap}">💬 Chamar no WhatsApp</a>` : ''}
-      ${ult ? `<button class="btn ghost" onclick="telaEditor(${cli.id}, ${ultIdx})">✨ Ver/editar último cartão</button>` : ''}
-      ${ult && !ult.postou ? `<button class="btn star" onclick="marcarPostou(${cli.id}, ${ultIdx}); telaCliente(${cli.id})">⭐ Ela postou! (+1 selo)</button>` : ''}
-      <button class="btn ghost" onclick="darSeloIndicacao(${cli.id})">💖 Trouxe uma amiga (+1 selo)</button>
-    </div>
-    ${fotos.length ? `<h2>Álbum 📸</h2><div class="galeria">
-      ${fotos.slice(-9).reverse().map(a => `<img src="${a.foto}">`).join('')}</div>` : ''}
-    <h2 style="margin-top:16px">Histórico</h2>
-    <div class="card">
-      ${cli.atend.slice().reverse().map(a =>
-        `<div class="hist-item">${a.serv} ${a.postou ? '⭐' : ''}<div class="d">${dataBR(a.d)}</div></div>`).join('') || '<div class="vazio">Nada ainda</div>'}
-    </div>`;
-}
-
-DB.cfg() ? telaInicio() : telaSetup();
+const inclui=['Cartão da Unha ilimitado com sua logo','Selos de fidelidade e brinde automático','Lembrete de "quem chamar hoje"','Portfólio público estilo Instagram','Agendamento em tempo real','Link de indicação com pontos'];
+document.getElementById('inclui').innerHTML=inclui.map(t=>`<li>${ic('check',20)} <span>${t}</span></li>`).join('');
 </script>
 </body>
 </html>
