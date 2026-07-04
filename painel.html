@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- ============================================================
+     PAINEL DA MANICURE — Clube da Unha
+     Login: nome do link (slug) + PIN.
+     Aqui ela vê a agenda (nome e contato de quem agendou),
+     edita logo, bio, serviços, horários e fotos do portfólio.
+     ============================================================ -->
+
+<title>Dymani — Painel do Studio</title>
+<style>
+  :root{
+    --bg:#1a0a1e; --card:#2a1230; --card2:#3a1a42; --border:#552a60;
+    --text:#fdf2f8; --muted:#c9a0d4;
+    --rosa:#ec4899; --rosa-forte:#db2777; --roxo:#7c3aed;
+    --gold:#fbbf24; --verde:#22c55e; --verm:#ef4444; --zap:#25d366;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{background:radial-gradient(1200px 500px at 50% -100px,#3a1245,var(--bg));color:var(--text);font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;line-height:1.5;min-height:100vh}
+  .container{max-width:520px;margin:0 auto;padding:16px 16px 100px}
+  h1{font-size:1.4rem} h2{font-size:1.05rem}
+  .logo{text-align:center;padding:16px 0 4px;font-size:1.45rem;font-weight:800}
+  .logo span{background:linear-gradient(90deg,var(--rosa),var(--roxo));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .tagline{text-align:center;color:var(--muted);font-size:.85rem;margin-bottom:16px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:14px}
+  label{display:block;font-size:.85rem;color:var(--muted);margin:12px 0 4px;font-weight:600}
+  input,select,textarea{width:100%;background:linear-gradient(180deg,#3a1a42,#321640);border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;color:var(--text);font-size:1rem;font-family:inherit;transition:border-color .2s,box-shadow .2s}
+  input::placeholder{color:#8f76a3}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--rosa);box-shadow:0 0 0 4px rgba(236,72,153,.18)}
+  select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23c9a0d4' stroke-width='2' fill='none'/%3E%3C/svg%3E"),linear-gradient(180deg,#3a1a42,#321640);background-repeat:no-repeat;background-position:right 16px center,0 0}
+  .btn-file{display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(236,72,153,.08);border:1.5px dashed var(--rosa);border-radius:14px;padding:14px;color:var(--text);font-weight:700;cursor:pointer;margin-top:4px;font-size:.95rem}
+  .btn-file:active{background:rgba(236,72,153,.2)}
+  .btn-file input{display:none}
+  .logo-prev{width:64px;height:64px;border-radius:50%;overflow:hidden;border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;background:var(--card2);font-size:1.5rem;flex-shrink:0}
+  .logo-prev img{width:100%;height:100%;object-fit:cover}
+  .btn{display:block;width:100%;background:linear-gradient(90deg,var(--rosa-forte),var(--roxo));color:#fff;border:none;font-weight:700;font-size:1.05rem;padding:15px;border-radius:14px;text-align:center;text-decoration:none;cursor:pointer;margin-top:14px}
+  .btn:active{opacity:.85}
+  .btn.zap{background:var(--zap)}
+  .btn.gold{background:linear-gradient(90deg,var(--gold),#f59e0b);color:#241303}
+  .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text);font-weight:600}
+  .btn.mini{width:auto;display:inline-block;padding:8px 14px;font-size:.82rem;margin:4px 4px 0 0}
+  .tabs{display:flex;gap:6px;margin:12px 0;overflow-x:auto;padding-bottom:4px}
+  .tab{padding:10px 14px;border-radius:20px;border:2px solid var(--border);background:var(--card);font-size:.85rem;font-weight:700;cursor:pointer;white-space:nowrap}
+  .tab.on{border-color:var(--gold);background:rgba(251,191,36,.15)}
+  .ag-dia{color:var(--gold);font-weight:800;margin:16px 0 8px;font-size:.95rem}
+  .ag-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .ag-item .h{font-size:1.15rem;font-weight:800;color:var(--rosa)}
+  .ag-item .n{font-weight:700}
+  .ag-item .s{font-size:.78rem;color:var(--muted)}
+  .ag-item .ind{font-size:.75rem;color:var(--gold)}
+  .servico-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+  .servico-row input:first-child{flex:2} .servico-row input:nth-child(2){flex:1}
+  .x{background:var(--verm);color:#fff;border:none;border-radius:10px;width:42px;height:42px;font-weight:800;cursor:pointer;flex-shrink:0}
+  .foto-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+  .foto-row .f{position:relative}
+  .foto-row img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;border:1px solid var(--border)}
+  .foto-row .x{position:absolute;top:4px;right:4px;width:30px;height:30px;font-size:.8rem}
+  .link-box{background:var(--card2);border:1px dashed var(--gold);border-radius:12px;padding:12px;font-size:.8rem;word-break:break-all;color:var(--gold);margin-top:10px}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--verde);color:#03240e;font-weight:700;padding:12px 22px;border-radius:30px;z-index:99;box-shadow:0 4px 14px rgba(0,0,0,.5)}
+  .vazio{text-align:center;color:var(--muted);font-size:.9rem;padding:24px 10px}
+  .dica{font-size:.78rem;color:var(--muted);margin-top:6px}
+</style>
+</head>
+<body>
+<div class="container" id="app"></div>
+
+<script>
+const SUPA_URL = 'https://rhveqvlldliccalfsuea.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJodmVxdmxsZGxpY2NhbGZzdWVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMjg5MjMsImV4cCI6MjA5NjcwNDkyM30.NrsH1optDK2IbOl8YUqBwUZaidvEk72lvrA4SEHPrVY';
+async function rpc(fn, args){
+  const r = await fetch(SUPA_URL + '/rest/v1/rpc/' + fn, {
+    method: 'POST',
+    headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify(args)
+  });
+  if (!r.ok) throw new Error('rede');
+  return r.json();
+}
+
+const $ = s => document.querySelector(s);
+const app = $('#app');
+const DIASEMANA = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+let sessao = JSON.parse(localStorage.getItem('cu_admin') || 'null'); // {slug, pin}
+let studio = null;   // dados carregados
+let agenda = [];
+
+function toast(msg){
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2400);
+}
+function comprimir(file, tam, cb){
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement('canvas');
+    const lado = Math.min(img.width, img.height);
+    c.width = c.height = tam;
+    c.getContext('2d').drawImage(img, (img.width-lado)/2, (img.height-lado)/2, lado, lado, 0, 0, tam, tam);
+    cb(c.toDataURL('image/jpeg', .7));
+  };
+  img.src = URL.createObjectURL(file);
+}
+const linkPortfolio = () => location.href.replace(/painel\.html.*/, 'portfolio.html?s=' + sessao.slug);
+
+/* ---------- login / criar studio ---------- */
+function telaLogin(criar){
+  app.innerHTML = `
+    <div style="text-align:center;padding:14px 0 4px">
+      <img src="dymani.jpg" alt="Dymani" style="width:200px;border-radius:16px" onerror="this.outerHTML='<div class=logo>💅 <span>DYMANI</span></div>'">
+    </div>
+    <div class="tagline">Painel do Studio</div>
+    <div class="card">
+      <h2>${criar ? '✨ Criar meu studio' : 'Entrar no meu painel'}</h2>
+      <label>Nome do seu link (só letras minúsculas e traço) *</label>
+      <input id="l-slug" placeholder="ex: studio-pati-nails" ${sessao && !criar ? `value="${sessao.slug}"` : ''}>
+      <div class="dica">Esse vira o endereço do seu portfólio na internet 💅</div>
+      <label>Senha (PIN de 4+ números) *</label>
+      <input id="l-pin" inputmode="numeric" type="password" placeholder="ex: 2580">
+      ${criar ? `
+        <label>Nome do studio *</label>
+        <input id="l-nome" placeholder="Ex: Studio Pati Nails">
+        <label>Seu WhatsApp (com DDD) *</label>
+        <input id="l-zap" inputmode="numeric" placeholder="Ex: 83999998888">` : ''}
+    </div>
+    <button class="btn" onclick="${criar ? 'criarStudio()' : 'entrar()'}">${criar ? 'Criar studio 🎉' : 'Entrar 💅'}</button>
+    <button class="btn ghost" onclick="telaLogin(${!criar})">${criar ? 'Já tenho studio — entrar' : '✨ Primeira vez? Criar meu studio'}</button>`;
+}
+function normSlug(){ return $('#l-slug').value.trim().toLowerCase().replace(/\s+/g, '-'); }
+async function entrar(){
+  const slug = normSlug(), pin = $('#l-pin').value.trim();
+  if (!slug || pin.length < 4) { toast('Preencha o link e o PIN 😊'); return; }
+  try {
+    const ag = await rpc('cu_agenda', { p_slug: slug, p_pin: pin });
+    const pub = await rpc('cu_studio_publico', { p_slug: slug });
+    if (!pub) { toast('Studio não existe — crie o seu! ✨'); return; }
+    // PIN errado devolve agenda vazia mesmo com studio existente: valida com um salvar vazio
+    const ok = await rpc('cu_salvar_studio', { p_slug: slug, p_pin: pin, dados: {} });
+    if (ok === 'pin_errado') { toast('PIN errado 🥺'); return; }
+    sessao = { slug, pin };
+    localStorage.setItem('cu_admin', JSON.stringify(sessao));
+    studio = pub; agenda = ag;
+    telaPainel('agenda');
+  } catch(e) { toast('Falha na conexão — tenta de novo'); }
+}
+async function criarStudio(){
+  const slug = normSlug(), pin = $('#l-pin').value.trim();
+  const nome = $('#l-nome').value.trim();
+  const zap = ($('#l-zap').value || '').replace(/\D/g, '');
+  if (!slug || pin.length < 4 || !nome || zap.length < 10) { toast('Preencha tudo direitinho 😊'); return; }
+  try {
+    const existe = await rpc('cu_studio_publico', { p_slug: slug });
+    if (existe) { toast('Esse nome de link já existe — escolha outro'); return; }
+    const res = await rpc('cu_salvar_studio', { p_slug: slug, p_pin: pin, dados: {
+      nome, zap: zap.startsWith('55') ? zap : '55' + zap,
+      servicos: [{ nome: 'Esmaltação em gel', preco: 45 }],
+      horarios: { "2": ["09:00","10:30","14:00","15:30"], "3": ["09:00","10:30","14:00","15:30"],
+                  "4": ["09:00","10:30","14:00","15:30"], "5": ["09:00","10:30","14:00","15:30"],
+                  "6": ["09:00","10:30","14:00"] }
+    }});
+    if (res === 'slug_invalido') { toast('Link inválido: use só letras minúsculas e traço'); return; }
+    if (res !== 'criado' && res !== 'ok') { toast('Não deu: ' + res); return; }
+    sessao = { slug, pin };
+    localStorage.setItem('cu_admin', JSON.stringify(sessao));
+    studio = await rpc('cu_studio_publico', { p_slug: slug });
+    agenda = [];
+    telaPainel('perfil');
+    toast('Studio criado! 🎉 Complete seu perfil');
+  } catch(e) { toast('Falha na conexão — tenta de novo'); }
+}
+function sair(){
+  localStorage.removeItem('cu_admin');
+  sessao = null; studio = null;
+  telaLogin(false);
+}
+
+/* ---------- painel ---------- */
+function telaPainel(aba){
+  app.innerHTML = `
+    <div class="logo">💅 ${studio.nome}</div>
+    <div class="tagline">Painel Dymani</div>
+    <div class="tabs">
+      ${[['agenda','📅 Agenda'],['servicos','💅 Serviços'],['horarios','⏰ Horários'],['fotos','📸 Fotos'],['perfil','⚙️ Perfil']]
+        .map(([k,n]) => `<div class="tab ${aba === k ? 'on' : ''}" onclick="telaPainel('${k}')">${n}</div>`).join('')}
+    </div>
+    <div id="aba"></div>
+    <div class="link-box">🔗 Link do seu portfólio (divulgue!):<br>${linkPortfolio()}</div>
+    <button class="btn ghost mini" onclick="navigator.clipboard.writeText(linkPortfolio()).then(()=>toast('Link copiado! 📋'))">📋 Copiar link</button>
+    <button class="btn ghost mini" onclick="sair()">Sair</button>`;
+  ({ agenda: abaAgenda, servicos: abaServicos, horarios: abaHorarios, fotos: abaFotos, perfil: abaPerfil })[aba]();
+}
+
+/* ---------- aba agenda ---------- */
+async function abaAgenda(){
+  $('#aba').innerHTML = '<div class="vazio">Carregando agenda… 👀</div>';
+  try { agenda = await rpc('cu_agenda', { p_slug: sessao.slug, p_pin: sessao.pin }); } catch(e) {}
+  if (!agenda.length) { $('#aba').innerHTML = '<div class="card vazio">Nenhum agendamento ainda.<br>Divulgue seu link que eles chegam! 💖</div>'; return; }
+  const porDia = {};
+  agenda.forEach(a => (porDia[a.dia] = porDia[a.dia] || []).push(a));
+  const fmt = iso => { const [a,m,d] = iso.split('-'); const dt = new Date(iso + 'T12:00'); return `${DIASEMANA[dt.getDay()]} · ${d}/${m}`; };
+  $('#aba').innerHTML = Object.keys(porDia).sort().map(dia => `
+    <div class="ag-dia">${fmt(dia)}</div>
+    ${porDia[dia].map(a => `
+      <div class="ag-item">
+        <div class="h">${a.hora}</div>
+        <div style="flex:1">
+          <div class="n">${a.nome}</div>
+          <div class="s">${a.servico}</div>
+          ${a.indicou ? `<div class="ind">💖 veio pela ${a.indicou} (dá o ponto pra ela!)</div>` : ''}
+        </div>
+        <div>
+          ${a.zap ? `<a class="btn zap mini" href="https://wa.me/${a.zap}">💬</a>` : ''}
+          <button class="x" onclick="cancelar(${a.id})">✕</button>
+        </div>
+      </div>`).join('')}`).join('');
+}
+async function cancelar(id){
+  if (!confirm('Cancelar esse agendamento? O horário volta a ficar livre.')) return;
+  try {
+    await rpc('cu_cancelar', { p_slug: sessao.slug, p_pin: sessao.pin, p_id: id });
+    toast('Cancelado — horário liberado');
+    abaAgenda();
+  } catch(e) { toast('Falha na conexão'); }
+}
+
+/* ---------- aba serviços ---------- */
+function abaServicos(){
+  const servs = studio.servicos || [];
+  $('#aba').innerHTML = `
+    <div class="card">
+      <h2>Seus serviços e preços</h2>
+      <div id="servs" style="margin-top:10px">
+        ${servs.map((s,i) => servRow(s.nome, s.preco)).join('')}
+      </div>
+      <button class="btn ghost mini" onclick="document.getElementById('servs').insertAdjacentHTML('beforeend', servRow('', ''))">➕ Adicionar serviço</button>
+      <button class="btn" onclick="salvarServicos()">💾 Salvar serviços</button>
+    </div>`;
+}
+function servRow(nome, preco){
+  return `<div class="servico-row">
+    <input placeholder="Serviço" value="${nome}">
+    <input placeholder="R$" inputmode="numeric" value="${preco}">
+    <button class="x" onclick="this.parentElement.remove()">✕</button>
+  </div>`;
+}
+async function salvarServicos(){
+  const servicos = [...document.querySelectorAll('.servico-row')].map(r => {
+    const [n, p] = r.querySelectorAll('input');
+    return { nome: n.value.trim(), preco: parseFloat(p.value) || 0 };
+  }).filter(s => s.nome);
+  await salvar({ servicos }, 'Serviços salvos! 💅');
+}
+
+/* ---------- aba horários ---------- */
+function abaHorarios(){
+  const h = studio.horarios || {};
+  $('#aba').innerHTML = `
+    <div class="card">
+      <h2>Horários de atendimento</h2>
+      <div class="dica">Escreva os horários separados por vírgula. Deixe vazio o dia que não atende.</div>
+      ${DIASEMANA.map((d,i) => `
+        <label>${d}</label>
+        <input class="hor-dia" data-dow="${i}" placeholder="não atendo" value="${(h[i] || []).join(', ')}">`).join('')}
+      <button class="btn" onclick="salvarHorarios()">💾 Salvar horários</button>
+    </div>`;
+}
+async function salvarHorarios(){
+  const horarios = {};
+  document.querySelectorAll('.hor-dia').forEach(inp => {
+    const horas = inp.value.split(',').map(s => s.trim()).filter(s => /^\d{1,2}:\d{2}$/.test(s));
+    if (horas.length) horarios[inp.dataset.dow] = horas;
+  });
+  await salvar({ horarios }, 'Horários salvos! ⏰');
+}
+
+/* ---------- aba fotos ---------- */
+function abaFotos(){
+  const fotos = studio.fotos || [];
+  $('#aba').innerHTML = `
+    <div class="card">
+      <h2>Fotos do portfólio (até 12)</h2>
+      <label class="btn-file">📷 Adicionar foto de trabalho
+        <input type="file" accept="image/*" onchange="addFoto(this)">
+      </label>
+      <div class="foto-row">
+        ${fotos.map((f,i) => `<div class="f"><img src="${f.img}"><button class="x" onclick="delFoto(${i})">✕</button></div>`).join('')}
+      </div>
+      ${fotos.length ? '<button class="btn" onclick="salvar({fotos: studio.fotos}, \'Fotos salvas! 📸\')">💾 Salvar fotos</button>' : ''}
+    </div>`;
+}
+function addFoto(inp){
+  if ((studio.fotos || []).length >= 12) { toast('Máximo de 12 fotos — apague uma primeiro'); return; }
+  comprimir(inp.files[0], 480, d => {
+    const leg = prompt('Legenda da foto (ex: Vermelho Rubi em gel):') || '';
+    studio.fotos = studio.fotos || [];
+    studio.fotos.push({ img: d, leg });
+    salvar({ fotos: studio.fotos }, 'Foto adicionada! 📸').then(abaFotos);
+  });
+}
+function delFoto(i){
+  studio.fotos.splice(i, 1);
+  salvar({ fotos: studio.fotos }, 'Foto removida').then(abaFotos);
+}
+
+/* ---------- aba perfil ---------- */
+function abaPerfil(){
+  $('#aba').innerHTML = `
+    <div class="card">
+      <h2>Perfil do studio</h2>
+      <label>Nome do studio</label>
+      <input id="p-nome" value="${studio.nome}">
+      <label>Frase de apresentação</label>
+      <input id="p-bio" value="${studio.bio || ''}" placeholder="Unhas feitas com amor ✨ · Centro">
+      <label>WhatsApp</label>
+      <input id="p-zap" inputmode="numeric" value="${studio.zap}">
+      <label>👑 Logo do studio</label>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="logo-prev" id="p-logoprev">${studio.logo ? `<img src="${studio.logo}">` : '💅'}</div>
+        <label class="btn-file" style="flex:1;margin:0">📷 ${studio.logo ? 'Trocar minha logo' : 'Escolher minha logo'}
+          <input type="file" accept="image/*" onchange="comprimir(this.files[0], 300, d => { window._logoNova = d; document.getElementById('p-logoprev').innerHTML = '<img src=&quot;' + d + '&quot;>'; toast('Logo linda! Agora salve o perfil 👑'); })">
+        </label>
+      </div>
+      <label>🎁 Brinde: unha grátis a cada quantos pontos?</label>
+      <select id="p-meta">
+        <option value="5" ${studio.meta == 5 ? 'selected' : ''}>5 pontos</option>
+        <option value="10" ${studio.meta == 10 ? 'selected' : ''}>10 pontos</option>
+      </select>
+      <button class="btn" onclick="salvarPerfil()">💾 Salvar perfil</button>
+    </div>`;
+}
+async function salvarPerfil(){
+  const zap = $('#p-zap').value.replace(/\D/g, '');
+  await salvar({
+    nome: $('#p-nome').value.trim(),
+    bio: $('#p-bio').value.trim(),
+    zap: zap.startsWith('55') ? zap : '55' + zap,
+    meta: parseInt($('#p-meta').value),
+    ...(window._logoNova ? { logo: window._logoNova } : {})
+  }, 'Perfil salvo! ✨');
+  window._logoNova = null;
+}
+
+/* ---------- salvar genérico ---------- */
+async function salvar(dados, msg){
+  try {
+    const res = await rpc('cu_salvar_studio', { p_slug: sessao.slug, p_pin: sessao.pin, dados });
+    if (res !== 'ok') { toast('Não deu: ' + res); return; }
+    studio = await rpc('cu_studio_publico', { p_slug: sessao.slug });
+    toast(msg);
+  } catch(e) { toast('Falha na conexão — tenta de novo'); }
+}
+
+/* ---------- início ---------- */
+(async function(){
+  if (sessao) {
+    try {
+      studio = await rpc('cu_studio_publico', { p_slug: sessao.slug });
+      if (studio) { telaPainel('agenda'); return; }
+    } catch(e) {}
+  }
+  telaLogin(false);
+})();
+</script>
+</body>
+</html>
