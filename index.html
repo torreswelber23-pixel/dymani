@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#140717">
+<meta name="theme-color" content="#0f0a1a">
 
 <!-- =============================================================
      DYMANI — Vitrine (página de vendas do sistema)
@@ -13,13 +13,16 @@
 
 <title>Dymani — Clientes sempre de volta, e exibindo suas unhas por aí</title>
 <meta name="description" content="Sistema de bolso para manicures: cartão da unha que a cliente exibe, selos de fidelidade, portfólio e agendamento em tempo real. R$29/mês.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#140717; --bg2:#1e0b23; --surf:#25102b; --surf2:#311539; --line:#4a2455; --line2:#5e2f6b;
-    --text:#fdf2f8; --muted:#c3a0cf; --muted2:#8f76a3;
-    --rosa:#ec4899; --rosa-forte:#db2777; --roxo:#7c3aed; --gold:#fbbf24; --verde:#22c55e; --zap:#25d366;
-    --shadow:0 8px 30px rgba(0,0,0,.4); --r:18px;
-  }
+  --bg:#0f0a1a; --bg2:#161024; --surf:#1e1432; --surf2:#2a1d42;
+  --line:#362654; --line2:#4a3570;
+  --text:#faf5ff; --muted:#c4b5d0; --muted2:#8b7a9e;
+  --rosa:#f472b6; --rosa-forte:#ec4899; --roxo:#a855f7;
+  --gold:#fcd34d; --verde:#34d399; --verm:#fb7185; --zap:#25d366;
+  --shadow:0 12px 40px rgba(0,0,0,.5); --r:20px;
+}
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html{scroll-behavior:smooth}
   html,body{overflow-x:hidden}
@@ -117,6 +120,199 @@
   footer{text-align:center;color:var(--muted2);font-size:.78rem;padding:34px 10px 0}
   footer .wm{font-weight:900;letter-spacing:1.5px;background:linear-gradient(90deg,var(--rosa),var(--gold));
     -webkit-background-clip:text;background-clip:text;color:transparent}
+</style>
+
+<style id="dymani-premium">
+/* ═══════════════════════════════════════════════════════
+   DYMANI PREMIUM DESIGN SYSTEM — Upgrade Visual 2026
+   Aplicado sobre o CSS existente via variáveis + overrides
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Tipografia Premium ── */
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif!important;
+  letter-spacing:-.01em}
+h1,h2,.sechead,.hero h1,.login-brand,.price .v{
+  font-family:'Playfair Display',Georgia,'Times New Roman',serif!important}
+
+/* ── Textura de fundo (pontos sutis) ── */
+body{background-image:radial-gradient(rgba(168,85,247,.035) 1px,transparent 1px)!important;
+  background-size:28px 28px!important;background-attachment:fixed!important}
+
+/* ── Sparkles decorativos flutuantes ── */
+body::before{content:'✦';position:fixed;top:13%;left:7%;font-size:11px;
+  color:rgba(252,211,77,.14);animation:dym-float 5s ease-in-out infinite;
+  pointer-events:none;z-index:9999}
+body::after{content:'✦';position:fixed;top:34%;right:5%;font-size:8px;
+  color:rgba(244,114,182,.11);animation:dym-float 6s ease-in-out infinite 2s;
+  pointer-events:none;z-index:9999}
+
+/* ── Keyframes ── */
+@keyframes dym-float{
+  0%,100%{transform:translateY(0) rotate(0deg);opacity:.5}
+  50%{transform:translateY(-10px) rotate(12deg);opacity:1}
+}
+@keyframes dym-shimmer{
+  0%{background-position:-200% center}
+  100%{background-position:200% center}
+}
+@keyframes dym-slideUp{
+  from{opacity:0;transform:translateY(22px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@keyframes dym-pulse{
+  0%,100%{box-shadow:0 8px 24px rgba(236,72,153,.3)}
+  50%{box-shadow:0 10px 44px rgba(236,72,153,.5),0 0 60px rgba(236,72,153,.1)}
+}
+@keyframes dym-glow-border{
+  0%,100%{border-color:var(--line2)}
+  50%{border-color:rgba(244,114,182,.35)}
+}
+@keyframes dym-entrance{
+  from{opacity:0;transform:translateY(16px) scale(.98)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+
+/* ── Glassmorphism nos cards ── */
+.card,.feat,.quote,.servico,.ag,.cli,.row,.atend,.chip{
+  background:rgba(30,20,50,.55)!important;
+  backdrop-filter:blur(14px)!important;-webkit-backdrop-filter:blur(14px)!important;
+  border-color:rgba(168,85,247,.12)!important;
+  transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease!important}
+
+/* ── Hover com glow ── */
+.feat:hover,.servico:hover,.ag:hover,.cli:hover,.row:hover,.card.tap:active,
+.cli:active,.row:active{
+  border-color:rgba(244,114,182,.28)!important;
+  box-shadow:0 8px 32px rgba(244,114,182,.08),0 0 0 1px rgba(244,114,182,.08)!important;
+  transform:translateY(-2px)!important}
+
+/* ── Botão com brilho deslizante ── */
+.btn{position:relative!important;overflow:hidden!important;
+  transition:transform .2s,opacity .2s,box-shadow .3s!important}
+.btn::after{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);
+  transition:left .6s ease;pointer-events:none}
+.btn:active::after{left:100%}
+
+/* ── Shimmer em textos gradiente ── */
+.hero h1 em,.login-brand,.top .brand span,footer .wm,.badge b{
+  background-size:200% auto!important;
+  animation:dym-shimmer 3.5s linear infinite!important}
+
+/* ── Float nos ícones de features ── */
+.feat .fi,.alert .ci{animation:dym-float 4s ease-in-out infinite!important}
+.feat:nth-child(2) .fi{animation-delay:.7s!important}
+.feat:nth-child(3) .fi{animation-delay:1.4s!important}
+.feat:nth-child(4) .fi{animation-delay:2.1s!important}
+
+/* ── Glow em avatares/logos ── */
+.top .brand .m,.login-logo,.appbar .av,.logoprev,.avatar,.appbar .logo,
+.mock .nail{box-shadow:0 6px 28px rgba(244,114,182,.25)!important}
+
+/* ── Entrada animada dos elementos ── */
+.feat,.step,.ag,.cli,.row,.servico,.atend{
+  animation:dym-entrance .5s ease-out both!important}
+.feat:nth-child(2),.ag:nth-child(2),.row:nth-child(2),.cli:nth-child(2){animation-delay:.06s!important}
+.feat:nth-child(3),.ag:nth-child(3),.row:nth-child(3),.cli:nth-child(3){animation-delay:.12s!important}
+.feat:nth-child(4),.ag:nth-child(4),.row:nth-child(4),.cli:nth-child(4){animation-delay:.18s!important}
+.feat:nth-child(5),.row:nth-child(5),.cli:nth-child(5){animation-delay:.24s!important}
+
+/* ── Preço com glow dourado ── */
+.price{box-shadow:var(--shadow),0 0 60px rgba(252,211,77,.06)!important;
+  animation:dym-glow-border 4s ease-in-out infinite}
+
+/* ── CTA com pulse ── */
+.hero .ctas>.btn:first-child,.final .btn{animation:dym-pulse 3s ease-in-out infinite!important}
+
+/* ── Chips melhorados ── */
+.chip{transition:all .2s ease!important}
+.chip.on{box-shadow:0 0 20px rgba(244,114,182,.12)!important;transform:scale(1.03)}
+
+/* ── Selos com glow ── */
+.stamps .s.on{box-shadow:0 0 14px rgba(252,211,77,.22)}
+.sel.on{box-shadow:0 0 10px rgba(252,211,77,.25)}
+
+/* ── Toast glassmorphism ── */
+.toast{background:rgba(42,29,66,.88)!important;
+  backdrop-filter:blur(14px)!important;-webkit-backdrop-filter:blur(14px)!important;
+  border-color:rgba(168,85,247,.25)!important}
+
+/* ── Modal glassmorphism ── */
+.modal{background:rgba(22,16,36,.94)!important;
+  backdrop-filter:blur(20px)!important;-webkit-backdrop-filter:blur(20px)!important;
+  border-color:rgba(168,85,247,.2)!important}
+.modal-bg{backdrop-filter:blur(6px)!important;-webkit-backdrop-filter:blur(6px)!important}
+
+/* ── Tabs com animação ── */
+.tabs button{transition:all .2s ease!important}
+.tabs button.on{transform:translateY(-2px)}
+
+/* ── Mock card glow ── */
+.mock{box-shadow:var(--shadow),0 0 50px rgba(244,114,182,.08)!important;
+  animation:dym-entrance .7s ease-out .15s both}
+
+/* ── Login glow intensificado ── */
+.login-logo{box-shadow:0 10px 50px rgba(244,114,182,.3),0 0 80px rgba(168,85,247,.12)!important}
+
+/* ── Appbar glassmorphism ── */
+.appbar{background:rgba(15,10,26,.88)!important;
+  backdrop-filter:blur(16px)!important;-webkit-backdrop-filter:blur(16px)!important}
+
+/* ── Tabs glassmorphism ── */
+.tabs{background:rgba(15,10,26,.92)!important;
+  backdrop-filter:blur(16px)!important;-webkit-backdrop-filter:blur(16px)!important}
+
+/* ── Grid de fotos com hover ── */
+.grid img,.frow3 .fi img,.gal img{transition:transform .3s ease,filter .3s ease!important}
+.grid img:hover,.gal img:hover{transform:scale(1.04)!important;filter:brightness(1.1)}
+
+/* ── Empty state sutil ── */
+.empty{animation:dym-entrance .6s ease-out!important}
+
+/* ── Scrollbar premium ── */
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--line2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--rosa)}
+
+/* ── Segmented control ── */
+.seg button{transition:all .2s ease!important}
+.seg button.on{box-shadow:0 2px 10px rgba(168,85,247,.15)}
+
+/* ── Inputs com focus premium ── */
+input:focus,select:focus,textarea:focus{
+  border-color:var(--rosa)!important;
+  box-shadow:0 0 0 4px rgba(244,114,182,.12)!important;
+  outline:none!important}
+
+/* ── Alert/banner com glow ── */
+.alert,.banner{animation:dym-entrance .5s ease-out!important;
+  box-shadow:0 4px 20px rgba(244,114,182,.08)}
+
+/* ── Lightbox melhorado ── */
+.lightbox{backdrop-filter:blur(8px)!important;-webkit-backdrop-filter:blur(8px)!important}
+.lightbox img{box-shadow:0 20px 60px rgba(0,0,0,.5);transition:transform .3s!important}
+
+/* ── Tagpill shimmer ── */
+.tagpill{backdrop-filter:blur(10px)!important;-webkit-backdrop-filter:blur(10px)!important}
+
+/* ── Footer mais elegante ── */
+footer{opacity:.85;transition:opacity .3s!important}
+footer:hover{opacity:1}
+
+/* ── Badge do rodapé ── */
+.badge{backdrop-filter:blur(8px)!important;-webkit-backdrop-filter:blur(8px)!important}
+
+/* ── Perfil (portfolio) ── */
+.perfil,.hdr{position:relative;animation:dym-entrance .6s ease-out!important}
+
+/* ── Nail polish SVG decorativo (via CSS shape) ── */
+.hero::after{content:'💅';position:absolute;top:8px;right:-2px;font-size:2rem;
+  opacity:.08;animation:dym-float 7s ease-in-out infinite 3s;pointer-events:none}
+.final::before{content:'✨';position:absolute;top:12px;left:16px;font-size:1.1rem;
+  opacity:.15;animation:dym-float 5s ease-in-out infinite;pointer-events:none}
+.final{position:relative;overflow:hidden}
+
 </style>
 </head>
 <body>
