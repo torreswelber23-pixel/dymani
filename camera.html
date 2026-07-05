@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Dymani · Cartão ao Vivo (teste)</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💅</text></svg>">
+<!--
+  PÁGINA DE TESTE — totalmente separada do app oficial.
+  Conceito: a câmera abre JÁ com o layout premium do Cartão da Unha por cima
+  (tipo filtro do Instagram). A manicure enquadra a unha onde fica bonito e,
+  ao bater a foto, o cartão sai pronto: nome da cliente, selos, logo e QR de
+  agendamento já "pregados" na imagem. Nada aqui toca painel/portfolio/index.
+-->
+<style>
+  :root{
+    --ouro:#d9b36a; --ouro-claro:#f4d58d; --ouro-escuro:#a87f35;
+    --rose:#e2aab4; --rose-claro:#efc6cd;
+    --fundo:#0d0810; --card:#1a1120; --borda:#3a2a42;
+    --texto:#f3e9ee; --muted:#b9a3ab;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  [hidden]{display:none!important}
+  body{background:var(--fundo);color:var(--texto);font-family:Georgia,'Times New Roman',serif;min-height:100vh}
+
+  /* ---------- tela de preparo ---------- */
+  .setup{max-width:460px;margin:0 auto;padding:34px 22px calc(40px + env(safe-area-inset-bottom));
+    min-height:100vh;display:flex;flex-direction:column;justify-content:center}
+  .marca{text-align:center;margin-bottom:26px}
+  .marca .selo-logo{width:92px;height:92px;border-radius:50%;margin:0 auto 12px;border:2px solid var(--ouro);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.4)}
+  .marca .selo-logo b{font-size:2rem;color:var(--rose);font-style:italic;line-height:1}
+  .marca .selo-logo i{font-size:.56rem;letter-spacing:3px;color:var(--ouro);font-style:normal;margin-top:3px}
+  .marca h1{font-size:1.45rem;font-weight:400;letter-spacing:1px}
+  .marca h1 b{color:var(--rose)}
+  .marca p{color:var(--muted);font-size:.9rem;margin-top:6px;font-family:system-ui,sans-serif}
+  .aviso{background:rgba(217,179,106,.1);border:1px dashed var(--ouro-escuro);border-radius:12px;
+    padding:10px 14px;font-size:.8rem;color:var(--ouro);text-align:center;margin-bottom:20px;font-family:system-ui,sans-serif}
+  .cartao-form{background:var(--card);border:1px solid var(--borda);border-radius:20px;padding:22px 18px}
+  label{display:block;font-size:.78rem;color:var(--muted);margin:14px 2px 6px;letter-spacing:.5px;
+    font-family:system-ui,sans-serif;font-weight:600}
+  label:first-child{margin-top:0}
+  input{width:100%;background:#241627;border:1.5px solid var(--borda);border-radius:12px;color:var(--texto);
+    padding:13px 14px;font-size:1rem;font-family:system-ui,sans-serif}
+  input:focus{outline:none;border-color:var(--ouro);box-shadow:0 0 0 3px rgba(217,179,106,.18)}
+  .lado{display:flex;gap:12px}.lado>div{flex:1}
+  .btn{width:100%;margin-top:22px;padding:16px;border:none;border-radius:30px;cursor:pointer;
+    font-size:1.05rem;font-weight:700;font-family:system-ui,sans-serif;color:#2a1608;
+    background:linear-gradient(90deg,var(--ouro-claro),var(--ouro));box-shadow:0 8px 26px rgba(217,179,106,.35)}
+  .btn:active{transform:scale(.97)}
+  .btn.ghost{background:none;border:1.5px solid var(--borda);color:var(--texto);box-shadow:none;margin-top:12px}
+  .btn.rose{background:linear-gradient(90deg,var(--rose-claro),var(--rose));color:#3b1220;
+    box-shadow:0 8px 26px rgba(226,170,180,.3)}
+
+  /* ---------- câmera com o molde por cima ---------- */
+  .telacam{position:fixed;inset:0;background:#000;z-index:50;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:14px;
+    padding:calc(10px + env(safe-area-inset-top)) 0 calc(14px + env(safe-area-inset-bottom))}
+  .stage{position:relative;width:min(100vw,calc((100dvh - 160px) * 3 / 4));aspect-ratio:3/4;overflow:hidden;background:#000;
+    border-radius:14px}
+  .stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .stage video.espelho{transform:scaleX(-1)}
+  .stage canvas.molde{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:6}
+  .flash.pisca{animation:pisca .28s ease-out}
+  @keyframes pisca{0%{opacity:.9}100%{opacity:0}}
+  .cambar{width:min(100vw,420px);display:flex;align-items:center;justify-content:space-around}
+  .camx{width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,.16);border:none;color:#fff;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.1rem;
+    -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+  .camshot{width:82px;height:82px;border-radius:50%;background:linear-gradient(135deg,var(--ouro-claro),var(--ouro));
+    border:4px solid rgba(255,255,255,.7);cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .camshot span{width:56px;height:56px;border-radius:50%;background:#fff;box-shadow:inset 0 0 0 3px rgba(0,0,0,.15)}
+  .camshot:active{transform:scale(.93)}
+  .camtorch{position:absolute;top:calc(16px + env(safe-area-inset-top));right:16px;z-index:5}
+  .camtorch.on{background:var(--ouro-claro);color:#3d2a00}
+  .camdica{position:absolute;top:calc(20px + env(safe-area-inset-top));left:0;right:0;text-align:center;z-index:4;
+    color:rgba(255,255,255,.85);font-size:.82rem;font-family:system-ui,sans-serif;font-weight:600;
+    text-shadow:0 1px 6px rgba(0,0,0,.8);pointer-events:none}
+
+  /* ---------- resultado ---------- */
+  .resultado{max-width:460px;margin:0 auto;padding:26px 22px calc(40px + env(safe-area-inset-bottom))}
+  .resultado h2{font-weight:400;font-size:1.3rem;text-align:center;margin-bottom:16px}
+  .resultado h2 b{color:var(--rose)}
+  .resultado img{width:100%;border-radius:22px;border:1px solid var(--borda);box-shadow:0 14px 44px rgba(0,0,0,.6)}
+  .svg-ic{width:22px;height:22px;vertical-align:-5px}
+</style>
+</head>
+<body>
+
+<!-- ============ 1. preparo (dados que entram no cartão) ============ -->
+<div class="setup" id="setup">
+  <div class="marca">
+    <div class="selo-logo"><b>D</b><i>DYMANI</i></div>
+    <h1>Cartão <b>ao Vivo</b></h1>
+    <p>O cartão já aparece na câmera — é só enquadrar a unha e bater a foto ✨</p>
+  </div>
+  <div class="aviso">🧪 Página de teste — separada do app oficial, não mexe em nada</div>
+  <div class="cartao-form">
+    <label>Nome da cliente</label>
+    <input id="f-nome" value="Gabriela Leão" placeholder="Ex: Gabriela Leão">
+    <label>Serviço</label>
+    <input id="f-serv" value="Serviço Premium" placeholder="Ex: Alongamento em gel">
+    <div class="lado">
+      <div><label>Selos dela</label><input id="f-selos" inputmode="numeric" value="9"></div>
+      <div><label>Meta de selos</label><input id="f-meta" inputmode="numeric" value="10"></div>
+    </div>
+    <label>Link do QR "agende seu horário"</label>
+    <input id="f-link" value="https://dymani-git-main-convitefys-projects.vercel.app/portfolio?s=studio-demo">
+    <button class="btn" onclick="abrirCamera()">📸 Abrir a câmera com o cartão</button>
+    <button class="btn ghost" onclick="usarGaleria()">🖼️ Usar uma foto da galeria</button>
+  </div>
+</div>
+
+<!-- ============ 2. câmera (molde premium por cima do vídeo) ============ -->
+<div class="telacam" id="telacam" hidden>
+  <div class="stage" id="stage">
+    <video id="camv" autoplay playsinline muted></video>
+    <canvas class="molde" id="molde"></canvas>
+    <div class="camdica">Posicione a unha na parte livre do cartão 💅</div>
+    <button class="camx camtorch" id="btorch" style="display:none" onclick="lanterna()">⚡</button>
+    <div class="flash" id="flash"></div>
+  </div>
+  <div class="cambar">
+    <button class="camx" onclick="fecharCamera()">✕</button>
+    <button class="camshot" onclick="bater()"><span></span></button>
+    <button class="camx" onclick="virar()">🔄</button>
+  </div>
+</div>
+
+<!-- ============ 3. resultado (cartão pronto) ============ -->
+<div class="resultado" id="resultado" hidden>
+  <h2>Ficou <b>linda</b>! 😍</h2>
+  <img id="foto-final" alt="Cartão da Unha pronto">
+  <button class="btn rose" onclick="compartilhar()">💌 Compartilhar com a cliente</button>
+  <button class="btn" onclick="baixar()">⬇️ Salvar no celular</button>
+  <button class="btn ghost" onclick="tirarOutra()">📸 Tirar outra</button>
+</div>
+
+<script>
+'use strict';
+const $=s=>document.querySelector(s);
+const W=1080,H=1440; // cartão 3:4, resolução de status/story
+
+/* ================================================================
+   Gerador de QR (byte mode, nível M, versões 1-10) — offline.
+   Copiado do painel.html (já testado com leitor de verdade).
+   ================================================================ */
+function qrMatrix(str){
+  const EXP=new Array(256),LOG=new Array(256);
+  for(let i=0,v=1;i<255;i++){EXP[i]=v;LOG[v]=i;v<<=1;if(v&0x100)v^=0x11d;}EXP[255]=EXP[0];
+  const mul=(a,b)=>(a===0||b===0)?0:EXP[(LOG[a]+LOG[b])%255];
+  function genPoly(n){let g=[1];for(let i=0;i<n;i++){const ng=new Array(g.length+1).fill(0);
+    for(let j=0;j<g.length;j++){ng[j]^=g[j];ng[j+1]^=mul(g[j],EXP[i]);}g=ng;}return g;}
+  function rsEcc(data,n){const gen=genPoly(n);const res=data.concat(new Array(n).fill(0));
+    for(let i=0;i<data.length;i++){const c=res[i];if(c)for(let j=0;j<gen.length;j++)res[i+j]^=mul(gen[j],c);}
+    return res.slice(data.length);}
+  const RS={1:[10,[[1,16]]],2:[16,[[1,28]]],3:[26,[[1,44]]],4:[18,[[2,32]]],5:[24,[[2,43]]],
+    6:[16,[[4,27]]],7:[18,[[4,31]]],8:[22,[[2,38],[2,39]]],9:[22,[[3,36],[2,37]]],10:[26,[[4,43],[1,44]]]};
+  const ALIGN={1:[],2:[6,18],3:[6,22],4:[6,26],5:[6,30],6:[6,34],7:[6,22,38],8:[6,24,42],9:[6,26,46],10:[6,28,50]};
+  const FORMAT_M=[0x5412,0x5125,0x5E7C,0x5B4B,0x45F9,0x40CE,0x4F97,0x4AA0];
+  const VER_INFO={7:0x07C94,8:0x085BC,9:0x09A99,10:0x0A4D3};
+  const utf8=[];for(const ch of str){let cp=ch.codePointAt(0);
+    if(cp<0x80)utf8.push(cp);else if(cp<0x800)utf8.push(0xC0|cp>>6,0x80|cp&63);
+    else if(cp<0x10000)utf8.push(0xE0|cp>>12,0x80|(cp>>6&63),0x80|cp&63);
+    else utf8.push(0xF0|cp>>18,0x80|(cp>>12&63),0x80|(cp>>6&63),0x80|cp&63);}
+  let ver=0,dataCwTotal=0;
+  for(let vv=1;vv<=10;vv++){const lb=vv<10?8:16,need=4+lb+8*utf8.length,total=RS[vv][1].reduce((s,[q,d])=>s+q*d,0);
+    if(need<=total*8){ver=vv;dataCwTotal=total;break;}}
+  if(!ver)throw new Error('texto grande demais pro QR');
+  const lenBits=ver<10?8:16,bits=[],push=(val,len)=>{for(let i=len-1;i>=0;i--)bits.push((val>>i)&1);};
+  push(0b0100,4);push(utf8.length,lenBits);for(const b of utf8)push(b,8);
+  const cap=dataCwTotal*8,term=Math.min(4,cap-bits.length);for(let i=0;i<term;i++)bits.push(0);
+  while(bits.length%8)bits.push(0);
+  const cw=[];for(let i=0;i<bits.length;i+=8){let v=0;for(let j=0;j<8;j++)v=(v<<1)|bits[i+j];cw.push(v);}
+  const pad=[0xEC,0x11];let pi=0;while(cw.length<dataCwTotal){cw.push(pad[pi&1]);pi++;}
+  const ecPer=RS[ver][0],blocks=[];let idx=0;
+  for(const[qtd,dlen] of RS[ver][1])for(let b=0;b<qtd;b++){const d=cw.slice(idx,idx+dlen);idx+=dlen;blocks.push({d,e:rsEcc(d,ecPer)});}
+  const maxD=Math.max(...blocks.map(b=>b.d.length)),finalCw=[];
+  for(let i=0;i<maxD;i++)for(const b of blocks)if(i<b.d.length)finalCw.push(b.d[i]);
+  for(let i=0;i<ecPer;i++)for(const b of blocks)finalCw.push(b.e[i]);
+  const MASK=[(r,c)=>(r+c)%2===0,(r,c)=>r%2===0,(r,c)=>c%3===0,(r,c)=>(r+c)%3===0,
+    (r,c)=>(Math.floor(r/2)+Math.floor(c/3))%2===0,(r,c)=>((r*c)%2+(r*c)%3)===0,
+    (r,c)=>(((r*c)%2+(r*c)%3)%2)===0,(r,c)=>(((r+c)%2+(r*c)%3)%2)===0];
+  const n=17+4*ver;
+  function build(mask){
+    const m=Array.from({length:n},()=>new Array(n).fill(null));
+    const finder=(r,c)=>{for(let dr=-1;dr<=7;dr++)for(let dc=-1;dc<=7;dc++){const rr=r+dr,cc=c+dc;
+      if(rr<0||rr>=n||cc<0||cc>=n)continue;
+      m[rr][cc]=(dr>=0&&dr<=6&&(dc===0||dc===6))||(dc>=0&&dc<=6&&(dr===0||dr===6))||(dr>=2&&dr<=4&&dc>=2&&dc<=4);}};
+    finder(0,0);finder(0,n-7);finder(n-7,0);
+    for(let i=8;i<n-8;i++){if(m[6][i]===null)m[6][i]=(i%2===0);if(m[i][6]===null)m[i][6]=(i%2===0);}
+    for(const r of ALIGN[ver])for(const c of ALIGN[ver]){
+      if((r<=7&&c<=7)||(r<=7&&c>=n-8)||(r>=n-8&&c<=7))continue;
+      for(let dr=-2;dr<=2;dr++)for(let dc=-2;dc<=2;dc++)m[r+dr][c+dc]=(Math.max(Math.abs(dr),Math.abs(dc))!==1);}
+    m[n-8][8]=true;
+    const fmt=FORMAT_M[mask];
+    for(let i=0;i<15;i++){const bit=((fmt>>i)&1)===1;
+      if(i<6)m[i][8]=bit;else if(i<8)m[i+1][8]=bit;else m[n-15+i][8]=bit;
+      if(i<8)m[8][n-1-i]=bit;else if(i<9)m[8][15-i-1+1]=bit;else m[8][15-i-1]=bit;}
+    if(ver>=7){const vi=VER_INFO[ver];for(let i=0;i<18;i++){const bit=((vi>>i)&1)===1;
+      m[Math.floor(i/3)][i%3+n-8-3]=bit;m[i%3+n-8-3][Math.floor(i/3)]=bit;}}
+    const mf=MASK[mask];let inc=-1,row=n-1,byteIndex=0,bitIndex=7;
+    for(let col=n-1;col>0;col-=2){if(col===6)col--;
+      while(true){for(let c=0;c<2;c++){const cc=col-c;if(m[row][cc]===null){
+        let dark=false;if(byteIndex<finalCw.length)dark=((finalCw[byteIndex]>>>bitIndex)&1)===1;
+        if(mf(row,cc))dark=!dark;m[row][cc]=dark;bitIndex--;if(bitIndex===-1){byteIndex++;bitIndex=7;}}}
+        row+=inc;if(row<0||row>=n){row-=inc;inc=-inc;break;}}}
+    return m;
+  }
+  function penalty(m){let p=0;
+    for(let r=0;r<n;r++)for(let c=0;c<n;c++){let same=0;const d=m[r][c];
+      for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){if(dr===0&&dc===0)continue;const rr=r+dr,cc=c+dc;
+        if(rr<0||rr>=n||cc<0||cc>=n)continue;if(m[rr][cc]===d)same++;}if(same>5)p+=(3+same-5);}
+    for(let r=0;r<n-1;r++)for(let c=0;c<n-1;c++){let cnt=0;if(m[r][c])cnt++;if(m[r+1][c])cnt++;if(m[r][c+1])cnt++;if(m[r+1][c+1])cnt++;if(cnt===0||cnt===4)p+=3;}
+    const pat=(a,b,c2,d,e,f,gg)=>a&&!b&&c2&&d&&e&&!f&&gg;
+    for(let r=0;r<n;r++)for(let c=0;c<n-6;c++)if(pat(m[r][c],m[r][c+1],m[r][c+2],m[r][c+3],m[r][c+4],m[r][c+5],m[r][c+6]))p+=40;
+    for(let c=0;c<n;c++)for(let r=0;r<n-6;r++)if(pat(m[r][c],m[r+1][c],m[r+2][c],m[r+3][c],m[r+4][c],m[r+5][c],m[r+6][c]))p+=40;
+    let dark=0;for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(m[r][c])dark++;
+    p+=Math.floor(Math.abs(100*dark/(n*n)-50)/5)*10;return p;}
+  let best=null,bestP=Infinity;
+  for(let mk=0;mk<8;mk++){const m=build(mk),pp=penalty(m);if(pp<bestP){bestP=pp;best=m;}}
+  return best.map(r=>r.map(v=>!!v));
+}
+function roundRect(x,a,b,w,h,r){x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);
+  x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath();}
+function desenharQR(x,texto,cx,cy,size){
+  let m;try{m=qrMatrix(texto);}catch(e){return;}
+  const mods=m.length,cell=size/(mods+8),pad=cell*4,rad=Math.round(size*0.08);
+  x.save();
+  x.fillStyle='#fff';roundRect(x,cx,cy,size,size,rad);x.fill();
+  x.strokeStyle='rgba(0,0,0,.12)';x.lineWidth=2;roundRect(x,cx,cy,size,size,rad);x.stroke();
+  x.fillStyle='#0b0b0b';
+  for(let r=0;r<mods;r++)for(let c=0;c<mods;c++)if(m[r][c])
+    x.fillRect(cx+pad+c*cell,cy+pad+r*cell,Math.ceil(cell),Math.ceil(cell));
+  x.restore();
+}
+
+/* ================================================================
+   O molde premium (desenhado num canvas transparente 1080x1440 que
+   fica por cima do vídeo — e é o MESMO desenho carimbado na foto final)
+   ================================================================ */
+const OURO='#d9b36a',OURO_CLARO='#f4d58d',OURO_ESCURO='#a87f35',ROSE='#e2aab4',ROSE_CLARO='#f0cdd3';
+
+function dadosDoForm(){
+  const meta=Math.max(1,Math.min(10,parseInt($('#f-meta').value)||10));
+  const selos=Math.max(0,Math.min(meta,parseInt($('#f-selos').value)||0));
+  return{nome:$('#f-nome').value.trim()||'Sua Cliente',
+    serv:($('#f-serv').value.trim()||'Serviço Premium').toUpperCase(),
+    selos,meta,link:$('#f-link').value.trim()};
+}
+// texto com espaçamento entre letras (canvas não tem letter-spacing em todo lugar)
+function txtEspacado(x,s,px,py,esp){let cx=px;for(const ch of s){x.fillText(ch,cx,py);cx+=x.measureText(ch).width+esp;}return cx-esp;}
+function largEspacado(x,s,esp){let w=0;for(const ch of s)w+=x.measureText(ch).width+esp;return w-esp;}
+
+function desenharMolde(x,d){
+  x.clearRect(0,0,W,H);
+  x.textBaseline='alphabetic';x.textAlign='left';
+
+  /* --- sombras pra leitura (topo, base e vinheta) --- */
+  let g=x.createLinearGradient(0,0,0,560);
+  g.addColorStop(0,'rgba(10,4,12,.82)');g.addColorStop(.6,'rgba(10,4,12,.45)');g.addColorStop(1,'rgba(10,4,12,0)');
+  x.fillStyle=g;x.fillRect(0,0,W,560);
+  g=x.createLinearGradient(0,H-640,0,H);
+  g.addColorStop(0,'rgba(10,4,12,0)');g.addColorStop(.45,'rgba(10,4,12,.55)');g.addColorStop(1,'rgba(10,4,12,.88)');
+  x.fillStyle=g;x.fillRect(0,H-640,W,640);
+  g=x.createRadialGradient(W/2,H/2,H*.34,W/2,H/2,H*.72);
+  g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(8,3,10,.5)');
+  x.fillStyle=g;x.fillRect(0,0,W,H);
+
+  /* --- moldura dourada --- */
+  const og=x.createLinearGradient(0,0,W,H);
+  og.addColorStop(0,OURO_CLARO);og.addColorStop(.5,OURO);og.addColorStop(1,OURO_ESCURO);
+  x.strokeStyle=og;x.lineWidth=3;roundRect(x,30,30,W-60,H-60,46);x.stroke();
+  x.strokeStyle='rgba(244,213,141,.28)';x.lineWidth=1.5;roundRect(x,44,44,W-88,H-88,38);x.stroke();
+
+  /* --- ornamento do topo (losango com riscos) --- */
+  const orn=(oy)=>{x.save();x.strokeStyle=OURO;x.fillStyle=OURO;x.lineWidth=2;
+    x.beginPath();x.moveTo(W/2-110,oy);x.lineTo(W/2-26,oy);x.stroke();
+    x.beginPath();x.moveTo(W/2+26,oy);x.lineTo(W/2+110,oy);x.stroke();
+    x.beginPath();x.moveTo(W/2,oy-11);x.lineTo(W/2+11,oy);x.lineTo(W/2,oy+11);x.lineTo(W/2-11,oy);x.closePath();x.fill();
+    x.restore();};
+  orn(82);
+
+  /* --- selo da marca (topo direito) --- */
+  const bx=W-186,by=214,br=118;
+  x.save();
+  x.fillStyle='rgba(8,3,10,.62)';x.beginPath();x.arc(bx,by,br,0,7);x.fill();
+  x.strokeStyle=og;x.lineWidth=3;x.beginPath();x.arc(bx,by,br,0,7);x.stroke();
+  x.strokeStyle='rgba(244,213,141,.35)';x.lineWidth=1;x.beginPath();x.arc(bx,by,br-9,0,7);x.stroke();
+  x.textAlign='center';
+  x.fillStyle=ROSE;x.font='italic 700 92px Georgia,serif';x.fillText('D',bx,by+8);
+  x.fillStyle='#f6e9ec';x.font='700 30px Georgia,serif';
+  const wD=largEspacado(x,'DYMANI',7);x.textAlign='left';txtEspacado(x,'DYMANI',bx-wD/2,by+52,7);
+  x.fillStyle=OURO;x.font='600 15px Georgia,serif';
+  const wB=largEspacado(x,'BEAUTY & NAILS',4);txtEspacado(x,'BEAUTY & NAILS',bx-wB/2,by+80,4);
+  x.restore();
+
+  /* --- nome da cliente (a estrela do cartão) --- */
+  const maxW=W-460;
+  let linhas=[d.nome];
+  x.font='400 104px Georgia,serif';
+  if(x.measureText(d.nome).width>maxW){
+    const p=d.nome.split(/\s+/);const meio=Math.ceil(p.length/2);
+    linhas=[p.slice(0,meio).join(' '),p.slice(meio).join(' ')].filter(Boolean);
+  }
+  let fs=104;
+  const cabe=()=>{x.font=`400 ${fs}px Georgia,serif`;return linhas.every(l=>x.measureText(l).width<=maxW);};
+  while(!cabe()&&fs>56)fs-=4;
+  const ng=x.createLinearGradient(0,120,0,150+linhas.length*fs);
+  ng.addColorStop(0,ROSE_CLARO);ng.addColorStop(1,ROSE);
+  x.fillStyle=ng;x.font=`400 ${fs}px Georgia,serif`;
+  let ny=126+fs*.86;
+  for(const l of linhas){x.fillText(l,78,ny);ny+=fs*1.04;}
+
+  /* --- serviço + risco + data --- */
+  let sy=ny+8;
+  x.fillStyle=OURO;x.font='600 34px Georgia,serif';
+  txtEspacado(x,d.serv,80,sy,9);
+  sy+=34;
+  x.strokeStyle='rgba(217,179,106,.55)';x.lineWidth=1.5;
+  x.beginPath();x.moveTo(80,sy);x.lineTo(80+Math.min(largEspacado(x,d.serv,9),420),sy);x.stroke();
+  sy+=64;
+  x.fillStyle='rgba(240,205,211,.85)';x.font='italic 34px Georgia,serif';x.fillText('Data:',80,sy);
+  const hj=new Date(),dataBR=`${String(hj.getDate()).padStart(2,'0')}/${String(hj.getMonth()+1).padStart(2,'0')}/${hj.getFullYear()}`;
+  x.fillStyle='#f6e9ec';x.font='400 42px Georgia,serif';x.fillText(dataBR,80,sy+52);
+
+  /* --- folhinhas decorativas (canto inferior esquerdo) --- */
+  x.save();x.translate(46,H-52);
+  const folha=(ang,comp,larg)=>{x.save();x.rotate(ang);
+    x.beginPath();x.moveTo(0,0);
+    x.quadraticCurveTo(comp*.42,-larg,comp,0);x.quadraticCurveTo(comp*.42,larg,0,0);x.closePath();
+    x.fillStyle='rgba(226,170,180,.30)';x.fill();
+    x.strokeStyle='rgba(217,179,106,.5)';x.lineWidth=1.5;
+    x.beginPath();x.moveTo(0,0);x.lineTo(comp*.94,0);x.stroke();x.restore();};
+  folha(-1.35,150,26);folha(-1.05,190,30);folha(-.72,150,26);folha(-.45,110,20);
+  x.restore();
+
+  /* --- selos (moedas douradas) --- */
+  const coinR=40,step=104,x0=118,y0=H-486;
+  for(let i=0;i<d.meta;i++){
+    const cx=x0+(i%5)*step,cy=y0+Math.floor(i/5)*step;
+    if(i<d.selos){
+      const cg=x.createRadialGradient(cx-12,cy-14,6,cx,cy,coinR);
+      cg.addColorStop(0,'#ffe9a8');cg.addColorStop(.55,OURO_CLARO);cg.addColorStop(1,'#b8892e');
+      x.fillStyle=cg;x.beginPath();x.arc(cx,cy,coinR,0,7);x.fill();
+      x.strokeStyle='#8a6420';x.lineWidth=3;x.beginPath();x.arc(cx,cy,coinR-2,0,7);x.stroke();
+      x.strokeStyle='rgba(255,244,200,.8)';x.lineWidth=1.5;x.beginPath();x.arc(cx,cy,coinR-8,0,7);x.stroke();
+      // florzinha de 4 pétalas gravada na moeda
+      x.fillStyle='rgba(138,100,32,.85)';
+      for(let p=0;p<4;p++){const a=p*Math.PI/2;
+        x.beginPath();x.arc(cx+Math.cos(a)*11,cy+Math.sin(a)*11,8.5,0,7);x.fill();}
+      x.fillStyle='#ffe9a8';x.beginPath();x.arc(cx,cy,4.5,0,7);x.fill();
+    }else{
+      x.setLineDash([7,7]);x.strokeStyle='rgba(230,190,120,.85)';x.lineWidth=2.5;
+      x.beginPath();x.arc(cx,cy,coinR-3,0,7);x.stroke();x.setLineDash([]);
+    }
+  }
+
+  /* --- quanto falta pra unha grátis --- */
+  const faltam=d.meta-d.selos,fy=H-262;
+  x.font='700 40px Georgia,serif';
+  if(faltam<=0){
+    x.fillStyle=OURO_CLARO;txtEspacado(x,'🎉 UNHA GRÁTIS CONQUISTADA! 🎉',78,fy,2);
+  }else{
+    x.fillStyle='#f2d7db';
+    const t1=faltam===1?'🎁 FALTA ':'🎁 FALTAM ';
+    let cx2=txtEspacado(x,t1+faltam+' PRA ',78,fy,2)+10;
+    x.fillStyle=OURO_CLARO;txtEspacado(x,'UNHA GRÁTIS',(x.font='800 40px Georgia,serif',cx2),fy,2);
+  }
+
+  /* --- QR de agendamento + convite --- */
+  const qs=236,qx=W-72-qs,qy=H-72-qs;
+  if(d.link)desenharQR(x,d.link,qx,qy,qs);
+  x.fillStyle='#f6e9ec';x.font='italic 40px Georgia,serif';
+  x.fillText('Agende seu',qx-338,qy+118);
+  x.fillText('horário',qx-338,qy+170);
+  // setinha charmosa apontando pro QR
+  x.strokeStyle=ROSE;x.lineWidth=3.5;x.lineCap='round';
+  x.beginPath();x.moveTo(qx-186,qy+196);x.quadraticCurveTo(qx-110,qy+226,qx-42,qy+192);x.stroke();
+  x.beginPath();x.moveTo(qx-42,qy+192);x.lineTo(qx-68,qy+186);x.moveTo(qx-42,qy+192);x.lineTo(qx-56,qy+214);x.stroke();
+}
+
+/* ================================================================
+   Câmera com o molde por cima + captura carimbada
+   ================================================================ */
+let stream=null,facing='environment',torchOn=false,dados=null;
+const moldeCv=$('#molde');moldeCv.width=W;moldeCv.height=H;
+
+async function abrirCamera(){
+  dados=dadosDoForm();
+  desenharMolde(moldeCv.getContext('2d'),dados);
+  if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)){usarGaleria();return;}
+  $('#setup').hidden=true;$('#resultado').hidden=true;$('#telacam').hidden=false;
+  await ligar();
+}
+async function ligar(){
+  try{
+    if(stream)stream.getTracks().forEach(t=>t.stop());
+    stream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:facing,width:{ideal:1920},height:{ideal:1920}},audio:false});
+    const v=$('#camv');v.srcObject=stream;v.classList.toggle('espelho',facing==='user');
+    torchOn=false;$('#btorch').classList.remove('on');
+    const tk=stream.getVideoTracks()[0],cap=tk.getCapabilities?tk.getCapabilities():{};
+    $('#btorch').style.display=cap.torch?'flex':'none';
+  }catch(e){fecharCamera();alert('Não consegui abrir a câmera 😢 — tenta "usar foto da galeria"');}
+}
+function virar(){facing=facing==='environment'?'user':'environment';ligar();}
+async function lanterna(){
+  const tk=stream&&stream.getVideoTracks()[0];if(!tk)return;
+  try{await tk.applyConstraints({advanced:[{torch:!torchOn}]});
+    torchOn=!torchOn;$('#btorch').classList.toggle('on',torchOn);}catch(e){}
+}
+function fecharCamera(){
+  if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
+  $('#telacam').hidden=true;$('#setup').hidden=false;
+}
+function bater(){
+  const v=$('#camv'),vw=v.videoWidth,vh=v.videoHeight;
+  if(!vw){alert('Espera a câmera abrir 🙏');return;}
+  $('#flash').classList.remove('pisca');void $('#flash').offsetWidth;$('#flash').classList.add('pisca');
+  if(navigator.vibrate)navigator.vibrate(60);
+  // recorta o vídeo no mesmo 3:4 que aparece na tela (object-fit: cover)
+  const alvo=W/H;let cw,ch;
+  if(vw/vh>alvo){ch=vh;cw=vh*alvo;}else{cw=vw;ch=cw/alvo;}
+  const sx=(vw-cw)/2,sy=(vh-ch)/2;
+  const c=document.createElement('canvas');c.width=W;c.height=H;
+  const x=c.getContext('2d');
+  x.save();
+  if(facing==='user'){x.translate(W,0);x.scale(-1,1);} // espelha igual ao preview
+  x.drawImage(v,sx,sy,cw,ch,0,0,W,H);
+  x.restore();
+  x.drawImage(moldeCv,0,0); // carimba o cartão por cima — o que ela viu é o que sai
+  mostrarResultado(c.toDataURL('image/jpeg',.88));
+}
+function mostrarResultado(dataUrl){
+  if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
+  $('#telacam').hidden=true;$('#setup').hidden=true;
+  $('#foto-final').src=dataUrl;$('#resultado').hidden=false;
+  window.scrollTo(0,0);
+}
+function tirarOutra(){$('#resultado').hidden=true;abrirCamera();}
+
+/* --- galeria (fallback / opção): escolhe a foto e carimba o mesmo molde --- */
+function usarGaleria(){
+  dados=dadosDoForm();
+  desenharMolde(moldeCv.getContext('2d'),dados);
+  const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
+  inp.onchange=()=>{const f=inp.files[0];if(!f)return;
+    const img=new Image();img.onload=()=>{
+      const alvo=W/H;let cw,ch;
+      if(img.width/img.height>alvo){ch=img.height;cw=ch*alvo;}else{cw=img.width;ch=cw/alvo;}
+      const c=document.createElement('canvas');c.width=W;c.height=H;
+      const x=c.getContext('2d');
+      x.drawImage(img,(img.width-cw)/2,(img.height-ch)/2,cw,ch,0,0,W,H);
+      x.drawImage(moldeCv,0,0);
+      mostrarResultado(c.toDataURL('image/jpeg',.88));
+    };img.src=URL.createObjectURL(f);};
+  inp.click();
+}
+
+/* --- compartilhar / salvar --- */
+async function compartilhar(){
+  const r=await fetch($('#foto-final').src),blob=await r.blob();
+  const file=new File([blob],'cartao-dymani.jpg',{type:'image/jpeg'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    try{await navigator.share({files:[file],title:'Cartão da Unha — Dymani'});}catch(e){}
+  }else baixar();
+}
+function baixar(){
+  const a=document.createElement('a');a.href=$('#foto-final').src;a.download='cartao-dymani.jpg';a.click();
+}
+</script>
+</body>
+</html>

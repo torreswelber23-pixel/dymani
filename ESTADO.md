@@ -53,6 +53,7 @@ Status comercial: **ainda sem cliente pagante** (jul/2026). O produto está pron
 - [x] **Subir foto da galeria** no atendimento e trocar a foto do cartão no editor
 - [x] Selos de fidelidade agora são **estrelas** (na lista, na ficha e no cartão) no lugar dos pontinhos
 - [x] Corrigido: o menu de baixo não tapa mais os botões (salvar imagem etc.)
+- [x] 🧪 **Experimento "Cartão ao Vivo"** (`camera.html`, página de teste 100% separada — não mexe no app): a câmera abre já com o layout premium do cartão por cima (nome, selos dourados, logo, QR), tipo filtro do Instagram; a foto sai pronta pra postar. Testado com Playwright (0 erros, QR lendo)
 
 ---
 
