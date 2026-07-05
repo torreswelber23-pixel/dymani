@@ -54,6 +54,7 @@ Status comercial: **ainda sem cliente pagante** (jul/2026). O produto está pron
 - [x] Selos de fidelidade agora são **estrelas** (na lista, na ficha e no cartão) no lugar dos pontinhos
 - [x] Corrigido: o menu de baixo não tapa mais os botões (salvar imagem etc.)
 - [x] 🧪 **Experimento "Cartão ao Vivo"** (`camera.html`, página de teste 100% separada — não mexe no app): a câmera abre já com o layout premium do cartão por cima (nome, selos dourados, logo, QR), tipo filtro do Instagram; a foto sai pronta pra postar. Testado com Playwright (0 erros, QR lendo)
+- [x] 🎠 **Portfólio virou site de conversão**: carrossel-herói com as fotos passando sozinhas (crossfade + zoom lento, arrastável), serviços em **cards com FOTO** + preço + botão que já pré-seleciona no agendamento, barra fixa de conversão com resumo da escolha ("Alongamento · 06/07 às 09:00 — só confirmar!"), seção "como funciona", animações de entrada ao rolar. No painel, cada serviço agora pode ter foto (caixinha 📷 na tela de serviços — salva no mesmo jsonb, sem migração). Testado E2E com Playwright: fluxo completo até o agendamento confirmado, 0 erros
 - [x] ✨ **Estilo "Premium" no editor do painel** (5º estilo, agora o padrão pra quem nunca escolheu): moldura dourada, fonte Playfair Display, moedas de selo com relevo, bokeh, logo do studio da manicure num selo redondo (ou monograma se não tiver logo), QR creme "Agende seu horário". Multitenant de verdade — cada studio com a marca dele. Testado com Playwright: 0 erros, QR lendo, os 4 estilos antigos intactos
 
 ---

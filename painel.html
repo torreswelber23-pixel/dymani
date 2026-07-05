@@ -150,6 +150,11 @@
   /* ---- serviços / horários rows ---- */
   .frow{display:flex;gap:8px;margin-bottom:9px;align-items:center}
   .frow input:first-child{flex:2}.frow input:nth-child(2){flex:1}
+  .frow .sfoto{width:48px;height:48px;border-radius:12px;flex-shrink:0;border:1.5px dashed var(--line2);
+    background:var(--surf2);display:flex;align-items:center;justify-content:center;cursor:pointer;
+    overflow:hidden;color:var(--muted2)}
+  .frow .sfoto img{width:100%;height:100%;object-fit:cover}
+  .frow .fx{flex:2}.frow .fp{flex:1}
   .del{background:rgba(239,68,68,.12);color:var(--verm);border:1px solid rgba(239,68,68,.4);border-radius:11px;
     width:46px;height:46px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
   .del svg{width:18px;height:18px}
@@ -1114,15 +1119,29 @@ function telaStudio(sub){
 function subServicos(){
   const s=studio.servicos||[];
   $('#sub').innerHTML=`<div class="card"><h2>Serviços e preços</h2>
-    <div id="servs" style="margin-top:12px">${s.map(x=>servRow(x.nome,x.preco)).join('')}</div>
-    <button class="btn ghost sm" onclick="document.getElementById('servs').insertAdjacentHTML('beforeend',servRow('',''))">${ic('plus',17)} Adicionar serviço</button>
+    <p style="color:var(--muted2);font-size:.8rem;margin-top:4px">Toque na caixinha 📷 pra pôr uma foto — ela aparece no seu portfólio e ajuda a vender ✨</p>
+    <div id="servs" style="margin-top:12px">${s.map(x=>servRow(x.nome,x.preco,x.img)).join('')}</div>
+    <button class="btn ghost sm" onclick="document.getElementById('servs').insertAdjacentHTML('beforeend',servRow('','',''))">${ic('plus',17)} Adicionar serviço</button>
     <button class="btn" onclick="salvarServicos()">${ic('check',18)} Salvar serviços</button></div>`;
 }
-function servRow(n,p){return `<div class="frow"><input placeholder="Serviço" value="${n}"><input placeholder="R$" inputmode="numeric" value="${p}">
+function servRow(n,p,img){return `<div class="frow"${img?` data-img="${img}"`:''}>
+  <label class="sfoto">${img?`<img src="${img}">`:ic('camera',18)}<input type="file" accept="image/*" style="display:none" onchange="fotoServ(this)"></label>
+  <input class="fx" placeholder="Serviço" value="${n}"><input class="fp" placeholder="R$" inputmode="numeric" value="${p}">
   <button class="del" onclick="this.parentElement.remove()">${ic('trash',17)}</button></div>`;}
+function fotoServ(inp){
+  const row=inp.closest('.frow'),lab=inp.closest('.sfoto');
+  comprimir(inp.files[0],400,d=>{row.dataset.img=d;
+    let im=lab.querySelector('img');
+    if(!im){im=document.createElement('img');lab.prepend(im);}
+    im.src=d;const sv=lab.querySelector('svg');if(sv)sv.remove();
+    toast('Foto do serviço pronta — salve os serviços 📸');});
+}
 async function salvarServicos(){
-  const servicos=[...document.querySelectorAll('#servs .frow')].map(r=>{const[n,p]=r.querySelectorAll('input');
-    return{nome:n.value.trim(),preco:parseFloat(p.value)||0};}).filter(s=>s.nome);
+  const servicos=[...document.querySelectorAll('#servs .frow')].map(r=>{
+    const[n,p]=r.querySelectorAll('input:not([type=file])');
+    const o={nome:n.value.trim(),preco:parseFloat(p.value)||0};
+    if(r.dataset.img)o.img=r.dataset.img;
+    return o;}).filter(s=>s.nome);
   await salvar({servicos},'Serviços salvos! 💅');
 }
 function subHorarios(){
