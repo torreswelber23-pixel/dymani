@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>Dymani · Cartão ao Vivo (teste)</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💅</text></svg>">
+<!-- fonte elegante do cartão (se estiver sem internet, cai na Georgia sem quebrar) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
 <!--
   PÁGINA DE TESTE — totalmente separada do app oficial.
   Conceito: a câmera abre JÁ com o layout premium do Cartão da Unha por cima
@@ -228,9 +232,9 @@ function desenharQR(x,texto,cx,cy,size){
   let m;try{m=qrMatrix(texto);}catch(e){return;}
   const mods=m.length,cell=size/(mods+8),pad=cell*4,rad=Math.round(size*0.08);
   x.save();
-  x.fillStyle='#fff';roundRect(x,cx,cy,size,size,rad);x.fill();
-  x.strokeStyle='rgba(0,0,0,.12)';x.lineWidth=2;roundRect(x,cx,cy,size,size,rad);x.stroke();
-  x.fillStyle='#0b0b0b';
+  x.fillStyle='#faf3ec';roundRect(x,cx,cy,size,size,rad);x.fill();
+  x.strokeStyle='rgba(168,127,53,.4)';x.lineWidth=2;roundRect(x,cx,cy,size,size,rad);x.stroke();
+  x.fillStyle='#2a1420';
   for(let r=0;r<mods;r++)for(let c=0;c<mods;c++)if(m[r][c])
     x.fillRect(cx+pad+c*cell,cy+pad+r*cell,Math.ceil(cell),Math.ceil(cell));
   x.restore();
@@ -241,6 +245,23 @@ function desenharQR(x,texto,cx,cy,size){
    fica por cima do vídeo — e é o MESMO desenho carimbado na foto final)
    ================================================================ */
 const OURO='#d9b36a',OURO_CLARO='#f4d58d',OURO_ESCURO='#a87f35',ROSE='#e2aab4',ROSE_CLARO='#f0cdd3';
+const SERIF='"Playfair Display",Georgia,serif';
+
+/* fonte + arte da logo carregadas ANTES de desenhar o molde
+   (se falhar — sem internet — segue com Georgia e o selo desenhado) */
+let logoImg=null,recursosProntos=null;
+function prepararRecursos(){
+  if(recursosProntos)return recursosProntos;
+  const fontes=Promise.race([
+    Promise.all(['104px','italic 40px','600 40px','500 34px']
+      .map(f=>document.fonts.load(`${f} "Playfair Display"`))),
+    new Promise(r=>setTimeout(r,3500))
+  ]).catch(()=>{});
+  const logo=new Promise(r=>{const im=new Image();
+    im.onload=()=>{logoImg=im;r();};im.onerror=()=>r();im.src='dymani.jpg';});
+  recursosProntos=Promise.all([fontes,logo]);
+  return recursosProntos;
+}
 
 function dadosDoForm(){
   const meta=Math.max(1,Math.min(10,parseInt($('#f-meta').value)||10));
@@ -268,113 +289,184 @@ function desenharMolde(x,d){
   g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(8,3,10,.5)');
   x.fillStyle=g;x.fillRect(0,0,W,H);
 
+  /* --- brilhos bokeh dourados no topo (o clima da referência) --- */
+  const bokeh=(cx,cy,r,al)=>{const bg=x.createRadialGradient(cx,cy,0,cx,cy,r);
+    bg.addColorStop(0,`rgba(242,203,122,${al})`);bg.addColorStop(1,'rgba(242,203,122,0)');
+    x.fillStyle=bg;x.beginPath();x.arc(cx,cy,r,0,7);x.fill();};
+  bokeh(150,120,70,.10);bokeh(300,70,38,.13);bokeh(430,150,26,.16);
+  bokeh(560,90,50,.09);bokeh(660,190,20,.18);bokeh(120,300,44,.07);
+  bokeh(1010,330,42,.09);bokeh(950,110,30,.10);
+  // estrelinhas de 4 pontas (como as da logo)
+  const brilho=(cx,cy,r,al)=>{x.save();x.fillStyle=`rgba(244,213,141,${al})`;x.beginPath();
+    x.moveTo(cx,cy-r);x.quadraticCurveTo(cx+r*.14,cy-r*.14,cx+r,cy);x.quadraticCurveTo(cx+r*.14,cy+r*.14,cx,cy+r);
+    x.quadraticCurveTo(cx-r*.14,cy+r*.14,cx-r,cy);x.quadraticCurveTo(cx-r*.14,cy-r*.14,cx,cy-r);
+    x.closePath();x.fill();x.restore();};
+  brilho(388,120,13,.75);brilho(430,168,8,.55);brilho(660,84,10,.6);
+
   /* --- moldura dourada --- */
   const og=x.createLinearGradient(0,0,W,H);
   og.addColorStop(0,OURO_CLARO);og.addColorStop(.5,OURO);og.addColorStop(1,OURO_ESCURO);
   x.strokeStyle=og;x.lineWidth=3;roundRect(x,30,30,W-60,H-60,46);x.stroke();
-  x.strokeStyle='rgba(244,213,141,.28)';x.lineWidth=1.5;roundRect(x,44,44,W-88,H-88,38);x.stroke();
+  x.strokeStyle='rgba(244,213,141,.22)';x.lineWidth=1.2;roundRect(x,42,42,W-84,H-84,38);x.stroke();
 
-  /* --- ornamento do topo (losango com riscos) --- */
-  const orn=(oy)=>{x.save();x.strokeStyle=OURO;x.fillStyle=OURO;x.lineWidth=2;
-    x.beginPath();x.moveTo(W/2-110,oy);x.lineTo(W/2-26,oy);x.stroke();
-    x.beginPath();x.moveTo(W/2+26,oy);x.lineTo(W/2+110,oy);x.stroke();
-    x.beginPath();x.moveTo(W/2,oy-11);x.lineTo(W/2+11,oy);x.lineTo(W/2,oy+11);x.lineTo(W/2-11,oy);x.closePath();x.fill();
-    x.restore();};
-  orn(82);
+  /* --- ornamento fino do topo --- */
+  x.save();x.strokeStyle='rgba(217,179,106,.85)';x.fillStyle=OURO;x.lineWidth=1.6;
+  const oy=80;
+  x.beginPath();x.moveTo(W/2-130,oy);x.lineTo(W/2-30,oy);x.stroke();
+  x.beginPath();x.moveTo(W/2+30,oy);x.lineTo(W/2+130,oy);x.stroke();
+  x.beginPath();x.arc(W/2-134,oy,2.6,0,7);x.fill();x.beginPath();x.arc(W/2+134,oy,2.6,0,7);x.fill();
+  x.save();x.translate(W/2,oy);x.rotate(Math.PI/4);
+  x.strokeRect(-8.5,-8.5,17,17);x.fillRect(-3.5,-3.5,7,7);x.restore();
+  x.restore();
 
-  /* --- selo da marca (topo direito) --- */
+  /* --- selo da marca (topo direito) — a arte REAL da logo recortada em círculo --- */
   const bx=W-186,by=214,br=118;
   x.save();
-  x.fillStyle='rgba(8,3,10,.62)';x.beginPath();x.arc(bx,by,br,0,7);x.fill();
+  x.fillStyle='rgba(12,5,14,.85)';x.beginPath();x.arc(bx,by,br,0,7);x.fill();
+  if(logoImg){
+    // só o emblema da arte (o D com a unha e os brilhos), sem o texto
+    x.save();x.beginPath();x.arc(bx,by,br-3,0,7);x.clip();
+    x.drawImage(logoImg,135,28,270,270,bx-77,by-108,154,154);
+    x.restore();
+  }else{ // sem internet/arquivo: D desenhado
+    x.textAlign='center';
+    x.fillStyle=ROSE;x.font=`italic 500 92px ${SERIF}`;x.fillText('D',bx,by-14);
+    x.textAlign='left';
+  }
+  x.fillStyle='#f6e9ec';x.font=`500 30px ${SERIF}`;
+  const wD=largEspacado(x,'DYMANI',7);txtEspacado(x,'DYMANI',bx-wD/2,by+62,7);
+  x.fillStyle=OURO;x.font=`500 15px ${SERIF}`;
+  const wB=largEspacado(x,'BEAUTY & NAILS',4);txtEspacado(x,'BEAUTY & NAILS',bx-wB/2,by+90,4);
   x.strokeStyle=og;x.lineWidth=3;x.beginPath();x.arc(bx,by,br,0,7);x.stroke();
-  x.strokeStyle='rgba(244,213,141,.35)';x.lineWidth=1;x.beginPath();x.arc(bx,by,br-9,0,7);x.stroke();
-  x.textAlign='center';
-  x.fillStyle=ROSE;x.font='italic 700 92px Georgia,serif';x.fillText('D',bx,by+8);
-  x.fillStyle='#f6e9ec';x.font='700 30px Georgia,serif';
-  const wD=largEspacado(x,'DYMANI',7);x.textAlign='left';txtEspacado(x,'DYMANI',bx-wD/2,by+52,7);
-  x.fillStyle=OURO;x.font='600 15px Georgia,serif';
-  const wB=largEspacado(x,'BEAUTY & NAILS',4);txtEspacado(x,'BEAUTY & NAILS',bx-wB/2,by+80,4);
+  x.strokeStyle='rgba(244,213,141,.3)';x.lineWidth=1;x.beginPath();x.arc(bx,by,br-8,0,7);x.stroke();
   x.restore();
 
   /* --- nome da cliente (a estrela do cartão) --- */
   const maxW=W-460;
   let linhas=[d.nome];
-  x.font='400 104px Georgia,serif';
+  x.font=`400 104px ${SERIF}`;
   if(x.measureText(d.nome).width>maxW){
     const p=d.nome.split(/\s+/);const meio=Math.ceil(p.length/2);
     linhas=[p.slice(0,meio).join(' '),p.slice(meio).join(' ')].filter(Boolean);
   }
   let fs=104;
-  const cabe=()=>{x.font=`400 ${fs}px Georgia,serif`;return linhas.every(l=>x.measureText(l).width<=maxW);};
+  const cabe=()=>{x.font=`400 ${fs}px ${SERIF}`;return linhas.every(l=>x.measureText(l).width<=maxW);};
   while(!cabe()&&fs>56)fs-=4;
   const ng=x.createLinearGradient(0,120,0,150+linhas.length*fs);
   ng.addColorStop(0,ROSE_CLARO);ng.addColorStop(1,ROSE);
-  x.fillStyle=ng;x.font=`400 ${fs}px Georgia,serif`;
-  let ny=126+fs*.86;
-  for(const l of linhas){x.fillText(l,78,ny);ny+=fs*1.04;}
+  x.fillStyle=ng;x.font=`400 ${fs}px ${SERIF}`;
+  let ny=126+fs*.9;
+  for(const l of linhas){x.fillText(l,78,ny);ny+=fs*1.06;}
 
   /* --- serviço + risco + data --- */
-  let sy=ny+8;
-  x.fillStyle=OURO;x.font='600 34px Georgia,serif';
+  let sy=ny+10;
+  x.fillStyle=OURO;x.font=`500 34px ${SERIF}`;
   txtEspacado(x,d.serv,80,sy,9);
   sy+=34;
-  x.strokeStyle='rgba(217,179,106,.55)';x.lineWidth=1.5;
+  x.strokeStyle='rgba(217,179,106,.5)';x.lineWidth=1.2;
   x.beginPath();x.moveTo(80,sy);x.lineTo(80+Math.min(largEspacado(x,d.serv,9),420),sy);x.stroke();
-  sy+=64;
-  x.fillStyle='rgba(240,205,211,.85)';x.font='italic 34px Georgia,serif';x.fillText('Data:',80,sy);
+  sy+=66;
+  x.fillStyle='rgba(240,205,211,.85)';x.font=`italic 34px ${SERIF}`;x.fillText('Data:',80,sy);
   const hj=new Date(),dataBR=`${String(hj.getDate()).padStart(2,'0')}/${String(hj.getMonth()+1).padStart(2,'0')}/${hj.getFullYear()}`;
-  x.fillStyle='#f6e9ec';x.font='400 42px Georgia,serif';x.fillText(dataBR,80,sy+52);
+  x.fillStyle='#f6e9ec';x.font=`400 44px ${SERIF}`;x.fillText(dataBR,80,sy+54);
 
-  /* --- folhinhas decorativas (canto inferior esquerdo) --- */
-  x.save();x.translate(46,H-52);
+  /* --- folhas orgânicas (canto inferior esquerdo, discretas) --- */
+  x.save();x.translate(50,H-46);
   const folha=(ang,comp,larg)=>{x.save();x.rotate(ang);
+    const lg=x.createLinearGradient(0,0,comp,0);
+    lg.addColorStop(0,'rgba(186,116,140,.38)');lg.addColorStop(1,'rgba(110,55,85,.16)');
     x.beginPath();x.moveTo(0,0);
-    x.quadraticCurveTo(comp*.42,-larg,comp,0);x.quadraticCurveTo(comp*.42,larg,0,0);x.closePath();
-    x.fillStyle='rgba(226,170,180,.30)';x.fill();
-    x.strokeStyle='rgba(217,179,106,.5)';x.lineWidth=1.5;
-    x.beginPath();x.moveTo(0,0);x.lineTo(comp*.94,0);x.stroke();x.restore();};
-  folha(-1.35,150,26);folha(-1.05,190,30);folha(-.72,150,26);folha(-.45,110,20);
+    x.bezierCurveTo(comp*.22,-larg,comp*.7,-larg*.75,comp,0);
+    x.bezierCurveTo(comp*.7,larg*.75,comp*.22,larg,0,0);x.closePath();
+    x.fillStyle=lg;x.fill();
+    x.strokeStyle='rgba(217,179,106,.4)';x.lineWidth=1.3;
+    x.beginPath();x.moveTo(comp*.05,0);x.quadraticCurveTo(comp*.55,-larg*.06,comp*.95,0);x.stroke();
+    for(let i=1;i<=3;i++){const t=i/4.2;
+      x.beginPath();x.moveTo(comp*t,0);
+      x.quadraticCurveTo(comp*(t+.07),-larg*.42,comp*(t+.14),-larg*.6*(1-t));x.stroke();
+      x.beginPath();x.moveTo(comp*t,0);
+      x.quadraticCurveTo(comp*(t+.07),larg*.42,comp*(t+.14),larg*.6*(1-t));x.stroke();}
+    x.restore();};
+  folha(-1.42,225,38);folha(-1.06,265,44);folha(-.7,205,34);folha(-.42,145,25);
   x.restore();
 
-  /* --- selos (moedas douradas) --- */
+  /* --- selos: moedas douradas com trevo em relevo --- */
   const coinR=40,step=104,x0=118,y0=H-486;
+  const trevo=(cx,cy,cor,desl)=>{ // trevo de 4 folhas (2 bolinhas por pétala) + cabinho
+    x.fillStyle=cor;
+    for(let p=0;p<4;p++){const a=p*Math.PI/2-Math.PI/4;
+      const px2=cx+Math.cos(a)*10.5,py2=cy+desl+Math.sin(a)*10.5;
+      const perp=a+Math.PI/2;
+      x.beginPath();x.arc(px2+Math.cos(perp)*4.6,py2+Math.sin(perp)*4.6,6.6,0,7);x.fill();
+      x.beginPath();x.arc(px2-Math.cos(perp)*4.6,py2-Math.sin(perp)*4.6,6.6,0,7);x.fill();
+      x.beginPath();x.moveTo(cx,cy+desl);
+      x.lineTo(px2+Math.cos(perp)*8,py2+Math.sin(perp)*8);
+      x.lineTo(px2-Math.cos(perp)*8,py2-Math.sin(perp)*8);x.closePath();x.fill();}
+    x.beginPath();x.moveTo(cx+2,cy+desl+8);x.quadraticCurveTo(cx+7,cy+desl+16,cx+13,cy+desl+19);
+    x.quadraticCurveTo(cx+6,cy+desl+20,cx+1,cy+desl+15);x.closePath();x.fill();};
   for(let i=0;i<d.meta;i++){
     const cx=x0+(i%5)*step,cy=y0+Math.floor(i/5)*step;
     if(i<d.selos){
-      const cg=x.createRadialGradient(cx-12,cy-14,6,cx,cy,coinR);
-      cg.addColorStop(0,'#ffe9a8');cg.addColorStop(.55,OURO_CLARO);cg.addColorStop(1,'#b8892e');
+      // sombra da moeda no "tecido"
+      x.fillStyle='rgba(0,0,0,.35)';x.beginPath();x.ellipse(cx+3,cy+6,coinR,coinR*.92,0,0,7);x.fill();
+      // corpo com luz vinda de cima-esquerda
+      const cg=x.createRadialGradient(cx-14,cy-16,4,cx,cy,coinR);
+      cg.addColorStop(0,'#fff1c0');cg.addColorStop(.4,'#efd189');cg.addColorStop(.75,'#c99a44');cg.addColorStop(1,'#8f6a1e');
       x.fillStyle=cg;x.beginPath();x.arc(cx,cy,coinR,0,7);x.fill();
-      x.strokeStyle='#8a6420';x.lineWidth=3;x.beginPath();x.arc(cx,cy,coinR-2,0,7);x.stroke();
-      x.strokeStyle='rgba(255,244,200,.8)';x.lineWidth=1.5;x.beginPath();x.arc(cx,cy,coinR-8,0,7);x.stroke();
-      // florzinha de 4 pétalas gravada na moeda
-      x.fillStyle='rgba(138,100,32,.85)';
-      for(let p=0;p<4;p++){const a=p*Math.PI/2;
-        x.beginPath();x.arc(cx+Math.cos(a)*11,cy+Math.sin(a)*11,8.5,0,7);x.fill();}
-      x.fillStyle='#ffe9a8';x.beginPath();x.arc(cx,cy,4.5,0,7);x.fill();
+      // chanfro: anel escuro externo + fio de luz interno
+      x.strokeStyle='rgba(94,68,15,.9)';x.lineWidth=3.5;x.beginPath();x.arc(cx,cy,coinR-2,0,7);x.stroke();
+      x.strokeStyle='rgba(255,246,214,.75)';x.lineWidth=1.4;x.beginPath();x.arc(cx,cy,coinR-6.5,0,7);x.stroke();
+      // trevo em relevo: sombra embaixo, luz em cima, tom médio no meio
+      trevo(cx,cy,'rgba(94,64,12,.55)',2);
+      trevo(cx,cy,'rgba(255,240,190,.6)',-1.6);
+      trevo(cx,cy,'#a87d28',0);
+      // reflexo especular
+      const sp=x.createRadialGradient(cx-16,cy-18,1,cx-16,cy-18,16);
+      sp.addColorStop(0,'rgba(255,255,255,.5)');sp.addColorStop(1,'rgba(255,255,255,0)');
+      x.fillStyle=sp;x.beginPath();x.arc(cx-16,cy-18,16,0,7);x.fill();
     }else{
-      x.setLineDash([7,7]);x.strokeStyle='rgba(230,190,120,.85)';x.lineWidth=2.5;
+      x.setLineDash([6,7]);x.strokeStyle='rgba(228,192,128,.7)';x.lineWidth=2;
       x.beginPath();x.arc(cx,cy,coinR-3,0,7);x.stroke();x.setLineDash([]);
+      x.fillStyle='rgba(255,255,255,.035)';x.beginPath();x.arc(cx,cy,coinR-4,0,7);x.fill();
     }
   }
 
-  /* --- quanto falta pra unha grátis --- */
-  const faltam=d.meta-d.selos,fy=H-262;
-  x.font='700 40px Georgia,serif';
+  /* --- quanto falta pra unha grátis (presente de linha fina, sem emoji) --- */
+  const faltam=d.meta-d.selos,fy=H-258;
+  const presente=(px,py,s)=>{x.save();x.strokeStyle='#e8b7c0';x.lineWidth=3;
+    x.lineJoin='round';x.lineCap='round';
+    const w2=s,h2=s*.62,tampa=s*.2;
+    roundRect(x,px,py,w2,h2,3);x.stroke();                       // caixa
+    roundRect(x,px-4,py-tampa,w2+8,tampa,2.5);x.stroke();        // tampa
+    x.beginPath();x.moveTo(px+w2/2,py-tampa);x.lineTo(px+w2/2,py+h2);x.stroke(); // fita
+    x.beginPath();                                               // laço
+    x.moveTo(px+w2/2,py-tampa);
+    x.bezierCurveTo(px+w2/2-s*.3,py-tampa-s*.34,px+w2/2-s*.44,py-tampa-s*.02,px+w2/2,py-tampa);
+    x.moveTo(px+w2/2,py-tampa);
+    x.bezierCurveTo(px+w2/2+s*.3,py-tampa-s*.34,px+w2/2+s*.44,py-tampa-s*.02,px+w2/2,py-tampa);
+    x.stroke();x.restore();};
+  const tFalta=faltam<=0?'UNHA GRÁTIS CONQUISTADA!'
+    :(faltam===1?'FALTA 1 PRA ':'FALTAM '+faltam+' PRA ');
+  let ffs=38,esp=5;
+  const totalTxt=faltam<=0?tFalta:tFalta+'UNHA GRÁTIS';
+  x.font=`600 ${ffs}px ${SERIF}`;
+  while(largEspacado(x,totalTxt,esp)>W-72-236-46-150&&ffs>26){ffs-=2;x.font=`600 ${ffs}px ${SERIF}`;}
+  presente(84,fy-ffs+6,44);
   if(faltam<=0){
-    x.fillStyle=OURO_CLARO;txtEspacado(x,'🎉 UNHA GRÁTIS CONQUISTADA! 🎉',78,fy,2);
+    x.fillStyle=OURO_CLARO;txtEspacado(x,tFalta,152,fy,esp);
+    brilho(152+largEspacado(x,tFalta,esp)+26,fy-12,12,.9);
   }else{
     x.fillStyle='#f2d7db';
-    const t1=faltam===1?'🎁 FALTA ':'🎁 FALTAM ';
-    let cx2=txtEspacado(x,t1+faltam+' PRA ',78,fy,2)+10;
-    x.fillStyle=OURO_CLARO;txtEspacado(x,'UNHA GRÁTIS',(x.font='800 40px Georgia,serif',cx2),fy,2);
+    const cx2=txtEspacado(x,tFalta,152,fy,esp)+12;
+    x.fillStyle=OURO_CLARO;txtEspacado(x,'UNHA GRÁTIS',cx2,fy,esp);
   }
 
   /* --- QR de agendamento + convite --- */
   const qs=236,qx=W-72-qs,qy=H-72-qs;
   if(d.link)desenharQR(x,d.link,qx,qy,qs);
-  x.fillStyle='#f6e9ec';x.font='italic 40px Georgia,serif';
-  x.fillText('Agende seu',qx-338,qy+118);
-  x.fillText('horário',qx-338,qy+170);
+  x.fillStyle='#f6e9ec';x.font=`italic 42px ${SERIF}`;
+  x.fillText('Agende seu',qx-346,qy+116);
+  x.fillText('horário',qx-346,qy+170);
   // setinha charmosa apontando pro QR
   x.strokeStyle=ROSE;x.lineWidth=3.5;x.lineCap='round';
   x.beginPath();x.moveTo(qx-186,qy+196);x.quadraticCurveTo(qx-110,qy+226,qx-42,qy+192);x.stroke();
@@ -389,6 +481,7 @@ const moldeCv=$('#molde');moldeCv.width=W;moldeCv.height=H;
 
 async function abrirCamera(){
   dados=dadosDoForm();
+  await prepararRecursos(); // fonte + logo antes de desenhar
   desenharMolde(moldeCv.getContext('2d'),dados);
   if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)){usarGaleria();return;}
   $('#setup').hidden=true;$('#resultado').hidden=true;$('#telacam').hidden=false;
@@ -442,8 +535,9 @@ function mostrarResultado(dataUrl){
 function tirarOutra(){$('#resultado').hidden=true;abrirCamera();}
 
 /* --- galeria (fallback / opção): escolhe a foto e carimba o mesmo molde --- */
-function usarGaleria(){
+async function usarGaleria(){
   dados=dadosDoForm();
+  await prepararRecursos();
   desenharMolde(moldeCv.getContext('2d'),dados);
   const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
   inp.onchange=()=>{const f=inp.files[0];if(!f)return;
@@ -470,6 +564,8 @@ async function compartilhar(){
 function baixar(){
   const a=document.createElement('a');a.href=$('#foto-final').src;a.download='cartao-dymani.jpg';a.click();
 }
+prepararRecursos(); // já vai baixando fonte e logo enquanto ela preenche
+
 </script>
 </body>
 </html>
