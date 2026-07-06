@@ -872,17 +872,9 @@ function overlayAoVivo(x,estilo,tema,prev){
     return;
   }
   const t=TEMAS[tema]||TEMAS.rosa;
-  const serv=prev.serv||'',cortar=s=>serv.length>s?serv.slice(0,s-1)+'…':serv;
-  const ov=x.createLinearGradient(0,H*.42,0,H);ov.addColorStop(0,'rgba(10,5,15,0)');ov.addColorStop(1,'rgba(10,5,15,.94)');
-  x.fillStyle=ov;x.fillRect(0,0,W,H);x.textAlign='center';
-  x.fillStyle='#fff';x.font='800 64px sans-serif';x.fillText(prev.nome,W/2,H-392);
-  x.fillStyle=t.acc;x.font='600 40px sans-serif';x.fillText(cortar(34),W/2,H-326);
-  x.fillStyle='rgba(255,255,255,.75)';x.font='400 30px sans-serif';x.fillText(dataBR(hoje())+(prev.frase?'  ·  '+prev.frase:''),W/2,H-272);
-  desenharSelos(x,prev.cli,t,H-214);
-  x.textAlign='left';x.fillStyle='#fff';x.font='700 40px sans-serif';x.fillText('💅 '+studio.nome,54,H-54);
-  x.save();x.textAlign='center';x.fillStyle='rgba(255,255,255,.9)';x.font='700 22px sans-serif';
-  x.fillText('agende aqui 📷',W-40-150+75,H-40-150-12);x.restore();
-  desenharQR(x,url,W-40-150,H-40-150,150);
+  glamOverlay(x,W,H,{nome:prev.nome,serv:prev.serv,data:dataBR(hoje()),frase:prev.frase||'',
+    selos:selosAt(prev.cli),meta:meta(),brinde:temBrinde(prev.cli),url,studioNome:studio.nome,
+    logoEl:prev.logoEl,cor:[t.acc,t.grad[0]]});
 }
 // salva o atendimento (cria cliente/atend +selo na 1ª foto; nas próximas só troca a foto)
 async function salvarAtdFoto(foto){
@@ -1078,10 +1070,12 @@ function desenharQR(x,texto,cx,cy,size,corFundo,corMod,corBorda){
 }
 
 /* ---- desenho do cartão (canvas) — 4 estilos, com QR de agendamento no canto ---- */
+let _cardGen=0;
 function desenharCartao(cli,at){
   const p=prefs(), t=TEMAS[p.tema]||TEMAS.rosa, est=p.estilo||'foto';
   const cv=$('#cartao'); if(!cv)return; const x=cv.getContext('2d');
   const W=1080,H=1350, url=urlPortfolio();
+  const gen=++_cardGen, viva=()=>gen===_cardGen; // ignora desenhos assíncronos velhos
   const cortar=s=>at.serv.length>s?at.serv.slice(0,s-1)+'…':at.serv;
   const g=x.createLinearGradient(0,0,W,H);g.addColorStop(0,t.grad[0]);g.addColorStop(1,t.grad[1]);
   x.fillStyle=g;x.fillRect(0,0,W,H);
@@ -1098,50 +1092,28 @@ function desenharCartao(cli,at){
       x.drawImage(img,rx+rw/2-img.width*e/2,ry+rh/2-img.height*e/2,img.width*e,img.height*e);x.restore();done();};
     img.onerror=done;img.src=at.foto;};
 
-  if(est==='classico'){
-    x.fillStyle='#160a1a';roundRect(x,40,40,W-80,H-80,36);x.fill();x.textAlign='center';
-    x.fillStyle='#fdf2f8';x.font='700 46px sans-serif';x.fillText('💅 '+studio.nome,W/2,140);
-    x.fillStyle=t.acc;x.font='400 30px sans-serif';x.fillText(p.frase||'Clube Dymani',W/2,185);
-    const txt=()=>{x.textAlign='center';x.fillStyle='#fdf2f8';x.font='700 52px sans-serif';x.fillText(cli.nome,W/2,940);
-      x.fillStyle=t.grad[0]==='#fbbf24'?t.acc:t.grad[0];x.font='600 38px sans-serif';x.fillText(cortar(40),W/2,1000);
-      x.fillStyle='#c3a0cf';x.font='400 30px sans-serif';x.fillText(dataBR(at.d),W/2,1048);
-      desenharSelos(x,cli,t,1110);
-      qrCanto(W-150-72,H-150-70,150,'#c3a0cf');fim();};
-    if(at.foto){const img=new Image();img.onload=()=>{x.save();roundRect(x,140,230,800,640,28);x.clip();
-      const e=Math.max(800/img.width,640/img.height);x.drawImage(img,W/2-img.width*e/2,550-img.height*e/2,img.width*e,img.height*e);x.restore();
-      x.strokeStyle=t.grad[0];x.lineWidth=6;roundRect(x,140,230,800,640,28);x.stroke();txt();};img.onerror=()=>txt();img.src=at.foto;}
-    else{x.fillStyle='#25102b';roundRect(x,140,230,800,640,28);x.fill();x.font='200px sans-serif';x.fillText('💅',W/2,620);txt();}
+  const dadosCard=logoEl=>({nome:cli.nome,serv:at.serv,data:dataBR(at.d),frase:p.frase||'',
+    selos:selosAt(cli),meta:meta(),brinde:temBrinde(cli),url,studioNome:studio.nome,logoEl,foto:null});
+  if(est==='classico'){ // ✨ Realeza — emoldurado e simétrico
+    fontesPremium().then(()=>pzLoad([{k:'foto',src:at.foto},{k:'logo',src:studio.logo}],m=>{
+      if(!viva())return;const d=dadosCard(m.logo);d.foto=m.foto;cartaoRealeza(x,d);}));
   }
-  else if(est==='polaroid'){
-    x.fillStyle='#fff';roundRect(x,54,54,W-108,H-108,44);x.fill();x.textAlign='center';
-    const fs=756,fx=(W-fs)/2,fy=120;
-    const depois=()=>{x.textAlign='center';
-      x.fillStyle='#1c0b20';x.font='800 62px sans-serif';x.fillText(cli.nome,W/2,fy+fs+94);
-      x.fillStyle=t.grad[1]==='#3b82f6'?t.grad[0]:t.grad[1];x.font='600 36px sans-serif';x.fillText(cortar(38),W/2,fy+fs+148);
-      x.fillStyle='#8f76a3';x.font='400 28px sans-serif';x.fillText(dataBR(at.d)+(p.frase?'  ·  '+p.frase:''),W/2,fy+fs+194);
-      desenharSelos(x,cli,t,fy+fs+262);
-      x.textAlign='left';x.fillStyle='#1c0b20';x.font='700 34px sans-serif';x.fillText('💅 '+studio.nome,96,H-92);
-      qrCanto(W-96-140,H-92-152,140,'#8f76a3');fim();};
-    coverInto(fx,fy,fs,fs,26,depois,'#eee');
+  else if(est==='polaroid'){ // ✨ Marfim — claro/creme premium
+    fontesPremium().then(()=>pzLoad([{k:'foto',src:at.foto},{k:'logo',src:studio.logo}],m=>{
+      if(!viva())return;const d=dadosCard(m.logo);d.foto=m.foto;cartaoMarfim(x,d);}));
   }
-  else if(est==='moderno'){
-    x.fillStyle='#0e0611';roundRect(x,28,28,W-56,H-56,46);x.fill();
-    const gb=x.createLinearGradient(0,0,W,H);gb.addColorStop(0,t.grad[0]);gb.addColorStop(1,t.grad[1]);
-    x.strokeStyle=gb;x.lineWidth=12;roundRect(x,34,34,W-68,H-68,42);x.stroke();
-    x.textAlign='center';x.fillStyle=t.acc;x.font='700 30px sans-serif';
-    x.fillText((p.frase||'Clube Dymani').toUpperCase(),W/2,124);
-    const fy=164,fh=744,fx=80,fw=W-160;
-    const depois=()=>{x.textAlign='center';
-      x.fillStyle='#fff';x.font='800 64px sans-serif';x.fillText(cli.nome,W/2,fy+fh+92);
-      x.fillStyle=t.acc;x.font='600 40px sans-serif';x.fillText(cortar(34),W/2,fy+fh+146);
-      desenharSelos(x,cli,t,fy+fh+222);
-      x.textAlign='left';x.fillStyle='#fff';x.font='700 36px sans-serif';x.fillText('💅 '+studio.nome,66,H-60);
-      qrCanto(W-66-150,H-60-158,150,'rgba(255,255,255,.85)');fim();};
-    coverInto(fx,fy,fw,fh,30,depois,gb);
+  else if(est==='moderno'){ // ✨ Art Déco — foto cheia + enfeites
+    fontesPremium().then(()=>pzLoad([{k:'foto',src:at.foto},{k:'logo',src:studio.logo}],m=>{
+      if(!viva())return;const d=dadosCard(m.logo);
+      if(m.foto){const e=Math.max(W/m.foto.width,H/m.foto.height);
+        x.drawImage(m.foto,W/2-m.foto.width*e/2,H/2-m.foto.height*e/2,m.foto.width*e,m.foto.height*e);}
+      else{const pg=x.createLinearGradient(0,0,W,H);pg.addColorStop(0,'#2b1030');pg.addColorStop(1,'#12060f');x.fillStyle=pg;x.fillRect(0,0,W,H);}
+      cartaoDeco(x,d);}));
   }
   else if(est==='premium'){ // ✨ luxo: moldura dourada, serifada, moedas com relevo, logo do studio no selo
     fontesPremium().then(()=>{
       const desenhaTudo=(logoEl)=>{
+        if(!viva())return;
         const base=(depois)=>{
           if(!at.foto){const pg=x.createLinearGradient(0,0,W,H);
             pg.addColorStop(0,'#2b1030');pg.addColorStop(1,'#12060f');
@@ -1160,20 +1132,14 @@ function desenharCartao(cli,at){
       else desenhaTudo(null);
     });
   }
-  else{ // foto (padrão) — foto inteira com degradê e textos por cima
-    const txt=()=>{
-      const ov=x.createLinearGradient(0,H*.45,0,H);ov.addColorStop(0,'rgba(10,5,15,0)');ov.addColorStop(1,'rgba(10,5,15,.93)');
-      x.fillStyle=ov;x.fillRect(24,24,W-48,H-48);x.textAlign='center';
-      x.fillStyle='#fff';x.font='800 64px sans-serif';x.fillText(cli.nome,W/2,H-392);
-      x.fillStyle=t.acc;x.font='600 40px sans-serif';x.fillText(cortar(34),W/2,H-326);
-      x.fillStyle='rgba(255,255,255,.75)';x.font='400 30px sans-serif';x.fillText(dataBR(at.d)+(p.frase?'  ·  '+p.frase:''),W/2,H-272);
-      desenharSelos(x,cli,t,H-214);
-      x.textAlign='left';x.fillStyle='#fff';x.font='700 40px sans-serif';x.fillText('💅 '+studio.nome,54,H-54);
-      qrCanto(W-40-150,H-40-150,150,'rgba(255,255,255,.9)');fim();};
-    x.save();roundRect(x,24,24,W-48,H-48,32);x.clip();
-    if(at.foto){const img=new Image();img.onload=()=>{const e=Math.max((W-48)/img.width,(H-48)/img.height);
-      x.drawImage(img,W/2-img.width*e/2,(H-48)/2+24-img.height*e/2,img.width*e,img.height*e);x.restore();txt();};img.onerror=()=>{x.restore();txt();};img.src=at.foto;}
-    else{x.fillStyle='#1a0a1e';x.fillRect(24,24,W-48,H-48);x.font='260px sans-serif';x.textAlign='center';x.fillText('💅',W/2,560);x.restore();txt();}
+  else{ // ✨ Glam (padrão) — foto inteira com moldura, ornamentos e cor do tema
+    fontesPremium().then(()=>pzLoad([{k:'foto',src:at.foto},{k:'logo',src:studio.logo}],m=>{
+      if(!viva())return;
+      if(m.foto){const e=Math.max(W/m.foto.width,H/m.foto.height);
+        x.drawImage(m.foto,W/2-m.foto.width*e/2,H/2-m.foto.height*e/2,m.foto.width*e,m.foto.height*e);}
+      else{const pg=x.createLinearGradient(0,0,W,H);pg.addColorStop(0,'#2b1030');pg.addColorStop(1,'#12060f');x.fillStyle=pg;x.fillRect(0,0,W,H);
+        pzFlorC(x,W/2,H/2-40,80,'rgba(244,213,141,.35)',3);}
+      const d=dadosCard(m.logo);d.cor=[t.acc,t.grad[0]];glamOverlay(x,W,H,d);}));
   }
 }
 function estrelaPath(x,cx,cy,r){x.beginPath();
@@ -1402,6 +1368,286 @@ function premiumOverlay(x,W,H,d){
 }
 function roundRect(x,a,b,w,h,r){x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);
   x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath();}
+
+/* ══════════════ KIT DE ORNAMENTOS PREMIUM (compartilhado pelos 4 layouts bonitos) ══════════════
+   Tudo desenhado à mão no canvas — flores, gemas, moedas, molduras, selo da marca. Zero emoji. */
+const PZOURO='#d9b36a',PZCLARO='#f4d58d',PZESC='#a87f35',PZROSE='#e2aab4',PZROSECL='#f0cdd3';
+const PZSERIF='"Playfair Display",Georgia,serif';
+function pzGradOuro(x,ax,ay,bx,by){const g=x.createLinearGradient(ax,ay,bx,by);
+  g.addColorStop(0,PZCLARO);g.addColorStop(.5,PZOURO);g.addColorStop(1,PZESC);return g;}
+function pzTxtEsp(x,s,px,py,esp){let cx=px;for(const ch of s){x.fillText(ch,cx,py);cx+=x.measureText(ch).width+esp;}return cx-esp;}
+function pzLargEsp(x,s,esp){let w=0;for(const ch of s)w+=x.measureText(ch).width+esp;return w-esp;}
+function pzSparkle(x,cx,cy,r,al){x.save();x.fillStyle=`rgba(244,213,141,${al})`;x.beginPath();
+  x.moveTo(cx,cy-r);x.quadraticCurveTo(cx+r*.14,cy-r*.14,cx+r,cy);x.quadraticCurveTo(cx+r*.14,cy+r*.14,cx,cy+r);
+  x.quadraticCurveTo(cx-r*.14,cy+r*.14,cx-r,cy);x.quadraticCurveTo(cx-r*.14,cy-r*.14,cx,cy-r);
+  x.closePath();x.fill();x.restore();}
+function pzBokeh(x,cx,cy,r,al){const g=x.createRadialGradient(cx,cy,0,cx,cy,r);
+  g.addColorStop(0,`rgba(242,203,122,${al})`);g.addColorStop(1,'rgba(242,203,122,0)');
+  x.fillStyle=g;x.beginPath();x.arc(cx,cy,r,0,7);x.fill();}
+// flor de 5 pétalas preenchida
+function pzFlor(x,cx,cy,r,cor,miolo){x.save();x.translate(cx,cy);
+  for(let i=0;i<5;i++){x.beginPath();x.moveTo(0,0);
+    x.bezierCurveTo(-r*.55,-r*.55,-r*.32,-r*1.1,0,-r*1.1);
+    x.bezierCurveTo(r*.32,-r*1.1,r*.55,-r*.55,0,0);x.closePath();x.fillStyle=cor;x.fill();
+    x.rotate(Math.PI*2/5);}
+  x.beginPath();x.arc(0,0,r*.3,0,7);x.fillStyle=miolo;x.fill();x.restore();}
+// flor só de contorno (delicada)
+function pzFlorC(x,cx,cy,r,cor,lw){x.save();x.translate(cx,cy);x.strokeStyle=cor;x.lineWidth=lw||2.2;
+  for(let i=0;i<5;i++){x.beginPath();x.moveTo(0,0);
+    x.bezierCurveTo(-r*.55,-r*.55,-r*.32,-r*1.1,0,-r*1.1);
+    x.bezierCurveTo(r*.32,-r*1.1,r*.55,-r*.55,0,0);x.stroke();x.rotate(Math.PI*2/5);}
+  x.beginPath();x.arc(0,0,r*.22,0,7);x.stroke();x.restore();}
+// gema/diamante com facetas
+function pzGema(x,cx,cy,s,cor,brilho){const t=cy-s*.62,b=cy+s*.8,l=cx-s*.62,r=cx+s*.62,gy=cy-s*.16;
+  x.save();
+  x.beginPath();x.moveTo(l,gy);x.lineTo(cx-s*.33,t);x.lineTo(cx+s*.33,t);x.lineTo(r,gy);x.lineTo(cx,b);x.closePath();
+  x.fillStyle=cor;x.fill();x.strokeStyle=brilho;x.lineWidth=1.4;x.stroke();
+  x.beginPath();
+  x.moveTo(cx-s*.33,t);x.lineTo(l,gy);x.lineTo(cx,b);
+  x.moveTo(cx+s*.33,t);x.lineTo(r,gy);x.lineTo(cx,b);
+  x.moveTo(l,gy);x.lineTo(r,gy);
+  x.moveTo(cx-s*.33,t);x.lineTo(cx,gy);x.lineTo(cx+s*.33,t);x.moveTo(cx,gy);x.lineTo(cx,b);
+  x.stroke();x.restore();}
+// ramo com folhinhas + florzinha na ponta
+function pzRamo(x,cx,cy,ang,comp,cor){x.save();x.translate(cx,cy);x.rotate(ang);
+  x.strokeStyle=cor;x.lineWidth=2;x.lineCap='round';
+  x.beginPath();x.moveTo(0,0);x.quadraticCurveTo(comp*.5,-comp*.06,comp,-comp*.02);x.stroke();
+  for(let i=1;i<=3;i++){const t=i/3.6,px=comp*t,py=-comp*.03*t,ls=comp*.14*(1-t*.3);
+    x.save();x.globalAlpha=.55;x.fillStyle=cor;
+    x.beginPath();x.ellipse(px,py-ls*.5,ls,ls*.42,-.6,0,7);x.fill();
+    x.beginPath();x.ellipse(px,py+ls*.5,ls,ls*.42,.6,0,7);x.fill();x.restore();}
+  pzFlorC(x,comp,-comp*.02,comp*.09,cor,2);x.restore();}
+// moeda dourada de selo (florzinha gravada) ou vazia tracejada
+function pzMoeda(x,cx,cy,r,cheia){
+  if(!cheia){x.setLineDash([6,7]);x.strokeStyle='rgba(228,192,128,.7)';x.lineWidth=2;
+    x.beginPath();x.arc(cx,cy,r-3,0,7);x.stroke();x.setLineDash([]);
+    x.fillStyle='rgba(255,255,255,.04)';x.beginPath();x.arc(cx,cy,r-4,0,7);x.fill();return;}
+  x.fillStyle='rgba(0,0,0,.35)';x.beginPath();x.ellipse(cx+3,cy+5,r,r*.92,0,0,7);x.fill();
+  const cg=x.createRadialGradient(cx-r*.35,cy-r*.4,3,cx,cy,r);
+  cg.addColorStop(0,'#fff1c0');cg.addColorStop(.4,'#efd189');cg.addColorStop(.75,'#c99a44');cg.addColorStop(1,'#8f6a1e');
+  x.fillStyle=cg;x.beginPath();x.arc(cx,cy,r,0,7);x.fill();
+  x.strokeStyle='rgba(94,68,15,.9)';x.lineWidth=r*.09;x.beginPath();x.arc(cx,cy,r-2,0,7);x.stroke();
+  x.strokeStyle='rgba(255,246,214,.75)';x.lineWidth=1.3;x.beginPath();x.arc(cx,cy,r-r*.16,0,7);x.stroke();
+  pzFlor(x,cx,cy,r*.42,'#a87d28','#7a5a18');
+  const sp=x.createRadialGradient(cx-r*.4,cy-r*.45,1,cx-r*.4,cy-r*.45,r*.42);
+  sp.addColorStop(0,'rgba(255,255,255,.5)');sp.addColorStop(1,'rgba(255,255,255,0)');
+  x.fillStyle=sp;x.beginPath();x.arc(cx-r*.4,cy-r*.45,r*.42,0,7);x.fill();}
+// linha(s) de moedas centradas em x0 (canto sup-esq da 1ª), 5 por linha
+function pzMoedas(x,x0,y0,step,r,selos,meta){for(let i=0;i<meta;i++){
+  const cx=x0+(i%5)*step,cy=y0+Math.floor(i/5)*step;pzMoeda(x,cx,cy,r,i<selos);}}
+// selo redondo da marca (logo recortada em círculo, ou monograma)
+function pzSelo(x,bx,by,br,logoEl,studioNome){x.save();
+  x.fillStyle='rgba(12,5,14,.72)';x.beginPath();x.arc(bx,by,br,0,7);x.fill();
+  if(logoEl){x.save();x.beginPath();x.arc(bx,by,br-3,0,7);x.clip();
+    const e=Math.max(((br-3)*2)/logoEl.width,((br-3)*2)/logoEl.height);
+    x.drawImage(logoEl,bx-logoEl.width*e/2,by-logoEl.height*e/2,logoEl.width*e,logoEl.height*e);x.restore();
+  }else{x.textAlign='center';x.fillStyle=PZROSE;x.font=`italic 500 ${br*1.05}px ${PZSERIF}`;
+    x.fillText((studioNome||'S').trim()[0].toUpperCase(),bx,by+br*.36);x.textAlign='left';}
+  x.strokeStyle=pzGradOuro(x,bx-br,by-br,bx+br,by+br);x.lineWidth=3;x.beginPath();x.arc(bx,by,br,0,7);x.stroke();
+  x.strokeStyle='rgba(244,213,141,.3)';x.lineWidth=1;x.beginPath();x.arc(bx,by,br-8,0,7);x.stroke();x.restore();}
+// nome do studio espaçado, centrado em bx
+function pzStudioNome(x,nome,bx,y,fs,cor){x.save();x.fillStyle=cor||'#f6e9ec';
+  let sn=(nome||'').toUpperCase(),esp=4;x.font=`500 ${fs}px ${PZSERIF}`;
+  while(pzLargEsp(x,sn,esp)>420&&fs>13){fs-=1;x.font=`500 ${fs}px ${PZSERIF}`;}
+  pzTxtEsp(x,sn,bx-pzLargEsp(x,sn,esp)/2,y,esp);x.restore();}
+// QR creme + rótulo "Agende seu horário"
+function pzQR(x,url,qx,qy,qs,labelLado){if(url)desenharQR(x,url,qx,qy,qs,'#faf3ec','#2a1420','rgba(168,127,53,.4)');
+  x.save();x.fillStyle='#f6e9ec';x.font=`italic 34px ${PZSERIF}`;
+  if(labelLado==='esq'){x.textAlign='right';x.fillText('Agende seu',qx-20,qy+qs*.42);x.fillText('horário',qx-20,qy+qs*.42+42);}
+  else if(labelLado==='cima'){x.textAlign='center';x.fillText('Agende seu horário',qx+qs/2,qy-18);}
+  x.textAlign='left';x.restore();}
+// moldura dourada dupla
+function pzMoldura(x,W,H){x.strokeStyle=pzGradOuro(x,0,0,W,H);x.lineWidth=3;roundRect(x,30,30,W-60,H-60,44);x.stroke();
+  x.strokeStyle='rgba(244,213,141,.22)';x.lineWidth=1.2;roundRect(x,42,42,W-84,H-84,36);x.stroke();}
+// vinheta + sombras pra leitura (layouts full-bleed)
+function pzVinheta(x,W,H){let g=x.createLinearGradient(0,0,0,520);
+  g.addColorStop(0,'rgba(10,4,12,.82)');g.addColorStop(.6,'rgba(10,4,12,.42)');g.addColorStop(1,'rgba(10,4,12,0)');
+  x.fillStyle=g;x.fillRect(0,0,W,520);
+  g=x.createLinearGradient(0,H-640,0,H);
+  g.addColorStop(0,'rgba(10,4,12,0)');g.addColorStop(.42,'rgba(10,4,12,.6)');g.addColorStop(1,'rgba(10,4,12,.92)');
+  x.fillStyle=g;x.fillRect(0,H-640,W,640);
+  g=x.createRadialGradient(W/2,H/2,H*.34,W/2,H/2,H*.72);
+  g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(8,3,10,.5)');x.fillStyle=g;x.fillRect(0,0,W,H);}
+function pzFundoLuxo(x,W,H){const g=x.createLinearGradient(0,0,W,H);
+  g.addColorStop(0,'#1c0f22');g.addColorStop(.5,'#140a18');g.addColorStop(1,'#0d0710');x.fillStyle=g;x.fillRect(0,0,W,H);}
+// ornamento central (linha + gema)
+function pzDivisor(x,cx,y,larg){x.save();x.strokeStyle='rgba(217,179,106,.75)';x.fillStyle=PZOURO;x.lineWidth=1.6;
+  x.beginPath();x.moveTo(cx-larg,y);x.lineTo(cx-24,y);x.stroke();
+  x.beginPath();x.moveTo(cx+24,y);x.lineTo(cx+larg,y);x.stroke();
+  x.beginPath();x.arc(cx-larg-4,y,2.6,0,7);x.fill();x.beginPath();x.arc(cx+larg+4,y,2.6,0,7);x.fill();
+  pzGema(x,cx,y,13,PZOURO,'rgba(255,246,214,.6)');x.restore();}
+// nome grande serif com gradiente; quebra em 2 linhas; devolve y final
+function pzNome(x,nome,cx,topY,maxW,corA,corB,align){
+  let linhas=[nome];x.font=`400 96px ${PZSERIF}`;
+  if(x.measureText(nome).width>maxW){const pp=nome.split(/\s+/),meio=Math.ceil(pp.length/2);
+    linhas=[pp.slice(0,meio).join(' '),pp.slice(meio).join(' ')].filter(Boolean);}
+  let fs=96;const cabe=()=>{x.font=`400 ${fs}px ${PZSERIF}`;return linhas.every(l=>x.measureText(l).width<=maxW);};
+  while(!cabe()&&fs>50)fs-=4;
+  const ng=x.createLinearGradient(0,topY,0,topY+linhas.length*fs);ng.addColorStop(0,corA);ng.addColorStop(1,corB);
+  x.fillStyle=ng;x.font=`400 ${fs}px ${PZSERIF}`;x.textAlign=align||'left';
+  let ny=topY+fs*.86;for(const l of linhas){x.fillText(l,cx,ny);ny+=fs*1.05;}
+  x.textAlign='left';return ny;}
+// "FALTA(M) N PRA UNHA GRÁTIS" com gema no lugar do emoji
+function pzFalta(x,selos,meta,brinde,px,y,fs,esp,align){
+  const faltam=meta-selos;x.save();x.font=`600 ${fs}px ${PZSERIF}`;
+  const t1=(brinde||faltam<=0)?'PRÓXIMA UNHA GRÁTIS':(faltam===1?'FALTA 1 PRA ':'FALTAM '+faltam+' PRA ');
+  const t2=(brinde||faltam<=0)?'':'UNHA GRÁTIS';
+  const larg=pzLargEsp(x,t1,esp)+(t2?pzLargEsp(x,t2,esp):0)+52;
+  let sx=align==='center'?px-larg/2:px;
+  pzGema(x,sx+14,y-fs*.32,15,'#e8b7c0','rgba(255,255,255,.55)');
+  x.textAlign='left';x.fillStyle=(brinde||faltam<=0)?PZCLARO:'#f2d7db';
+  let cx2=pzTxtEsp(x,t1,sx+44,y,esp);
+  if(t2){x.fillStyle=PZCLARO;pzTxtEsp(x,t2,cx2+10,y,esp);}
+  x.restore();}
+// foto cobrindo retângulo arredondado (com placeholder floral)
+function pzFotoRect(x,img,rx,ry,rw,rh,rad){x.save();roundRect(x,rx,ry,rw,rh,rad);x.clip();
+  if(img){const e=Math.max(rw/img.width,rh/img.height);
+    x.drawImage(img,rx+rw/2-img.width*e/2,ry+rh/2-img.height*e/2,img.width*e,img.height*e);}
+  else{const g=x.createLinearGradient(rx,ry,rx+rw,ry+rh);g.addColorStop(0,'#2b1030');g.addColorStop(1,'#12060f');
+    x.fillStyle=g;x.fillRect(rx,ry,rw,rh);pzFlorC(x,rx+rw/2,ry+rh/2,64,'rgba(244,213,141,.4)',2.5);}
+  x.restore();}
+// carrega várias imagens e chama cb quando prontas
+function pzLoad(list,cb){const out={};let n=list.filter(i=>i.src).length;if(!n)return cb(out);
+  list.forEach(i=>{if(!i.src)return;const im=new Image();
+    im.onload=()=>{out[i.k]=im;if(--n===0)cb(out);};im.onerror=()=>{if(--n===0)cb(out);};im.src=i.src;});}
+// spray de flores/gemas no canto (bouquet)
+function pzBouquet(x,cx,cy,esc,cor){x.save();x.translate(cx,cy);x.scale(esc,esc);
+  pzRamo(x,0,0,-2.5,180,cor);pzRamo(x,0,0,-1.9,150,cor);pzRamo(x,0,0,-1.2,120,cor);
+  pzFlor(x,60,-70,20,'rgba(226,170,180,.85)','#c98aa0');
+  pzFlorC(x,120,-40,16,cor,2.4);pzGema(x,30,-120,16,'rgba(226,170,180,.7)','rgba(255,255,255,.5)');
+  pzFlor(x,150,-90,14,'rgba(240,205,211,.8)','#c98aa0');x.restore();}
+
+/* ---------- LAYOUT full-bleed "Glam" (estilo foto, temável por cor) ---------- */
+function glamOverlay(x,W,H,d){
+  const acc=d.cor||['#f0cdd3','#e2aab4'];
+  pzVinheta(x,W,H);
+  pzBokeh(x,150,120,66,.10);pzBokeh(x,320,70,34,.13);pzBokeh(x,900,110,42,.10);pzBokeh(x,1000,300,40,.08);
+  pzSparkle(x,250,120,12,.7);pzSparkle(x,300,160,7,.5);pzSparkle(x,860,150,10,.6);
+  pzMoldura(x,W,H);
+  // logo do studio no topo-ESQUERDA + nome ao lado
+  const bx=170,by=190,br=98;pzSelo(x,bx,by,br,d.logoEl,d.studioNome);
+  pzStudioNomeEsq(x,d.studioNome,bx+br+24,by+12,W-(bx+br+24)-190);
+  // bouquet no topo-direita
+  pzBouquet(x,W-64,150,.66,'rgba(217,179,106,.6)');
+  // nome da cliente embaixo (à esquerda, sobre o degradê)
+  let ny=pzNome(x,d.nome,72,H-596,W-320,acc[0],acc[1],'left');
+  x.fillStyle=PZOURO;x.font=`500 34px ${PZSERIF}`;pzTxtEsp(x,(d.serv||'').toUpperCase(),74,ny+16,7);
+  x.fillStyle='rgba(240,205,211,.85)';x.font=`italic 30px ${PZSERIF}`;
+  x.fillText(d.data+(d.frase?'   ·   '+d.frase:''),74,ny+60);
+  // moedas (1-2 linhas) à esquerda
+  pzMoedas(x,110,H-286,98,35,d.selos,d.meta);
+  // faltam abaixo das moedas
+  pzFalta(x,d.selos,d.meta,d.brinde,74,H-104,32,3,'left');
+  // QR canto inferior-direito com rótulo à esquerda
+  const qs=196,qx=W-60,qy=H-60-qs;pzQR(x,d.url,qx-qs,qy,qs,'esq');
+}
+function pzStudioNomeEsq(x,nome,px,py,maxW){x.save();x.fillStyle='#f6e9ec';let fs=38;x.font=`500 ${fs}px ${PZSERIF}`;
+  let sn=(nome||'').toUpperCase();while(pzLargEsp(x,sn,3)>maxW&&fs>18){fs--;x.font=`500 ${fs}px ${PZSERIF}`;}
+  pzTxtEsp(x,sn,px,py,3);x.restore();}
+
+/* ---------- LAYOUT "Realeza" (clássico, emoldurado e simétrico, tudo centrado) ---------- */
+function cartaoRealeza(x,d){const W=1080,H=1350,cx=W/2;
+  pzFundoLuxo(x,W,H);
+  pzBokeh(x,180,200,70,.08);pzBokeh(x,900,180,60,.09);pzBokeh(x,540,90,50,.07);
+  pzMoldura(x,W,H);
+  // cantos florais no topo
+  pzBouquet(x,96,148,.58,'rgba(217,179,106,.5)');
+  x.save();x.translate(W,0);x.scale(-1,1);pzBouquet(x,96,148,.58,'rgba(217,179,106,.5)');x.restore();
+  // selo/monograma no topo-CENTRO + nome do studio + divisor
+  pzSelo(x,cx,172,80,d.logoEl,d.studioNome);
+  pzStudioNome(x,d.studioNome,cx,290,28,'#f6e9ec');
+  pzDivisor(x,cx,326,140);
+  // foto emoldurada no centro
+  const rw=752,rh=500,rx=cx-rw/2,ry=356;
+  pzFotoRect(x,d.foto,rx,ry,rw,rh,24);
+  x.strokeStyle=pzGradOuro(x,rx,ry,rx+rw,ry+rh);x.lineWidth=6;roundRect(x,rx,ry,rw,rh,24);x.stroke();
+  x.strokeStyle='rgba(244,213,141,.35)';x.lineWidth=1.5;roundRect(x,rx+10,ry+10,rw-20,rh-20,18);x.stroke();
+  // nome da cliente (1 linha, encolhe se preciso) centralizado
+  x.textAlign='center';let fs=88;x.font=`400 ${fs}px ${PZSERIF}`;
+  while(x.measureText(d.nome).width>W-260&&fs>48){fs-=4;x.font=`400 ${fs}px ${PZSERIF}`;}
+  const ng=x.createLinearGradient(0,ry+rh+30,0,ry+rh+30+fs);ng.addColorStop(0,PZROSECL);ng.addColorStop(1,PZROSE);
+  x.fillStyle=ng;x.fillText(d.nome,cx,ry+rh+40+fs*.7);
+  // serviço
+  x.fillStyle=PZOURO;x.font=`500 30px ${PZSERIF}`;pzTxtEspCentro(x,(d.serv||'').toUpperCase(),cx,ry+rh+40+fs+34,6);
+  // moedas centradas (2 linhas de 5)
+  const cols=Math.min(d.meta,5),step=84,lw=(cols-1)*step,mx=cx-lw/2,cy0=ry+rh+40+fs+96;
+  pzMoedas(x,mx,cy0,step,30,d.selos,d.meta);
+  const rows=Math.ceil(d.meta/5),cyF=cy0+(rows-1)*step;
+  // faltam centralizado, abaixo das moedas
+  pzFalta(x,d.selos,d.meta,d.brinde,cx,cyF+62,30,3,'center');
+  // QR pequeno no rodapé-direito (sem rótulo, pra não estourar a borda)
+  const qs=128,qx=W-60-qs,qy=H-58-qs;pzQR(x,d.url,qx,qy,qs);
+}
+function pzTxtEspCentro(x,s,cx,y,esp){const w=pzLargEsp(x,s,esp);pzTxtEsp(x,s,cx-w/2,y,esp);}
+
+/* ---------- LAYOUT "Marfim" (claro, creme premium) ---------- */
+function cartaoMarfim(x,d){const W=1080,H=1350,cx=W/2;
+  const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#fbf4ea');g.addColorStop(1,'#f2e6d6');x.fillStyle=g;x.fillRect(0,0,W,H);
+  // moldura dourada
+  x.strokeStyle=pzGradOuro(x,0,0,W,H);x.lineWidth=3;roundRect(x,30,30,W-60,H-60,40);x.stroke();
+  x.strokeStyle='rgba(168,127,53,.28)';x.lineWidth=1.2;roundRect(x,42,42,W-84,H-84,32);x.stroke();
+  // foto grande no topo com borda dourada
+  const rw=W-160,rh=760,rx=80,ry=96;
+  pzFotoRect(x,d.foto,rx,ry,rw,rh,22);
+  x.strokeStyle=pzGradOuro(x,rx,ry,rx+rw,ry+rh);x.lineWidth=7;roundRect(x,rx,ry,rw,rh,22);x.stroke();
+  // logo pequena sobreposta no topo-esquerda da foto
+  pzSelo(x,rx+86,ry+86,66,d.logoEl,d.studioNome);
+  // flores nos cantos de baixo
+  pzBouquet(x,120,H-70,.6,'rgba(190,120,140,.6)');
+  x.save();x.translate(W,0);x.scale(-1,1);pzBouquet(x,120,H-70,.5,'rgba(190,120,140,.5)');x.restore();
+  // nome da cliente em itálico (assinatura), escuro sobre o creme
+  x.fillStyle='#5b2338';let fs=88;x.font=`italic 500 ${fs}px ${PZSERIF}`;
+  while(x.measureText(d.nome).width>W-320&&fs>48){fs-=4;x.font=`italic 500 ${fs}px ${PZSERIF}`;}
+  x.textAlign='center';x.fillText(d.nome,cx,ry+rh+96);
+  x.fillStyle='#a87f35';x.font=`500 29px ${PZSERIF}`;pzTxtEspCentro(x,(d.serv||'').toUpperCase(),cx,ry+rh+144,6);
+  x.fillStyle='rgba(91,35,56,.55)';x.font=`italic 26px ${PZSERIF}`;x.fillText(d.data,cx,ry+rh+184);
+  x.textAlign='left';
+  // moedas centradas (2 linhas de 5)
+  const cols=Math.min(d.meta,5),step=84,lw=(cols-1)*step,mx=cx-lw/2,cy0=ry+rh+236;
+  pzMoedas(x,mx,cy0,step,30,d.selos,d.meta);
+  const rows=Math.ceil(d.meta/5),cyF=cy0+(rows-1)*step;
+  // faltam (texto escuro) centralizado, abaixo das moedas
+  x.save();x.font=`600 30px ${PZSERIF}`;const faltam=d.meta-d.selos;
+  const t1=(d.brinde||faltam<=0)?'PRÓXIMA UNHA GRÁTIS':(faltam===1?'FALTA 1 PRA ':'FALTAM '+faltam+' PRA ');
+  const t2=(d.brinde||faltam<=0)?'':'UNHA GRÁTIS';const larg=pzLargEsp(x,t1,3)+(t2?pzLargEsp(x,t2,3):0)+52;
+  let sx=cx-larg/2;pzGema(x,sx+13,cyF+56,14,'#c98aa0','rgba(255,255,255,.6)');
+  x.textAlign='left';x.fillStyle='#8a5a1e';let c2=pzTxtEsp(x,t1,sx+40,cyF+66,3);
+  if(t2){x.fillStyle='#a87f35';pzTxtEsp(x,t2,c2+8,cyF+66,3);}x.restore();
+  // QR pequeno no rodapé-direito
+  const qs=128,qx=W-64-qs,qy=H-64-qs;
+  desenharQR(x,d.url,qx,qy,qs,'#fff','#3a1420','rgba(168,127,53,.5)');
+}
+
+/* ---------- LAYOUT "Art Déco" (moderno, ousado) ---------- */
+function cartaoDeco(x,d){const W=1080,H=1350;
+  // foto já desenhada atrás (full-bleed) — aqui só enfeites
+  pzVinheta(x,W,H);
+  // moldura art-déco: dupla linha + cantos em leque
+  x.strokeStyle=pzGradOuro(x,0,0,W,H);x.lineWidth=4;roundRect(x,36,36,W-72,H-72,10);x.stroke();
+  x.strokeStyle='rgba(244,213,141,.5)';x.lineWidth=1.5;roundRect(x,50,50,W-100,H-100,6);x.stroke();
+  const canto=(cx,cy,sx,sy)=>{x.save();x.translate(cx,cy);x.scale(sx,sy);x.strokeStyle=PZCLARO;x.lineWidth=2.4;
+    for(let i=0;i<4;i++){x.beginPath();x.moveTo(0,30+i*14);x.lineTo(30+i*14,0);x.stroke();}
+    pzGema(x,16,16,12,PZOURO,'rgba(255,246,214,.6)');x.restore();};
+  canto(60,60,1,1);canto(W-60,60,-1,1);canto(60,H-60,1,-1);canto(W-60,H-60,-1,-1);
+  // QR no topo-DIREITA dentro de um quadro com moldura
+  const qs=166,qx=W-72-qs,qy=104;
+  x.fillStyle='rgba(12,5,14,.5)';roundRect(x,qx-16,qy-16,qs+32,qs+60,14);x.fill();
+  x.strokeStyle=pzGradOuro(x,qx,qy,qx+qs,qy+qs);x.lineWidth=2.5;roundRect(x,qx-16,qy-16,qs+32,qs+60,14);x.stroke();
+  desenharQR(x,d.url,qx,qy,qs,'#faf3ec','#2a1420','rgba(168,127,53,.4)');
+  x.fillStyle=PZCLARO;x.font=`italic 25px ${PZSERIF}`;x.textAlign='center';x.fillText('Agende seu horário',qx+qs/2,qy+qs+32);x.textAlign='left';
+  // coluna de gemas na lateral esquerda
+  for(let i=0;i<3;i++)pzGema(x,90,420+i*70,14,'rgba(226,170,180,.75)','rgba(255,255,255,.5)');
+  // nome grande à esquerda, abaixo do QR
+  let ny=pzNome(x,d.nome,74,150,qx-120,PZROSECL,PZROSE,'left');
+  x.fillStyle=PZCLARO;x.font=`500 34px ${PZSERIF}`;pzTxtEsp(x,(d.serv||'').toUpperCase(),76,ny+14,8);
+  x.strokeStyle='rgba(217,179,106,.6)';x.lineWidth=1.4;
+  x.beginPath();x.moveTo(76,ny+36);x.lineTo(76+Math.min(pzLargEsp(x,(d.serv||'').toUpperCase(),8),420),ny+36);x.stroke();
+  // logo no canto inferior-ESQUERDA (a marca já fica no selo)
+  pzSelo(x,150,H-206,88,d.logoEl,d.studioNome);
+  // moedas na base (centro) + faltam centralizado abaixo
+  const step=92,mx=316;pzMoedas(x,mx,H-300,step,34,d.selos,d.meta);
+  pzFalta(x,d.selos,d.meta,d.brinde,mx+2*step,H-96,32,3,'center');
+}
 function ativarArraste(cli,at){
   const cv=$('#cartao');let arr=false;
   const coord=e=>{const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height};};
