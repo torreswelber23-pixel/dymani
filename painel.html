@@ -225,6 +225,50 @@
   .camshot span{width:58px;height:58px;border-radius:50%;background:#fff;box-shadow:inset 0 0 0 3px rgba(0,0,0,.18)}
   .camshot:active{transform:scale(.94)}
 
+  /* ---- passos do novo atendimento ---- */
+  .steps{display:flex;align-items:center;gap:6px;margin:2px 0 16px}
+  .steps .sd{flex:1;height:5px;border-radius:3px;background:var(--surf2)}
+  .steps .sd.on{background:linear-gradient(90deg,var(--rosa),var(--roxo))}
+  .steps .sn{font-size:.72rem;color:var(--muted2);font-weight:700;white-space:nowrap}
+  .bigcli{display:flex;align-items:center;gap:12px;background:var(--surf);border:1px solid var(--line);
+    border-radius:14px;padding:12px 14px;margin-bottom:9px;cursor:pointer;transition:border-color .15s}
+  .bigcli:active{border-color:var(--rosa)}
+  .bigcli .ava{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--rosa),var(--roxo));
+    display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;flex-shrink:0;font-size:.9rem}
+  .bigcli .nm{font-weight:700}.bigcli .sub{font-size:.76rem;color:var(--muted2)}
+
+  /* ---- câmera do cartão AO VIVO (filtro estilo Instagram) ---- */
+  .livecam{position:fixed;inset:0;z-index:1000;background:#000;display:flex;flex-direction:column;
+    padding:calc(8px + env(safe-area-inset-top)) 0 calc(10px + env(safe-area-inset-bottom))}
+  .lc-stage{position:relative;flex:1;min-height:0;margin:0 auto;width:100%;max-width:min(100vw,calc((100dvh - 220px) * 0.8));
+    aspect-ratio:4/5;overflow:hidden;border-radius:16px;background:#120610;align-self:center}
+  .lc-stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .lc-stage video.esp{transform:scaleX(-1)}
+  .lc-ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .lc-flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+  .lc-flash.pisca{animation:lcpisca .3s ease-out}
+  @keyframes lcpisca{0%{opacity:.9}100%{opacity:0}}
+  .lc-hint{position:absolute;top:12px;left:0;right:0;text-align:center;color:rgba(255,255,255,.9);
+    font-size:.8rem;font-weight:700;text-shadow:0 1px 6px rgba(0,0,0,.8);pointer-events:none}
+  /* fita de temas (swatches circulares que passam) */
+  .lc-temas{display:flex;gap:12px;overflow-x:auto;padding:14px 42px 6px;scroll-snap-type:x mandatory;
+    -ms-overflow-style:none;scrollbar-width:none}
+  .lc-temas::-webkit-scrollbar{display:none}
+  .lc-tema{flex:0 0 auto;width:56px;text-align:center;scroll-snap-align:center;cursor:pointer}
+  .lc-tema .sw{width:56px;height:56px;border-radius:50%;border:3px solid transparent;
+    display:flex;align-items:center;justify-content:center;font-size:1.3rem;transition:transform .15s,border-color .15s}
+  .lc-tema.on .sw{border-color:#fff;transform:scale(1.12)}
+  .lc-tema b{display:block;font-size:.62rem;color:rgba(255,255,255,.7);margin-top:3px;font-weight:700}
+  .lc-tema.on b{color:#fff}
+  .lc-bar{display:flex;align-items:center;justify-content:space-around;max-width:460px;width:100%;margin:2px auto 0}
+  .lc-x{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.16);border:none;color:#fff;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.05rem;
+    -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+  .lc-shot{width:78px;height:78px;border-radius:50%;border:4px solid rgba(255,255,255,.7);cursor:pointer;
+    background:linear-gradient(135deg,#f4d58d,#d9b36a);display:flex;align-items:center;justify-content:center}
+  .lc-shot span{width:54px;height:54px;border-radius:50%;background:#fff;box-shadow:inset 0 0 0 3px rgba(0,0,0,.15)}
+  .lc-shot:active{transform:scale(.93)}
+
   /* ---- login ---- */
   .auth{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:24px 20px calc(30px + env(safe-area-inset-bottom))}
   .brand{text-align:center;margin-bottom:22px}
@@ -659,58 +703,219 @@ function listaHTML(arr){
 }
 function filtrar(q){q=q.toLowerCase();$('#lista').innerHTML=listaHTML(clientes.filter(c=>c.nome.toLowerCase().includes(q)));}
 
-/* ================= Novo atendimento ================= */
+/* ================= Novo atendimento (em etapas + câmera ao vivo) ================= */
+// atd guarda o atendimento em construção pelas etapas
+let atd=null;
+function capFotos(cli){let vistas=0;for(let i=cli.atend.length-1;i>=0;i--){if(cli.atend[i].foto){vistas++;if(vistas>6)delete cli.atend[i].foto;}}}
+const TEMAS_CARD=[
+  {id:'premium',estilo:'premium',label:'Premium',em:'✨',grad:['#f4d58d','#a87f35']},
+  {id:'rosa',estilo:'foto',tema:'rosa',label:'Rosa',grad:TEMAS.rosa.grad},
+  {id:'dourado',estilo:'foto',tema:'dourado',label:'Dourado',grad:TEMAS.dourado.grad},
+  {id:'vermelho',estilo:'foto',tema:'vermelho',label:'Vermelho',grad:TEMAS.vermelho.grad},
+  {id:'lilas',estilo:'foto',tema:'lilás',label:'Lilás',grad:TEMAS.lilas.grad}];
+
+function passosHTML(ativo){
+  const nomes=['Cliente','Serviço','Cartão'];
+  return `<div class="steps">${nomes.map((n,i)=>`<div class="sd ${i<=ativo?'on':''}"></div>`).join('')}
+    <span class="sn">${ativo+1}/3 · ${nomes[ativo]}</span></div>`;
+}
 function telaAtendimento(){
-  fotoTemp=null; tab=''; bottomNav();
+  tab=''; bottomNav();
+  atd={modo:'nova',nome:'',zap:'',horario:'',serv:'',cliBase:null,savedCli:null,idx:-1};
+  telaAtd1();
+}
+// passo 1 — quem é a cliente
+function telaAtd1(){
+  const barra=passosHTML(0);
   app.innerHTML=`<div class="screen noNav">
     <button class="back" onclick="irTab('clientes')">${ic('back',18)} Início</button>
-    <h2 style="margin-bottom:4px;font-size:1.3rem">Novo atendimento</h2>
-    <p style="color:var(--muted);font-size:.86rem;margin-bottom:6px">Registra a unha e já monta o cartão ✨</p>
+    ${barra}
+    <h2 style="margin-bottom:4px;font-size:1.3rem">Pra quem é a unha? 💅</h2>
+    <p style="color:var(--muted);font-size:.86rem;margin-bottom:12px">Escolha uma cliente ou cadastre uma nova</p>
     <div class="card">
-      <label>Cliente</label>
-      <select id="a-cli" onchange="$('#nova').style.display=this.value==='nova'?'block':'none'">
-        <option value="nova">➕ Cliente nova</option>
-        ${clientes.map(c=>`<option value="${c.id}">${c.nome}</option>`).join('')}
-      </select>
-      <div id="nova">
-        <label>Nome da cliente</label><input id="a-nome" placeholder="Ex: Maria Souza">
-        <label>WhatsApp dela (com DDD)</label><input id="a-zap" inputmode="numeric" placeholder="Ex: 83988887777">
-        <label>Horário de costume (opcional)</label><input id="a-hor" placeholder="Ex: quinta às 14h">
+      <div class="bigcli" onclick="atdCliente('nova')" id="bc-nova">
+        <div class="ava">${ic('plus',20)}</div><div><div class="nm">Cliente nova</div>
+        <div class="sub">cadastrar agora, rapidinho</div></div></div>
+      <div id="atd-nova" style="display:${atd.modo==='nova'?'block':'none'}">
+        <label>Nome da cliente</label><input id="a-nome" placeholder="Ex: Maria Souza" value="${atd.nome||''}">
+        <label>WhatsApp (com DDD) — opcional</label><input id="a-zap" inputmode="numeric" placeholder="Ex: 83988887777" value="${atd.zap||''}">
       </div>
-      <label>Serviço / cor de hoje</label><input id="a-serv" placeholder="Ex: Alongamento fibra + Vermelho Rubi">
-      <label>Foto da unha</label>
-      <div class="btnrow">
-        <button type="button" class="btn ghost sm" style="margin-top:0" onclick="abrirCamera(setFotoAtend)">${ic('camera',18)} Abrir câmera</button>
-        <label class="btn ghost sm" style="margin-top:0;cursor:pointer">${ic('image',18)} Da galeria
-          <input type="file" accept="image/*" style="display:none" onchange="comprimir(this.files[0],720,setFotoAtend)"></label>
-      </div>
-      <img id="a-prev" style="display:none;width:100%;border-radius:13px;margin-top:10px">
+      ${clientes.length?`<div style="margin:14px 2px 8px;font-size:.75rem;font-weight:800;letter-spacing:.5px;color:var(--muted2)">OU JÁ CADASTRADAS</div>
+        <div class="search">${ic('search')}<input placeholder="Buscar cliente..." oninput="filtrarAtd(this.value)"></div>
+        <div id="atd-lista">${clientesAtdHTML(clientes)}</div>`:''}
     </div>
-    <button class="btn" onclick="salvarAtendimento(this)">${ic('sparkle',19)} Salvar e montar o cartão</button>
+    <button class="btn" onclick="atdNext1()">${ic('chev',19)} Continuar</button>
   </div>`;
 }
-function setFotoAtend(d){fotoTemp=d;const pv=$('#a-prev');if(pv){pv.src=d;pv.style.display='block';}}
-function capFotos(cli){let vistas=0;for(let i=cli.atend.length-1;i>=0;i--){if(cli.atend[i].foto){vistas++;if(vistas>6)delete cli.atend[i].foto;}}}
-async function salvarAtendimento(btn){
-  const serv=$('#a-serv').value.trim();
-  if(!serv){toast('Escreva o serviço/cor de hoje');return;}
-  const sel=$('#a-cli').value; let cli;
+function clientesAtdHTML(arr){
+  return arr.map(c=>`<div class="bigcli ${atd.modo===c.id?'':''}" onclick="atdCliente(${c.id})">
+    <div class="ava">${iniciais(c.nome)}</div><div><div class="nm">${c.nome}</div>
+    <div class="sub">${selosMini(c)}</div></div></div>`).join('');
+}
+function filtrarAtd(q){q=q.toLowerCase();const el=$('#atd-lista');if(el)el.innerHTML=clientesAtdHTML(clientes.filter(c=>c.nome.toLowerCase().includes(q)));}
+function atdCliente(id){
+  if(id==='nova'){atd.modo='nova';$('#atd-nova').style.display='block';}
+  else{ // cliente existente — já segue pro passo 2
+    const c=clientes.find(x=>x.id===id);atd.modo=id;atd.nome=c?c.nome:'';atd.cliBase=c;telaAtd2();}
+}
+function atdNext1(){
+  if(atd.modo==='nova'){
+    const nome=($('#a-nome')?.value||'').trim();
+    if(!nome){toast('Coloque o nome da cliente 😊');return;}
+    atd.nome=nome;atd.zap=soNums($('#a-zap')?.value);atd.cliBase=null;
+  }
+  telaAtd2();
+}
+// passo 2 — serviço de hoje
+function telaAtd2(){
+  app.innerHTML=`<div class="screen noNav">
+    <button class="back" onclick="telaAtd1()">${ic('back',18)} Voltar</button>
+    ${passosHTML(1)}
+    <h2 style="margin-bottom:4px;font-size:1.3rem">O que você fez hoje? ✨</h2>
+    <p style="color:var(--muted);font-size:.86rem;margin-bottom:12px">Aparece no cartão da ${primeiro(atd.nome)}</p>
+    <div class="card">
+      <label>Serviço / cor de hoje</label>
+      <input id="a-serv" placeholder="Ex: Alongamento fibra + Vermelho Rubi" value="${atd.serv||''}">
+      ${(studio.servicos||[]).length?`<div class="chips" style="margin-top:10px">
+        ${studio.servicos.map(s=>`<div class="chip" onclick="$('#a-serv').value='${(s.nome||'').replace(/'/g,'')}'">${s.nome}</div>`).join('')}</div>`:''}
+    </div>
+    <button class="btn" onclick="atdNext2()">${ic('camera',19)} Tirar a foto do cartão</button>
+  </div>`;
+}
+function atdNext2(){
+  const serv=($('#a-serv')?.value||'').trim();
+  if(!serv){toast('Escreva o serviço/cor de hoje 😊');return;}
+  atd.serv=serv;
+  abrirCameraCartao();
+}
+
+// dados de preview do cartão (nome, serviço, selos previstos, logo carregada)
+function atdPreview(logoEl){
+  const base=atd.cliBase?atd.cliBase.selos:(atd.savedCli?0:0);
+  const fake={nome:atd.nome,selos:base+ (atd.savedCli?0:1)};
+  // se já salvou, os selos reais já contam; usa o savedCli
+  if(atd.savedCli)fake.selos=atd.savedCli.selos;
+  return {nome:atd.nome,serv:atd.serv,frase:(prefs().frase||''),cli:fake,logoEl};
+}
+
+/* ---- CÂMERA AO VIVO: cartão por cima + fita de temas estilo filtro ---- */
+async function abrirCameraCartao(){
+  if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)){
+    // sem câmera no navegador: cai no seletor de arquivo e usa o tema atual
+    const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.capture='environment';
+    inp.onchange=()=>comprimir(inp.files[0],1080,d=>salvarAtdFoto(d));inp.click();return;}
+  await fontesPremium();
+  const p=prefs();
+  // tema inicial = o que estiver salvo (senão premium)
+  let atual=TEMAS_CARD.findIndex(o=>o.estilo===p.estilo&&(o.tema?o.tema===p.tema:true));
+  if(atual<0)atual=0;
+  let logoEl=null;
+  if(studio.logo){await new Promise(r=>{const im=new Image();im.onload=()=>{logoEl=im;r();};im.onerror=r;im.src=studio.logo;});}
+
+  const ov=document.createElement('div');ov.className='livecam';
+  ov.innerHTML=`
+    <div class="lc-stage" id="lc-stage">
+      <video id="lc-v" autoplay playsinline muted></video>
+      <canvas class="lc-ov" id="lc-ov" width="1080" height="1350"></canvas>
+      <div class="lc-hint">Enquadre a unha • escolha o tema embaixo 👇</div>
+      <div class="lc-flash" id="lc-flash"></div>
+    </div>
+    <div class="lc-temas" id="lc-temas">
+      ${TEMAS_CARD.map((o,i)=>`<div class="lc-tema ${i===atual?'on':''}" data-i="${i}" onclick="lcTema(${i})">
+        <div class="sw" style="background:linear-gradient(135deg,${o.grad[0]},${o.grad[1]})">${o.em||''}</div>
+        <b>${o.label}</b></div>`).join('')}
+    </div>
+    <div class="lc-bar">
+      <button class="lc-x" id="lc-cancel">${ic('x',22)}</button>
+      <button class="lc-shot" id="lc-shot"><span></span></button>
+      <button class="lc-x" id="lc-flip">${ic('camera',22)}</button>
+    </div>`;
+  document.body.appendChild(ov);
+  const v=ov.querySelector('#lc-v'),ovc=ov.querySelector('#lc-ov').getContext('2d');
+  let stream=null,facing='environment';
+  const prev=()=>atdPreview(logoEl);
+  function redraw(){const o=TEMAS_CARD[atual];overlayAoVivo(ovc,o.estilo,o.tema,prev());}
+  window._lcTema=i=>{atual=i;const q=prefs();q.estilo=TEMAS_CARD[i].estilo;if(TEMAS_CARD[i].tema)q.tema=TEMAS_CARD[i].tema;setPrefs(q);
+    ov.querySelectorAll('.lc-tema').forEach(el=>el.classList.toggle('on',+el.dataset.i===i));
+    ov.querySelector(`.lc-tema[data-i="${i}"]`).scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+    redraw();};
+  async function start(){try{if(stream)stream.getTracks().forEach(t=>t.stop());
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing,width:{ideal:1440},height:{ideal:1920}},audio:false});
+    v.srcObject=stream;v.classList.toggle('esp',facing==='user');}
+    catch(e){fechar();toast('Não consegui abrir a câmera 😢');}}
+  function fechar(){if(stream)stream.getTracks().forEach(t=>t.stop());ov.remove();window._lcTema=null;}
+  ov.querySelector('#lc-cancel').onclick=()=>{fechar();if(!atd.savedCli)telaAtd2();else telaAtdResultado();};
+  ov.querySelector('#lc-flip').onclick=()=>{facing=facing==='environment'?'user':'environment';start();};
+  ov.querySelector('#lc-shot').onclick=()=>{
+    const vw=v.videoWidth,vh=v.videoHeight;if(!vw){toast('Espera a câmera abrir 🙏');return;}
+    const fl=ov.querySelector('#lc-flash');fl.classList.remove('pisca');void fl.offsetWidth;fl.classList.add('pisca');
+    if(navigator.vibrate)navigator.vibrate(55);
+    const alvo=1080/1350;let cw,ch;
+    if(vw/vh>alvo){ch=vh;cw=vh*alvo;}else{cw=vw;ch=cw/alvo;}
+    const sx=(vw-cw)/2,sy=(vh-ch)/2,c=document.createElement('canvas');c.width=1080;c.height=1350;
+    const cx=c.getContext('2d');cx.save();
+    if(facing==='user'){cx.translate(1080,0);cx.scale(-1,1);}
+    cx.drawImage(v,sx,sy,cw,ch,0,0,1080,1350);cx.restore();
+    const foto=c.toDataURL('image/jpeg',.72);
+    fechar();salvarAtdFoto(foto);
+  };
+  redraw();start();
+}
+function lcTema(i){if(window._lcTema)window._lcTema(i);}
+// desenha SÓ os enfeites do cartão (transparente) por cima do vídeo ao vivo
+function overlayAoVivo(x,estilo,tema,prev){
+  const W=1080,H=1350,url=urlPortfolio();
+  x.clearRect(0,0,W,H);
+  if(estilo==='premium'){
+    premiumOverlay(x,W,H,{nome:prev.nome,serv:prev.serv,data:dataBR(hoje()),frase:prev.frase,
+      selos:selosAt(prev.cli),meta:meta(),brinde:temBrinde(prev.cli),url,logoEl:prev.logoEl,studioNome:studio.nome});
+    return;
+  }
+  const t=TEMAS[tema]||TEMAS.rosa;
+  const serv=prev.serv||'',cortar=s=>serv.length>s?serv.slice(0,s-1)+'…':serv;
+  const ov=x.createLinearGradient(0,H*.42,0,H);ov.addColorStop(0,'rgba(10,5,15,0)');ov.addColorStop(1,'rgba(10,5,15,.94)');
+  x.fillStyle=ov;x.fillRect(0,0,W,H);x.textAlign='center';
+  x.fillStyle='#fff';x.font='800 64px sans-serif';x.fillText(prev.nome,W/2,H-392);
+  x.fillStyle=t.acc;x.font='600 40px sans-serif';x.fillText(cortar(34),W/2,H-326);
+  x.fillStyle='rgba(255,255,255,.75)';x.font='400 30px sans-serif';x.fillText(dataBR(hoje())+(prev.frase?'  ·  '+prev.frase:''),W/2,H-272);
+  desenharSelos(x,prev.cli,t,H-214);
+  x.textAlign='left';x.fillStyle='#fff';x.font='700 40px sans-serif';x.fillText('💅 '+studio.nome,54,H-54);
+  x.save();x.textAlign='center';x.fillStyle='rgba(255,255,255,.9)';x.font='700 22px sans-serif';
+  x.fillText('agende aqui 📷',W-40-150+75,H-40-150-12);x.restore();
+  desenharQR(x,url,W-40-150,H-40-150,150);
+}
+// salva o atendimento (cria cliente/atend +selo na 1ª foto; nas próximas só troca a foto)
+async function salvarAtdFoto(foto){
+  toast('Salvando o cartão… ✨');
   try{
-    if(sel==='nova'){
-      const nome=$('#a-nome').value.trim();
-      if(!nome){toast('Coloque o nome da cliente');return;}
-      const zap=soNums($('#a-zap').value);
-      cli={nome,zap:zap?(zap.startsWith('55')?zap:'55'+zap):'',horario:$('#a-hor').value.trim(),selos:0,atend:[]};
+    let cli;
+    if(atd.savedCli){ // "tirar outra": troca a foto do mesmo atendimento
+      cli=atd.savedCli; cli.atend[atd.idx].foto=foto; capFotos(cli);
     }else{
-      cli=await rpc('cu_cliente',{p_slug:sessao.slug,p_pin:sessao.pin,p_id:+sel});
+      if(atd.modo==='nova'){cli={nome:atd.nome,zap:atd.zap?(atd.zap.startsWith('55')?atd.zap:'55'+atd.zap):'',horario:atd.horario||'',selos:0,atend:[]};}
+      else{cli=await rpc('cu_cliente',{p_slug:sessao.slug,p_pin:sessao.pin,p_id:+atd.modo});}
+      cli.selos++; cli.atend.push({d:hoje(),serv:atd.serv,foto,postou:false}); capFotos(cli);
     }
-    btn.disabled=true;
-    cli.selos++; cli.atend.push({d:hoje(),serv,foto:fotoTemp,postou:false}); capFotos(cli);
     const saved=await rpc('cu_cliente_salvar',{p_slug:sessao.slug,p_pin:sessao.pin,p_cliente:cli});
-    if(saved.erro){toast('PIN errado');btn.disabled=false;return;}
-    clienteAtual=saved; await recarregarClientes();
-    telaEditor(saved.atend.length-1);
-  }catch(e){toast('Falha na conexão — tenta de novo');btn.disabled=false;}
+    if(saved.erro){toast('PIN errado');return;}
+    atd.savedCli=saved;if(atd.idx<0)atd.idx=saved.atend.length-1;
+    clienteAtual=saved; await recarregarClientes(); telaAtdResultado();
+  }catch(e){toast('Falha na conexão — tenta de novo 😢');}
+}
+// passo 4 — resultado: o cartão pronto + compartilhar / tirar outra
+function telaAtdResultado(){
+  const cli=atd.savedCli,at=cli.atend[atd.idx];tab='';bottomNav();
+  app.innerHTML=`<div class="screen noNav">
+    ${passosHTML(2)}
+    <h2 style="font-size:1.3rem;text-align:center">Ficou linda! 😍</h2>
+    <p style="color:var(--muted);font-size:.86rem;text-align:center;margin-bottom:12px">O cartão da ${primeiro(cli.nome)} já está pronto</p>
+    <canvas id="cartao" width="1080" height="1350"></canvas>
+    <button class="btn" onclick="enviarCartao('${primeiro(cli.nome).replace(/'/g,'')}')">${ic('send',19)} Compartilhar com a cliente</button>
+    <button class="btn ghost" onclick="abrirCameraCartao()">${ic('camera',18)} Tirar outra</button>
+    <button class="btn gold" onclick="telaEditor(${atd.idx})">${ic('sparkle',18)} Ajustar / trocar tema</button>
+    <button class="link" onclick="irTab('clientes')" style="color:var(--muted);background:none;border:none;width:100%;margin-top:12px;cursor:pointer">Concluir e voltar ao início</button>
+  </div>`;
+  desenharCartao(cli,at);
 }
 
 /* ================= Cartão (editor estilo Canva) ================= */
