@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0d0810">
+
+<!-- =============================================================
+     DYMANI — Provador Virtual · ETAPA 1 (reconhecimento do dedo)
+     Página de TESTE separada. Abre a câmera e desenha ao vivo os
+     pontos da mão (MediaPipe Hand Landmarker, roda no próprio
+     celular, de graça), marcando a ZONA DA UNHA de cada dedo.
+     Objetivo: ver a precisão do reconhecimento antes de partir
+     pra colocar a moldura (etapa 2 / 3D).
+     ============================================================= -->
+
+<title>Dymani — Provador (teste de reconhecimento)</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💅</text></svg>">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;overflow:hidden}
+  .wrap{position:fixed;inset:0;display:flex;flex-direction:column}
+  .stagewrap{position:relative;flex:1;min-height:0;background:#0d0810}
+  #canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+  video{display:none}
+
+  .hud{position:absolute;top:calc(12px + env(safe-area-inset-top));left:12px;right:12px;z-index:3;
+    display:flex;gap:8px;align-items:flex-start;pointer-events:none}
+  .status{background:rgba(13,8,16,.72);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+    border:1px solid rgba(244,114,182,.3);border-radius:14px;padding:9px 13px;font-size:.82rem;font-weight:600;
+    line-height:1.35;max-width:75%}
+  .status b{color:#f9d5e6}
+  .status .mao{color:#34d399}
+  .status .nada{color:#fca5a5}
+  .fps{margin-left:auto;background:rgba(13,8,16,.72);border:1px solid rgba(255,255,255,.14);border-radius:12px;
+    padding:8px 11px;font-size:.72rem;color:#c4b5d0;font-weight:700}
+
+  .bar{display:flex;align-items:center;justify-content:space-around;padding:14px 0 calc(16px + env(safe-area-inset-bottom));
+    background:#0d0810;z-index:3}
+  .b{width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,.14);border:none;color:#fff;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.15rem}
+  .b:active{transform:scale(.93)}
+  .seg{display:flex;background:rgba(255,255,255,.1);border-radius:22px;padding:4px}
+  .seg button{border:none;background:none;color:#c4b5d0;font-weight:700;font-size:.82rem;padding:8px 14px;border-radius:18px;cursor:pointer}
+  .seg button.on{background:linear-gradient(90deg,#ec4899,#a855f7);color:#fff}
+
+  .tela{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:30px;background:radial-gradient(700px 400px at 50% 30%,#2a1442,#0d0810)}
+  .tela h1{font-size:1.5rem;margin-bottom:8px}
+  .tela p{color:#c4b5d0;font-size:.95rem;max-width:340px;margin-bottom:8px;line-height:1.5}
+  .tela .lg{font-size:3rem;margin-bottom:10px}
+  .tela button{margin-top:18px;padding:15px 26px;border:none;border-radius:30px;font-size:1.05rem;font-weight:800;cursor:pointer;
+    color:#2a1608;background:linear-gradient(90deg,#f4d58d,#d9b36a);box-shadow:0 8px 26px rgba(217,179,106,.35)}
+  .spin{width:38px;height:38px;border:4px solid rgba(255,255,255,.2);border-top-color:#f472b6;border-radius:50%;
+    animation:sp 1s linear infinite;margin:0 auto 14px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .erro{color:#fca5a5;font-size:.85rem;margin-top:12px;max-width:340px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="stagewrap">
+    <video id="v" autoplay playsinline muted></video>
+    <canvas id="canvas"></canvas>
+    <div class="hud">
+      <div class="status" id="status">Preparando…</div>
+      <div class="fps" id="fps">— fps</div>
+    </div>
+    <!-- tela inicial / carregando -->
+    <div class="tela" id="tela">
+      <div class="lg">💅</div>
+      <h1>Provador · Etapa 1</h1>
+      <p>Vamos ver se o celular reconhece bem o seu dedo. Aponte a câmera pra sua mão e veja os pontos e a <b>zona da unha</b> aparecerem em cima.</p>
+      <div id="tela-extra"></div>
+      <button id="btn-start">📷 Ligar a câmera</button>
+      <div class="erro" id="erro"></div>
+    </div>
+  </div>
+  <div class="bar">
+    <button class="b" id="flip">🔄</button>
+    <div class="seg" id="seg">
+      <button data-mode="pontos" class="on">Pontos</button>
+      <button data-mode="unha">Zona da unha</button>
+      <button data-mode="ambos">Ambos</button>
+    </div>
+    <button class="b" id="close" onclick="location.reload()">✕</button>
+  </div>
+</div>
+
+<script type="module">
+import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+
+const $=s=>document.querySelector(s);
+const v=$('#v'), cv=$('#canvas'), x=cv.getContext('2d');
+let landmarker=null, stream=null, facing='environment', rodando=false, modo='pontos';
+let lastT=0, fps=0, fpsSm=0;
+
+// conexões da mão (pares de índices) — MediaPipe Hands
+const CONEXOES=[[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],
+  [9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
+// por dedo: [ponta, junta antes da unha (DIP/IP), junta de baixo]  -> pra achar a unha e a largura
+const DEDOS=[
+  {nome:'polegar', tip:4, dip:3, mcp:2},
+  {nome:'indicador', tip:8, dip:7, mcp:5},
+  {nome:'médio', tip:12, dip:11, mcp:9},
+  {nome:'anelar', tip:16, dip:15, mcp:13},
+  {nome:'mindinho', tip:20, dip:19, mcp:17}];
+
+async function carregarModelo(){
+  const fs=await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
+  landmarker=await HandLandmarker.createFromOptions(fs,{
+    baseOptions:{
+      modelAssetPath:"https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+      delegate:"GPU"
+    },
+    numHands:2, runningMode:"VIDEO"
+  });
+}
+
+async function ligarCamera(){
+  if(stream)stream.getTracks().forEach(t=>t.stop());
+  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing,width:{ideal:1280},height:{ideal:720}},audio:false});
+  v.srcObject=stream;
+  await v.play();
+  await new Promise(r=>{ if(v.videoWidth) r(); else v.onloadedmetadata=()=>r(); });
+}
+
+function start(){
+  $('#tela-extra').innerHTML='<div class="spin"></div><p>Baixando o reconhecedor (só na 1ª vez)…</p>';
+  $('#btn-start').style.display='none'; $('#erro').textContent='';
+  Promise.all([carregarModelo(), ligarCamera()]).then(()=>{
+    $('#tela').style.display='none';
+    rodando=true; requestAnimationFrame(loop);
+  }).catch(e=>{
+    $('#tela-extra').innerHTML='';
+    $('#btn-start').style.display='';
+    $('#erro').textContent='Não consegui iniciar: '+(e.message||e)+'. Verifique a permissão da câmera e a internet.';
+  });
+}
+
+// mapeia ponto normalizado (0-1 no frame do vídeo) -> pixel no canvas (cover + espelho)
+let mapCtx={sx:0,sy:0,e:1,W:0,H:0,mirror:false};
+function calcCover(){
+  const vw=v.videoWidth, vh=v.videoHeight, W=cv.width, H=cv.height;
+  const e=Math.max(W/vw, H/vh);
+  mapCtx={ e, W, H, vw, vh, dx:(W-vw*e)/2, dy:(H-vh*e)/2, mirror:(facing==='user') };
+}
+function mapPt(p){
+  const m=mapCtx; let px=p.x*m.vw*m.e+m.dx; const py=p.y*m.vh*m.e+m.dy;
+  if(m.mirror)px=m.W-px;
+  return [px,py];
+}
+
+function loop(t){
+  if(!rodando)return;
+  if(cv.width!==cv.clientWidth*devicePixelRatio||cv.height!==cv.clientHeight*devicePixelRatio){
+    cv.width=cv.clientWidth*devicePixelRatio; cv.height=cv.clientHeight*devicePixelRatio;
+  }
+  calcCover();
+  // desenha o vídeo (cover + espelho) no canvas
+  x.save();
+  if(mapCtx.mirror){x.translate(cv.width,0);x.scale(-1,1);}
+  const {e,vw,vh}=mapCtx, W=cv.width,H=cv.height;
+  x.drawImage(v,(W-vw*e)/2,(H-vh*e)/2,vw*e,vh*e);
+  x.restore();
+
+  let nMaos=0;
+  if(landmarker&&v.videoWidth){
+    const res=landmarker.detectForVideo(v, t);
+    if(res&&res.landmarks){nMaos=res.landmarks.length;
+      res.landmarks.forEach(desenharMao);}
+  }
+  // fps
+  if(lastT){const dt=t-lastT; fps=1000/dt; fpsSm=fpsSm?fpsSm*0.9+fps*0.1:fps;}
+  lastT=t;
+  $('#fps').textContent=Math.round(fpsSm)+' fps';
+  $('#status').innerHTML = nMaos
+    ? `<b class="mao">✓ ${nMaos} mão${nMaos>1?'s':''} reconhecida${nMaos>1?'s':''}</b><br>zona da unha marcada em cada dedo`
+    : `<b class="nada">Nenhuma mão ainda</b><br>aproxime a mão, com boa luz`;
+  requestAnimationFrame(loop);
+}
+
+function desenharMao(lm){
+  const px=lm.map(mapPt);
+  if(modo!=='unha'){
+    // ossos
+    x.lineWidth=Math.max(2,cv.width*0.004); x.strokeStyle='rgba(244,114,182,.85)';
+    x.beginPath();
+    CONEXOES.forEach(([a,b])=>{x.moveTo(px[a][0],px[a][1]);x.lineTo(px[b][0],px[b][1]);});
+    x.stroke();
+    // pontos
+    px.forEach((p,i)=>{const r=DEDOS.some(d=>d.tip===i)?cv.width*0.011:cv.width*0.007;
+      x.beginPath();x.arc(p[0],p[1],r,0,7);
+      x.fillStyle=DEDOS.some(d=>d.tip===i)?'#fcd34d':'#fff';x.fill();});
+  }
+  if(modo!=='pontos'){
+    DEDOS.forEach(d=>desenharUnha(px[d.tip],px[d.dip],px[d.mcp]));
+  }
+}
+
+// estima o retângulo da unha a partir de ponta, junta e base do dedo
+function desenharUnha(tip,dip,mcp){
+  const vx=tip[0]-dip[0], vy=tip[1]-dip[1];         // direção do dedo (junta->ponta)
+  const len=Math.hypot(vx,vy)||1; const ux=vx/len, uy=vy/len;
+  const largDedo=Math.hypot(dip[0]-mcp[0],dip[1]-mcp[1]); // comprimento da falange ~ referência
+  const larg=Math.max(len*0.9, largDedo*0.5);       // largura da unha
+  const comp=len*1.15;                               // comprimento da unha
+  // centro da unha: um pouco antes da ponta
+  const cx=tip[0]-ux*comp*0.42, cy=tip[1]-uy*comp*0.42;
+  const px=-uy, py=ux;                               // perpendicular (largura)
+  const a=comp/2, b=larg/2;
+  // quadrilátero da unha
+  const pts=[
+    [cx+ux*a+px*b, cy+uy*a+py*b],
+    [cx+ux*a-px*b, cy+uy*a-py*b],
+    [cx-ux*a-px*b, cy-uy*a-py*b],
+    [cx-ux*a+px*b, cy-uy*a+py*b]];
+  x.save();
+  x.beginPath();
+  // formato de unha: retângulo com a ponta arredondada
+  x.moveTo(pts[3][0],pts[3][1]);
+  x.lineTo((pts[0][0]+pts[1][0])/2 - ux*a*0.15,(pts[0][1]+pts[1][1])/2 - uy*a*0.15);
+  x.quadraticCurveTo(pts[0][0],pts[0][1], pts[0][0],pts[0][1]);
+  x.lineTo(pts[1][0],pts[1][1]);
+  x.quadraticCurveTo((pts[1][0]+pts[2][0])/2,(pts[1][1]+pts[2][1])/2, pts[2][0],pts[2][1]);
+  x.closePath();
+  x.fillStyle='rgba(236,72,153,.32)'; x.fill();
+  x.lineWidth=Math.max(2,cv.width*0.004); x.strokeStyle='rgba(255,214,235,.95)'; x.stroke();
+  x.restore();
+}
+
+// controles
+$('#btn-start').onclick=start;
+$('#flip').onclick=async()=>{ facing=facing==='environment'?'user':'environment'; try{await ligarCamera();}catch(e){} };
+$('#seg').querySelectorAll('button').forEach(btn=>btn.onclick=()=>{
+  modo=btn.dataset.mode;
+  $('#seg').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===btn));
+});
+// se não houver suporte a câmera
+if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)){
+  $('#tela-extra').innerHTML=''; $('#btn-start').style.display='none';
+  $('#erro').textContent='Este navegador não tem acesso à câmera.';
+}
+window._diag=()=>({landmarker:!!landmarker,rodando,facing,fps:Math.round(fpsSm)});
+</script>
+</body>
+</html>
