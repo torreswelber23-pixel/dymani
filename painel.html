@@ -508,6 +508,9 @@ const IC={
   gift:'<polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>',
   bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
   chev:'<polyline points="9 18 15 12 9 6"/>',
+  chart:'<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
+  heart:'FILL:<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>',
+  trend:'<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>',
   back:'<line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>',
   trash:'<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
   logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
@@ -584,7 +587,17 @@ function abrirCamera(cb){
     const d=c.toDataURL('image/jpeg',.72);fechar();cb(d);};
   start();
 }
-function urlPortfolio(){const base=location.href.split('#')[0].split('?')[0].replace(/[^/]*$/,'');return base+'portfolio.html?s='+sessao.slug;}
+function urlBase(){return location.href.split('#')[0].split('?')[0].replace(/[^/]*$/,'');}
+function urlPortfolio(){return urlBase()+'portfolio.html?s='+sessao.slug;}
+function urlCarteirinha(id){return urlBase()+'carteirinha.html?s='+encodeURIComponent(sessao.slug)+'&c='+id;}
+async function enviarCarteirinha(id,nome,zap){
+  const url=urlCarteirinha(id);
+  const texto=`Oi, ${primeiro(nome)}! 💖 Essa é a sua carteirinha do Clube ${studio.nome} — dá pra ver seus selos e quanto falta pra sua unha grátis. Guarde o link:\n${url}`;
+  const zapnum=soNums(zap||'');
+  if(zapnum.length>=10){window.open('https://wa.me/'+(zapnum.startsWith('55')?zapnum:'55'+zapnum)+'?text='+encodeURIComponent(texto),'_blank');return;}
+  try{if(navigator.share){await navigator.share({text:texto});return;}}catch(e){}
+  try{await navigator.clipboard.writeText(url);toast('Link da carteirinha copiado 💳');}catch(e){prompt('Copie o link:',url);}
+}
 function selosMini(c){let h='';const n=selosAt(c),m=meta();for(let i=0;i<m;i++)h+=i<n?'★':'☆';return h;}
 function paraChamar(){return clientes.filter(c=>c.atend.length&&diasDesde(c.atend[c.atend.length-1].d)>=limDias())
   .sort((a,b)=>diasDesde(b.atend[b.atend.length-1].d)-diasDesde(a.atend[a.atend.length-1].d));}
@@ -685,10 +698,68 @@ function telaClientes(){
       <div class="ci">${ic('bell',22)}</div>
       <div class="tx"><b>${chamar.length} cliente${chamar.length>1?'s':''} na hora de voltar</b>
         <span>Toque para chamar com 1 clique</span></div>${ic('chev',20)}</div>`:''}
+    <div class="alert" onclick="telaRelatorio()" style="background:linear-gradient(100deg,rgba(252,211,77,.14),rgba(168,85,247,.14));border-color:var(--gold)">
+      <div class="ci" style="background:rgba(252,211,77,.2);color:var(--gold)">${ic('chart',22)}</div>
+      <div class="tx"><b>Relatório do mês</b><span>Veja quanto o Dymani te trouxe</span></div>${ic('chev',20)}</div>
     <div class="search">${ic('search')}<input placeholder="Buscar cliente..." oninput="filtrar(this.value)"></div>
     <div id="lista">${listaHTML(clientes)}</div>
   </div>`;
 }
+/* ================= Relatório do mês ================= */
+const MESES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+async function telaRelatorio(){
+  tab=''; bottomNav();
+  app.innerHTML=`<div class="screen noNav"><button class="back" onclick="irTab('clientes')">${ic('back',18)} Clientes</button>
+    <div class="empty">Somando seu mês… 📊</div></div>`;
+  const now=new Date(), ym=new Date(now.getTime()-now.getTimezoneOffset()*6e4).toISOString().slice(0,7);
+  const servs=(studio.servicos||[]).filter(s=>+s.preco>0);
+  const precoMedio=servs.length?servs.reduce((a,s)=>a+(+s.preco||0),0)/servs.length:0;
+  const precoDe=nome=>{const t=(nome||'').toLowerCase();
+    for(const s of servs){if(s.nome&&t.includes(s.nome.toLowerCase()))return +s.preco;}return precoMedio;};
+  let atendMes=0,postadosMes=0,receita=0;const voltaram=new Set(),novas=new Set();
+  clientes.forEach(c=>{const ats=c.atend||[];
+    const noMes=ats.filter(a=>a.d&&a.d.slice(0,7)===ym);
+    const antes=ats.some(a=>a.d&&a.d.slice(0,7)<ym);
+    noMes.forEach(a=>{atendMes++;if(a.postou)postadosMes++;receita+=precoDe(a.serv);});
+    if(noMes.length){antes?voltaram.add(c.id):novas.add(c.id);}});
+  let indicacoes=0;
+  try{const ag=await rpc('cu_agenda',{p_slug:sessao.slug,p_pin:sessao.pin});
+    indicacoes=(ag||[]).filter(a=>a.indicou&&a.dia&&a.dia.slice(0,7)===ym).length;}catch(e){}
+  const rec=Math.round(receita);
+  const nadaAinda=atendMes===0;
+  const tile=(cor,icone,num,lab)=>`<div class="card" style="text-align:center;padding:16px 10px;margin:0">
+    <div style="width:40px;height:40px;border-radius:12px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;background:${cor}22;color:${cor}">${ic(icone,20)}</div>
+    <div style="font-size:1.7rem;font-weight:800;line-height:1">${num}</div>
+    <div style="font-size:.76rem;color:var(--muted2);margin-top:3px">${lab}</div></div>`;
+  app.innerHTML=`<div class="screen noNav">
+    <button class="back" onclick="irTab('clientes')">${ic('back',18)} Clientes</button>
+    <h2 style="font-size:1.3rem">Seu mês de ${MESES[now.getMonth()]} ✨</h2>
+    <p style="color:var(--muted);font-size:.86rem;margin-bottom:14px">O que o Dymani fez por você até agora</p>
+    ${nadaAinda?`<div class="empty">${ic('chart',40)}Ainda sem atendimentos esse mês.<br>Faça o primeiro que os números aparecem aqui 💖</div>`:`
+    ${rec>0?`<div class="card" style="text-align:center;background:linear-gradient(135deg,rgba(252,211,77,.16),rgba(236,72,153,.14));border-color:var(--gold)">
+      <div style="font-size:.8rem;letter-spacing:1px;color:var(--gold);font-weight:800;text-transform:uppercase">Valor que passou pela sua agenda</div>
+      <div style="font-family:'Playfair Display',serif;font-size:2.8rem;font-weight:800;margin:4px 0;color:var(--text)">≈ R$ ${rec}</div>
+      <div style="font-size:.82rem;color:var(--muted)">em serviços registrados este mês</div></div>`:''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
+      ${tile('#f472b6','sparkle',atendMes,'atendimentos')}
+      ${tile('#34d399','heart',voltaram.size,'clientes voltaram')}
+      ${tile('#fcd34d','star',postadosMes,'cartões postados')}
+      ${tile('#a855f7','users',indicacoes,'vieram por indicação')}
+    </div>
+    ${novas.size?`<div class="card" style="margin-top:12px;display:flex;align-items:center;gap:10px">
+      <div style="color:var(--verde)">${ic('trend',22)}</div>
+      <div style="font-size:.9rem"><b>${novas.size}</b> cliente${novas.size>1?'s novas':' nova'} esse mês — sua rede tá crescendo!</div></div>`:''}
+    <div class="card" style="margin-top:12px;font-size:.9rem;color:var(--muted);text-align:center">
+      💡 Cada cliente que volta e cada indicação vale muito mais que os R$29/mês. Continue mandando os cartões! 💅</div>
+    <button class="btn" onclick='compartilharMes(${JSON.stringify({a:atendMes,v:voltaram.size,p:postadosMes,i:indicacoes,r:rec,mes:MESES[now.getMonth()]})})'>${ic('send',19)} Compartilhar meu mês</button>`}
+  </div>`;
+}
+function compartilharMes(d){
+  const txt=`📊 Meu mês de ${d.mes} na ${studio.nome} (Clube Dymani):\n✨ ${d.a} atendimentos\n💖 ${d.v} clientes voltaram\n⭐ ${d.p} cartões postados\n👭 ${d.i} vieram por indicação${d.r>0?`\n💰 ≈ R$ ${d.r} em serviços`:''}`;
+  if(navigator.share){navigator.share({text:txt}).catch(()=>{});return;}
+  navigator.clipboard.writeText(txt).then(()=>toast('Resumo copiado 📋')).catch(()=>prompt('Copie:',txt));
+}
+
 function listaHTML(arr){
   if(!arr.length) return `<div class="empty">${ic('users',40)}Suas clientes aparecem aqui depois do primeiro atendimento.<br>Toque em <b>Novo</b> para começar 💖</div>`;
   return arr.map(c=>{
@@ -1719,6 +1790,7 @@ async function telaCliente(id){
         ${ult&&!ult.postou?`<button class="btn gold sm" onclick="marcarPostouFicha(${ultIdx})">${ic('star',18)} Ela postou (+1)</button>`:''}
         <button class="btn ghost sm" onclick="darSeloIndicacao()">${ic('users',18)} Trouxe amiga (+1)</button>
       </div>
+      <button class="btn zap sm" onclick="enviarCarteirinha(${cli.id},'${cli.nome.replace(/'/g,'')}','${cli.zap||''}')">${ic('send',18)} Enviar carteirinha da cliente</button>
       <button class="btn ghost sm" style="color:var(--verm)" onclick="apagarCliente(${cli.id})">${ic('trash',17)} Apagar cliente</button>
     </div>
     ${fotos.length?`<div class="eyebrow">Álbum</div><div class="gal">${fotos.slice(-9).reverse().map(a=>`<img src="${a.foto}">`).join('')}</div>`:''}

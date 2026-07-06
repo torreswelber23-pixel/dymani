@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f0a1a">
+
+<!-- =============================================================
+     DYMANI — Carteirinha da Cliente (Clube Dymani)
+     carteirinha.html?s=slug-do-studio&c=id-da-cliente
+     Página pública/leve: a cliente vê os selos dela juntando,
+     o álbum das unhas, quanto falta pra unha grátis, e pode
+     reagendar ou indicar amigas (ganhando pontos). Sem instalar nada.
+     ============================================================= -->
+
+<title>Dymani — Minha Carteirinha</title>
+<meta name="description" content="Seus selos, seu álbum e sua próxima unha grátis no Clube Dymani.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0f0a1a; --bg2:#161024; --surf:#1e1432; --surf2:#2a1d42; --line:#362654; --line2:#4a3570;
+    --text:#faf5ff; --muted:#c4b5d0; --muted2:#8b7a9e;
+    --rosa:#f472b6; --rosa-forte:#ec4899; --roxo:#a855f7; --gold:#fcd34d; --ouro:#d9b36a; --verde:#34d399; --zap:#25d366;
+    --shadow:0 12px 40px rgba(0,0,0,.5); --r:18px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{scroll-behavior:smooth}html,body{overflow-x:hidden}
+  body{background:radial-gradient(1200px 500px at 50% -140px,#2a1442,var(--bg)) fixed;color:var(--text);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;line-height:1.5;min-height:100vh;-webkit-font-smoothing:antialiased}
+  svg{display:block}
+  .container{max-width:520px;margin:0 auto;padding:22px 16px calc(34px + env(safe-area-inset-bottom))}
+
+  .topo{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+  .logo{width:58px;height:58px;border-radius:50%;border:2px solid var(--ouro);background:linear-gradient(135deg,var(--rosa),var(--roxo));
+    display:flex;align-items:center;justify-content:center;font-weight:800;overflow:hidden;flex-shrink:0;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+  .logo img{width:100%;height:100%;object-fit:cover}
+  .topo h1{font-size:1.12rem;line-height:1.2}
+  .topo p{color:var(--muted);font-size:.78rem;display:flex;align-items:center;gap:5px}
+  .topo p svg{width:12px;height:12px;color:var(--gold)}
+
+  /* ---- cartão de fidelidade (o herói) ---- */
+  .cartao{position:relative;border-radius:24px;padding:22px 20px 24px;overflow:hidden;
+    background:linear-gradient(135deg,#3a1550,#1c1030 60%,#2a0f38);
+    border:1px solid var(--line2);box-shadow:var(--shadow),0 0 60px rgba(168,85,247,.12)}
+  .cartao::before{content:'';position:absolute;inset:0;border-radius:24px;padding:1.5px;pointer-events:none;
+    background:linear-gradient(135deg,rgba(252,211,77,.6),rgba(244,114,182,.2),rgba(252,211,77,.5));
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+  .cartao .selo{position:absolute;top:16px;right:18px;font-size:.66rem;letter-spacing:2px;color:var(--gold);font-weight:800}
+  .cartao .eyebrow{font-size:.72rem;letter-spacing:2px;color:var(--muted);font-weight:700;text-transform:uppercase}
+  .cartao .nome{font-family:'Playfair Display',serif;font-size:2rem;line-height:1.1;margin:2px 0 3px;
+    background:linear-gradient(90deg,#f7d9e6,#f472b6);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .cartao .studio{color:var(--muted);font-size:.84rem;margin-bottom:16px}
+
+  .selos{display:flex;flex-wrap:wrap;gap:9px;margin:4px 0 6px}
+  .selo-item{width:calc(20% - 8px);aspect-ratio:1;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    border:1.5px dashed rgba(252,211,77,.4);background:rgba(255,255,255,.03);transition:transform .3s}
+  .selo-item.on{border:none;background:radial-gradient(circle at 35% 30%,#fff1c0,#f4d58d 45%,#c99a44);
+    box-shadow:0 4px 12px rgba(217,179,106,.4);animation:pop .4s ease both}
+  .selo-item svg{width:52%;height:52%}
+  .selo-item.on svg{color:#8a5a1e}.selo-item svg{color:rgba(252,211,77,.35)}
+  @keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+
+  .barra{height:9px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden;margin:14px 0 8px}
+  .barra i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--gold),var(--rosa));transition:width .9s ease}
+  .falta{text-align:center;font-weight:700;font-size:.98rem}
+  .falta b{color:var(--gold)}
+  .premio{text-align:center;background:linear-gradient(100deg,rgba(252,211,77,.18),rgba(244,114,182,.18));
+    border:1px solid var(--gold);border-radius:14px;padding:12px;font-weight:800;color:var(--gold);margin-top:6px}
+
+  .acts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0 4px}
+  .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:none;cursor:pointer;
+    font-weight:700;font-size:.96rem;padding:15px 12px;border-radius:14px;text-decoration:none;color:#fff;
+    background:linear-gradient(90deg,var(--rosa-forte),var(--roxo));box-shadow:0 6px 18px rgba(219,39,119,.32)}
+  .btn.gold{background:linear-gradient(90deg,var(--gold),#f59e0b);color:#2a1704;box-shadow:0 6px 18px rgba(252,211,77,.3)}
+  .btn:active{transform:translateY(1px);opacity:.93}
+  .btn svg{width:18px;height:18px}
+  .acts .btn{margin:0}
+
+  .banner{display:flex;align-items:center;gap:12px;background:linear-gradient(100deg,rgba(252,211,77,.12),rgba(244,114,182,.12));
+    border:1px solid rgba(252,211,77,.5);border-radius:var(--r);padding:12px 14px;margin:16px 0 0;font-size:.84rem}
+  .banner .bi{width:36px;height:36px;border-radius:10px;background:rgba(252,211,77,.18);color:var(--gold);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .banner b{color:var(--gold)}
+
+  .eyebrow2{display:flex;align-items:center;gap:8px;font-size:.74rem;font-weight:800;letter-spacing:.6px;
+    text-transform:uppercase;color:var(--muted2);margin:26px 2px 12px}
+  .eyebrow2 svg{width:15px;height:15px;color:var(--rosa)}
+  .gal{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .gal img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px;border:1px solid var(--line);cursor:pointer;transition:transform .18s}
+  .gal img:active{transform:scale(.95)}
+  .galvazio{color:var(--muted2);font-size:.86rem;text-align:center;padding:24px;border:1px dashed var(--line2);border-radius:14px}
+
+  .lightbox{position:fixed;inset:0;background:rgba(8,3,11,.94);z-index:50;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px)}
+  .lightbox img{width:100%;max-width:440px;border-radius:18px}
+  .fechar{position:absolute;top:14px;right:16px;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.12);
+    color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .fechar svg{width:22px;height:22px}
+
+  footer{text-align:center;color:var(--muted2);font-size:.76rem;padding:30px 0 4px}
+  footer .badge{display:inline-flex;align-items:center;gap:7px;background:var(--surf);border:1px solid var(--line);
+    border-radius:20px;padding:7px 14px;margin-top:8px;color:var(--muted);font-weight:700}
+  footer .badge b{background:linear-gradient(90deg,var(--rosa),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:1px}
+  .carregando{text-align:center;padding:90px 20px;color:var(--muted)}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--gold);color:#2a1704;
+    font-weight:700;padding:12px 22px;border-radius:30px;z-index:99;box-shadow:0 6px 20px rgba(0,0,0,.4);max-width:90vw;text-align:center}
+  #confete{position:fixed;inset:0;pointer-events:none;z-index:60}
+</style>
+</head>
+<body>
+<canvas id="confete"></canvas>
+<div class="container" id="app"><div class="carregando">💳<br>Carregando sua carteirinha…</div></div>
+
+<script>
+const SUPA_URL='https://rhveqvlldliccalfsuea.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJodmVxdmxsZGxpY2NhbGZzdWVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMjg5MjMsImV4cCI6MjA5NjcwNDkyM30.NrsH1optDK2IbOl8YUqBwUZaidvEk72lvrA4SEHPrVY';
+async function rpc(fn,args){
+  const r=await fetch(SUPA_URL+'/rest/v1/rpc/'+fn,{method:'POST',
+    headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY,'Content-Type':'application/json'},body:JSON.stringify(args)});
+  if(!r.ok) throw new Error('rede'); return r.json();
+}
+const IC={
+  star:'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+  calendar:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+  gift:'<polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>',
+  users:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  image:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>',
+  x:'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+  check:'<polyline points="20 6 9 17 4 12"/>'
+};
+function ic(n,s){const raw=IC[n]||'';return `<svg viewBox="0 0 24 24" width="${s||24}" height="${s||24}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${raw}</svg>`;}
+function icf(n,s){const raw=IC[n]||'';return `<svg viewBox="0 0 24 24" width="${s||24}" height="${s||24}" fill="currentColor" stroke="none">${raw}</svg>`;}
+
+const $=s=>document.querySelector(s);
+const params=new URLSearchParams(location.search);
+const slug=params.get('s')||'studio-demo';
+const cid=params.get('c');
+let studio=null, cli=null;
+
+function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2600);}
+function primeiro(n){return (n||'').split(' ')[0];}
+function urlBase(){return location.href.split('#')[0].split('?')[0].replace(/[^/]*$/,'');}
+
+async function carregar(){
+  if(!cid){erro();return;}
+  try{const r=await rpc('cu_carteirinha',{p_slug:slug,p_id:+cid});
+    studio=r.studio;cli=r.cliente;
+    if(!studio||!cli)throw 0;
+    render();
+  }catch(e){erro();}
+}
+function erro(){$('#app').innerHTML=`<div class="carregando">😕 Não encontrei sua carteirinha.<br><br>Peça o link de novo pra sua manicure 💅</div>`;}
+
+function render(){
+  const meta=(studio.meta)||10;
+  const selos=cli.selos||0;
+  const n=selos%meta || (selos?meta:0);          // selos na cartela atual
+  const brinde=selos>0 && selos%meta===0;
+  const faltam=meta-n;
+  const fotos=(cli.atend||[]).filter(a=>a&&a.foto);
+  let selHTML='';
+  for(let i=0;i<meta;i++) selHTML+=`<div class="selo-item ${i<n?'on':''}">${icf('star',24)}</div>`;
+
+  $('#app').innerHTML=`
+    <div class="topo">
+      <div class="logo">${studio.logo?`<img src="${studio.logo}">`:primeiro(studio.nome)[0]||'D'}</div>
+      <div><h1>${studio.nome}</h1><p>${ic('star',12)} Clube Dymani</p></div>
+    </div>
+
+    <div class="cartao">
+      <div class="selo">CLUBE DYMANI</div>
+      <div class="eyebrow">Carteirinha de fidelidade</div>
+      <div class="nome">${cli.nome}</div>
+      <div class="studio">${studio.nome}</div>
+      <div class="selos">${selHTML}</div>
+      <div class="barra"><i style="width:${Math.round(n/meta*100)}%"></i></div>
+      ${brinde
+        ? `<div class="premio">${ic('gift',18)} Você tem uma UNHA GRÁTIS pra resgatar! 🎁</div>`
+        : `<div class="falta">Faltam <b>${faltam}</b> selo${faltam>1?'s':''} pra sua <b>unha grátis</b></div>`}
+      <div class="acts">
+        <a class="btn" href="${urlBase()}portfolio.html?s=${encodeURIComponent(slug)}">${ic('calendar',18)} Agendar de novo</a>
+        <button class="btn gold" onclick="indicar()">${ic('users',18)} Indicar amiga</button>
+      </div>
+    </div>
+
+    <div class="banner"><div class="bi">${ic('gift',18)}</div>
+      <div>Indique uma amiga: quando ela agendar pelo seu link, <b>vocês duas ganham selo</b> 💖</div></div>
+
+    <div class="eyebrow2">${ic('image')} Meu álbum de unhas</div>
+    ${fotos.length
+      ? `<div class="gal">${fotos.slice().reverse().map((a,i)=>`<img src="${a.foto}" onclick="abrirFoto(${fotos.length-1-i})">`).join('')}</div>`
+      : `<div class="galvazio">Suas fotos aparecem aqui a cada unha nova 💅</div>`}
+
+    <footer>💅 ${studio.nome}<br>
+      <span class="badge">${ic('star',14)} <b>DYMANI</b> · Clube de Fidelidade</span></footer>`;
+
+  window._fotos=fotos;
+  if(brinde) confete();
+  // anima os selos preenchidos em cascata
+  document.querySelectorAll('.selo-item.on').forEach((el,i)=>{el.style.animationDelay=(i*0.06)+'s';});
+}
+
+function indicar(){
+  const url=urlBase()+'portfolio.html?s='+encodeURIComponent(slug)+'&ind='+encodeURIComponent(primeiro(cli.nome));
+  const texto=`💅 Amei minhas unhas na ${studio.nome}! Agenda pelo meu link que a gente ganha ponto e unha grátis no Clube Dymani: ${url}`;
+  if(navigator.share){navigator.share({text:texto}).catch(()=>{});return;}
+  navigator.clipboard.writeText(texto).then(()=>toast('Link copiado! Manda pras amigas 💖')).catch(()=>prompt('Copie o link:',url));
+}
+function abrirFoto(i){
+  const f=window._fotos[i];const bg=document.createElement('div');bg.className='lightbox';
+  bg.innerHTML=`<button class="fechar" onclick="this.parentElement.remove()">${ic('x',22)}</button><img src="${f.foto}">`;
+  bg.onclick=e=>{if(e.target===bg)bg.remove();};document.body.appendChild(bg);
+}
+function confete(){
+  const cv=$('#confete'),x=cv.getContext('2d');cv.width=innerWidth;cv.height=innerHeight;
+  const cores=['#ec4899','#a855f7','#fcd34d','#34d399','#f472b6','#fff'];
+  const pecas=Array.from({length:150},()=>({x:Math.random()*cv.width,y:-20-Math.random()*cv.height*.5,
+    w:8+Math.random()*8,h:6+Math.random()*6,cor:cores[Math.floor(Math.random()*cores.length)],
+    vy:2.4+Math.random()*3.2,vx:-1.4+Math.random()*2.8,rot:Math.random()*6.3,vr:-.14+Math.random()*.28}));
+  let q=0;(function anima(){x.clearRect(0,0,cv.width,cv.height);
+    pecas.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.rot+=p.vr;x.save();x.translate(p.x,p.y);x.rotate(p.rot);
+      x.fillStyle=p.cor;x.fillRect(-p.w/2,-p.h/2,p.w,p.h);x.restore();});
+    if(++q<230)requestAnimationFrame(anima);else x.clearRect(0,0,cv.width,cv.height);})();
+}
+carregar();
+</script>
+</body>
+</html>
