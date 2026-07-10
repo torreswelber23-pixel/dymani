@@ -2,7 +2,22 @@
 
 > Arquivo vivo pra bater o olho e saber, em 1 minuto, **qual é o objetivo, o que já foi feito e o que falta**. Toda vez que mexer no projeto, atualize as caixinhas aqui embaixo.
 >
-> Última atualização: **04/07/2026**
+> Última atualização: **10/07/2026**
+
+## 🚨 Incidente: banco de dados apagado e reconstruído (10/07/2026)
+
+O projeto Supabase original (`rhveqvlldliccalfsuea`) foi apagado fora do
+controle desta sessão (conta/organização diferente da usada agora).
+**Recriado do zero**: projeto novo `dymani` (ref `jozjhdjfjcyvdkmwpkra`,
+região sa-east-1), mesmo schema (3 tabelas: `cu_studios`, `cu_agendamentos`,
+`cu_clientes`) e as mesmas 10 funções `security definer`, reconstruídas a
+partir do código-fonte das páginas (a fonte da verdade do contrato).
+Tudo testado via SQL direto (segurança de PIN, formato dos dados,
+prevenção de choque de horário) — sandbox não alcança `*.supabase.co`
+pra teste via navegador, então **o teste real no celular é obrigatório**
+antes de considerar resolvido. `studio-demo` / PIN `1234` recriado com a
+cliente Gabriela (histórico e selos). **Qualquer dado real que existisse
+foi perdido** — não havia como recuperar.
 
 ---
 

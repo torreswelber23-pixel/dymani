@@ -114,9 +114,21 @@ para quem divulga.
 | `portfolio.html` | Página pública (estilo Instagram) + agendamento | Supabase (tempo real) |
 | `painel.html` | **App completo da manicure**: clientes/selos/Cartão da Unha (editor Canva) + agenda + serviços + horários + fotos + perfil | Supabase (tempo real, multitenant) |
 
-**Backend (Supabase, plano grátis, projeto `rhveqvlldliccalfsuea`, o mesmo
-projeto onde mora o "Site de Promoções" do dono — projetos diferentes,
-mesmo banco, tabelas isoladas por prefixo `cu_`):**
+**Backend (Supabase, plano grátis, projeto `dymani` / ref `jozjhdjfjcyvdkmwpkra`,
+região sa-east-1, organização `projia`, tabelas com prefixo `cu_`):**
+
+> ⚠️ **Reconstruído em 2026-07-10**: o projeto Supabase original
+> (`rhveqvlldliccalfsuea`) foi apagado (fora do controle desta sessão —
+> outra conta/organização). Recriado do zero, mesmo schema e mesmas 10
+> funções `security definer` (recompostas a partir do código-fonte das
+> páginas, que é a especificação real do contrato), com dados de demo
+> recriados (`studio-demo` / PIN `1234`, cliente Gabriela com histórico).
+> **Perda de dados real**: qualquer studio/cliente/agendamento que tenha
+> sido cadastrado de verdade entre a criação original e 2026-07-10 foi
+> perdido — só o studio-demo existia no momento da reconstrução. Se algum
+> dia isso acontecer de novo: **não crie outro projeto sem antes confirmar
+> com o dono** — o passo certo é restaurar/despausar o mesmo projeto
+> (`restore_project`), criar do zero é o último recurso.
 
 - Tabelas: `cu_studios` (perfil, PIN, serviços, horários, fotos, meta de
   pontos, `dias` = limiar do lembrete), `cu_agendamentos` (studio, serviço,
