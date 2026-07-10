@@ -1903,7 +1903,11 @@ function telaPerfil(){
           <input type="file" accept="image/*" onchange="comprimir(this.files[0],300,d=>{window._logo=d;document.getElementById('lprev').innerHTML='<img src=&quot;'+d+'&quot;>';toast('Logo linda! Salve o perfil 👑');})"></label>
       </div>
       <label>Nome do studio</label><input id="p-nome" value="${studio.nome}">
-      <label>Frase de apresentação</label><input id="p-bio" value="${studio.bio||''}" placeholder="Unhas feitas com amor ✨ · Centro">
+      <label>Frase de apresentação</label><input id="p-bio" value="${studio.bio||''}" placeholder="Unhas feitas com amor ✨">
+      <div class="frow" style="margin-top:0">
+        <div style="flex:2"><label>Bairro</label><input id="p-bairro" value="${studio.bairro||''}" placeholder="Ex: Centro"></div>
+        <div style="flex:1"><label>Cidade</label><input id="p-cidade" value="${studio.cidade||''}" placeholder="Ex: Macapá"></div>
+      </div>
       <label>WhatsApp</label><input id="p-zap" inputmode="numeric" value="${studio.zap}">
       <label>Brinde: unha grátis a cada quantos selos?</label>
       <select id="p-meta"><option value="5" ${studio.meta==5?'selected':''}>5 selos</option><option value="10" ${studio.meta==10?'selected':''}>10 selos</option></select>
@@ -1927,6 +1931,7 @@ function telaPerfil(){
 async function salvarPerfil(){
   const zap=soNums($('#p-zap').value);
   await salvar({nome:$('#p-nome').value.trim(),bio:$('#p-bio').value.trim(),
+    bairro:$('#p-bairro').value.trim(),cidade:$('#p-cidade').value.trim(),
     zap:zap.startsWith('55')?zap:'55'+zap,meta:parseInt($('#p-meta').value),dias:parseInt($('#p-dias').value),
     ...(window._logo?{logo:window._logo}:{})},'Perfil salvo! ✨');
   window._logo=null; telaPerfil();
