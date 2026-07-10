@@ -791,7 +791,7 @@ function filtrar(q){q=q.toLowerCase();$('#lista').innerHTML=listaHTML(clientes.f
 /* ================= Novo atendimento (em etapas + câmera ao vivo) ================= */
 // atd guarda o atendimento em construção pelas etapas
 let atd=null;
-function capFotos(cli){let vistas=0;for(let i=cli.atend.length-1;i>=0;i--){if(cli.atend[i].foto){vistas++;if(vistas>6)delete cli.atend[i].foto;}}}
+function capFotos(cli){let vistas=0;for(let i=cli.atend.length-1;i>=0;i--){if(cli.atend[i].foto){vistas++;if(vistas>6){delete cli.atend[i].foto;delete cli.atend[i].fotoAntes;}}}}
 const TEMAS_CARD=[
   {id:'premium',estilo:'premium',label:'Premium',em:'✨',grad:['#f4d58d','#a87f35']},
   {id:'rosa',estilo:'foto',tema:'rosa',label:'Rosa',grad:TEMAS.rosa.grad},
@@ -989,11 +989,47 @@ function telaAtdResultado(){
     <canvas id="cartao" width="1080" height="1350"></canvas>
     <button class="btn" onclick="enviarCartao('${primeiro(cli.nome).replace(/'/g,'')}')">${ic('send',19)} Compartilhar foto</button>
     <button class="btn video" onclick="fazerVideo(atd.savedCli,atd.savedCli.atend[atd.idx],'${primeiro(cli.nome).replace(/'/g,'')}')">${ic('sparkle',19)} Fazer vídeo 🎬</button>
+    ${fotoAntesHTML('atd.savedCli','atd.idx',at)}
     <button class="btn ghost" onclick="abrirCameraCartao()">${ic('camera',18)} Tirar outra</button>
     <button class="btn gold" onclick="telaEditor(${atd.idx})">${ic('sparkle',18)} Ajustar / trocar tema</button>
     <button class="link" onclick="irTab('clientes')" style="color:var(--muted);background:none;border:none;width:100%;margin-top:12px;cursor:pointer">Concluir e voltar ao início</button>
   </div>`;
   desenharCartao(cli,at);
+}
+// widget "foto de antes" (opcional) — refCli/refIdx são EXPRESSÕES js que apontam pra um global
+// (ex: 'atd.savedCli','atd.idx' ou 'clienteAtual','3') — nunca variáveis locais, senão quebra no onclick
+function fotoAntesHTML(refCli,refIdx,at){
+  const chamar=d=>`d=>salvarFotoAntes(${refCli},${refIdx},d)`;
+  if(at.fotoAntes){
+    return `<div class="btnrow" style="align-items:center;margin-top:10px">
+      <img src="${at.fotoAntes}" style="width:52px;height:52px;border-radius:12px;object-fit:cover;border:1px solid var(--line);flex-shrink:0">
+      <button type="button" class="btn ghost sm" style="flex:1;margin-top:0" onclick="abrirCamera(${chamar()})">${ic('camera',16)} Trocar antes</button>
+      <button type="button" class="btn ghost sm" style="color:var(--verm);margin-top:0" onclick="removerFotoAntes(${refCli},${refIdx})">${ic('trash',16)}</button>
+    </div>`;
+  }
+  return `<div class="btnrow" style="margin-top:10px">
+      <button type="button" class="btn ghost sm" onclick="abrirCamera(${chamar()})">${ic('camera',16)} Foto de antes</button>
+      <label class="btn ghost sm" style="cursor:pointer">${ic('image',16)} Galeria
+        <input type="file" accept="image/*" style="display:none" onchange="comprimir(this.files[0],1080,${chamar()})"></label>
+    </div>
+    <p style="color:var(--muted);font-size:.78rem;text-align:center;margin-top:2px">Opcional: junta uma foto de antes e o vídeo mostra a transição ✨</p>`;
+}
+async function salvarFotoAntes(cliRef,idx,d){
+  cliRef.atend[idx].fotoAntes=d;
+  const saved=await rpc('cu_cliente_salvar',{p_slug:sessao.slug,p_pin:sessao.pin,p_cliente:cliRef});
+  if(saved.erro){toast('PIN errado');return;}
+  clienteAtual=saved;await recarregarClientes();
+  toast('Foto de antes salva! 📸');
+  if(atd&&atd.savedCli&&atd.savedCli.id===saved.id){atd.savedCli=saved;telaAtdResultado();}
+  else telaEditor(idx);
+}
+async function removerFotoAntes(cliRef,idx){
+  delete cliRef.atend[idx].fotoAntes;
+  const saved=await rpc('cu_cliente_salvar',{p_slug:sessao.slug,p_pin:sessao.pin,p_cliente:cliRef});
+  if(saved.erro){toast('PIN errado');return;}
+  clienteAtual=saved;await recarregarClientes();toast('Foto de antes removida');
+  if(atd&&atd.savedCli&&atd.savedCli.id===saved.id){atd.savedCli=saved;telaAtdResultado();}
+  else telaEditor(idx);
 }
 
 /* ================= Cartão (editor estilo Canva) ================= */
@@ -1025,6 +1061,8 @@ function telaEditor(idx){
         <label class="btn ghost sm" style="margin-top:0;cursor:pointer">${ic('image',18)} Galeria
           <input type="file" accept="image/*" style="display:none" onchange="comprimir(this.files[0],720,d=>trocarFotoCartao(${idx},d))"></label>
       </div>
+      <label>Foto de antes</label>
+      ${fotoAntesHTML('clienteAtual',String(idx),at)}
       <label>Frase do studio (opcional)</label>
       <input id="e-frase" value="${p.frase||''}" placeholder="Ex: Unhas feitas com amor ✨" oninput="mudar('frase',this.value)">
       ${studio.logo?`<label>Tamanho da logo</label><input type="range" min="100" max="340" value="${p.logoPos.s}" oninput="mudar('logoS',this.value)">`
@@ -1775,38 +1813,101 @@ async function gerarVideoCartao(cli,at,onProgresso){
   const base=$('#cartao'); if(!base)throw new Error('sem cartão');
   const mime=melhorMimeVideo();
   if(!mime)throw new Error('sem suporte a vídeo neste navegador');
-  const W=1080,H=1350,DUR=4400;
+  const W=1080,H=1350;
+  // foto de "antes" opcional: se tiver, o vídeo abre nela e faz a transição pro cartão
+  let antesImg=null;
+  if(at.fotoAntes){antesImg=await new Promise(res=>{const im=new Image();im.onload=()=>res(im);im.onerror=()=>res(null);im.src=at.fotoAntes;});}
+  const ANTES_DUR=antesImg?1300:0, TRANS_DUR=antesImg?650:0, DEPOIS_DUR=4200;
+  const DUR=ANTES_DUR+TRANS_DUR+DEPOIS_DUR;
+
   const vc=document.createElement('canvas');vc.width=W;vc.height=H;const vx=vc.getContext('2d');
   const stream=vc.captureStream(30);
   const rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:9e6});
   const chunks=[];rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
   const fim=new Promise(res=>rec.onstop=res);
+
   // confete com semente fixa (mesmo visual em toda geração)
   const CONF=Array.from({length:90},(_,i)=>{const s=n=>{const v=Math.sin(i*127.1+n*311.7)*43758.5453;return v-Math.floor(v);};
     return{x0:s(1)*W,vy:340+s(2)*420,vx:-60+s(3)*120,rot:s(4)*6.3,vr:-2+s(5)*4,
       w:8+s(6)*9,h:6+s(7)*7,cor:['#f4d58d','#e2aab4','#d9b36a','#f0cdd3','#fff'][Math.floor(s(8)*5)],atraso:s(9)*.4};});
-  const easeOut=t=>1-Math.pow(1-t,3);
+  // poeira dourada ambiente (flutua devagar o segmento "depois" inteiro)
+  const POEIRA=Array.from({length:14},(_,i)=>{const s=n=>{const v=Math.sin(i*91.7+n*57.3)*12345.6789;return v-Math.floor(v);};
+    return{x:s(1)*W,y:H*.12+s(2)*H*.7,r:2+s(3)*3,vy:-9-s(4)*11,fase:s(5)*6.28,vel:.7+s(6)*.6};});
+
   const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+  const easeOut=t=>1-Math.pow(1-t,3);
+  const easeInOutQ=t=>t<.5?2*t*t:-1+(4-2*t)*t;
+  const easeOutBack=t=>{const c1=1.70158,c3=c1+1;return 1+c3*Math.pow(t-1,3)+c1*Math.pow(t-1,2);};
+  function cobrir(img){const e=Math.max(W/img.width,H/img.height);
+    return{w:img.width*e,h:img.height*e,x:W/2-img.width*e/2,y:H/2-img.height*e/2};}
+  function badge(texto,cy,alfa){
+    if(alfa<=0)return;
+    vx.save();vx.globalAlpha=alfa;vx.font='700 30px "Playfair Display",Georgia,serif';
+    const w=vx.measureText(texto).width+56;
+    vx.fillStyle='rgba(10,4,12,.55)';roundRect(vx,W/2-w/2,cy-28,w,56,28);vx.fill();
+    vx.strokeStyle='rgba(244,213,141,.7)';vx.lineWidth=1.5;roundRect(vx,W/2-w/2,cy-28,w,56,28);vx.stroke();
+    vx.fillStyle='#f4d58d';vx.textAlign='center';vx.textBaseline='middle';vx.fillText(texto,W/2,cy+2);
+    vx.textBaseline='alphabetic';vx.restore();
+  }
+  function varre(tAtual,t0,t1){const p=clamp((tAtual-t0)/(t1-t0),0,1);if(p<=0||p>=1)return;
+    const cx=-W*.4+(W*1.8)*p;
+    const gg=vx.createLinearGradient(cx-160,0,cx+160,H);
+    gg.addColorStop(0,'rgba(255,244,214,0)');gg.addColorStop(.5,'rgba(255,244,214,.22)');gg.addColorStop(1,'rgba(255,244,214,0)');
+    vx.save();vx.globalCompositeOperation='lighter';vx.fillStyle=gg;
+    vx.translate(W/2,H/2);vx.rotate(-.35);vx.translate(-W/2,-H/2);
+    vx.fillRect(-W*.3,-H*.2,W*1.6,H*1.4);vx.restore();}
+
   function frame(T){
     vx.clearRect(0,0,W,H);vx.fillStyle='#0b0510';vx.fillRect(0,0,W,H);
-    const p1=easeOut(clamp(T/700,0,1)),esc=1.05-0.05*p1;
-    vx.save();vx.globalAlpha=p1;
-    vx.translate(W/2,H/2);vx.scale(esc,esc);vx.translate(-W/2,-H/2);
-    vx.drawImage(base,0,0,W,H);vx.restore();
-    const varre=(t0,t1)=>{const p=clamp((T-t0)/(t1-t0),0,1);if(p<=0||p>=1)return;
-      const cx=-W*.4+(W*1.8)*p;
-      const gg=vx.createLinearGradient(cx-160,0,cx+160,H);
-      gg.addColorStop(0,'rgba(255,244,214,0)');gg.addColorStop(.5,'rgba(255,244,214,.22)');gg.addColorStop(1,'rgba(255,244,214,0)');
-      vx.save();vx.globalCompositeOperation='lighter';vx.fillStyle=gg;
-      vx.translate(W/2,H/2);vx.rotate(-.35);vx.translate(-W/2,-H/2);
-      vx.fillRect(-W*.3,-H*.2,W*1.6,H*1.4);vx.restore();};
-    varre(1000,2000);varre(2900,3700);
-    if(T>3300){const tc=(T-3300)/1000;
-      CONF.forEach(pt=>{const tt=tc-pt.atraso;if(tt<0)return;
-        const py=-30+pt.vy*tt,px2=pt.x0+pt.vx*tt;if(py>H+40)return;
-        vx.save();vx.globalAlpha=clamp(1.3-tt*.55,0,1);
-        vx.translate(px2,py);vx.rotate(pt.rot+pt.vr*tt);
-        vx.fillStyle=pt.cor;vx.fillRect(-pt.w/2,-pt.h/2,pt.w,pt.h);vx.restore();});}
+
+    if(antesImg&&T<ANTES_DUR){
+      // ---- segmento ANTES ----
+      const p=clamp(T/ANTES_DUR,0,1);
+      const alfaIn=easeOut(clamp(T/280,0,1)), alfaOut=1-easeOut(clamp((T-(ANTES_DUR-280))/280,0,1));
+      const alfa=Math.min(alfaIn,alfaOut), zoom=1+0.025*p;
+      const c=cobrir(antesImg);
+      vx.save();vx.globalAlpha=alfa;
+      vx.translate(W/2,H/2);vx.scale(zoom,zoom);vx.translate(-W/2,-H/2);
+      vx.drawImage(antesImg,c.x,c.y,c.w,c.h);vx.restore();
+      badge('ANTES',110,alfa);
+    }
+    else if(antesImg&&T<ANTES_DUR+TRANS_DUR){
+      // ---- transição: pincelada de esmalte revelando o cartão pronto ----
+      const p=easeInOutQ(clamp((T-ANTES_DUR)/TRANS_DUR,0,1));
+      const ang=-.16, edge=-.2*W+p*1.35*W, dx=Math.tan(ang)*H;
+      const c=cobrir(antesImg);
+      vx.drawImage(antesImg,c.x,c.y,c.w,c.h);
+      vx.save();
+      vx.beginPath();vx.moveTo(-W,0);vx.lineTo(edge,0);vx.lineTo(edge-dx,H);vx.lineTo(-W-dx,H);vx.closePath();vx.clip();
+      vx.drawImage(base,0,0,W,H);vx.restore();
+      // glint dourado na borda da pincelada
+      vx.save();vx.globalCompositeOperation='lighter';vx.translate(edge,H/2);vx.rotate(ang);
+      const gg=vx.createLinearGradient(-46,0,46,0);
+      gg.addColorStop(0,'rgba(255,244,214,0)');gg.addColorStop(.5,'rgba(255,246,220,.95)');gg.addColorStop(1,'rgba(255,244,214,0)');
+      vx.fillStyle=gg;vx.fillRect(-46,-H*.8,92,H*1.6);vx.restore();
+      if(p>0.55)badge('DEPOIS ✨',110,clamp((p-0.55)/0.35,0,1));
+    }
+    else{
+      // ---- segmento DEPOIS: o cartão pronto, com motion de estúdio ----
+      const t2=T-(ANTES_DUR+TRANS_DUR);
+      const pIn=clamp(t2/750,0,1), escIn=easeOutBack(pIn);
+      const alfa=easeOut(clamp(t2/420,0,1));
+      const zoomExtra=1+0.028*clamp(t2/DEPOIS_DUR,0,1);
+      vx.save();vx.globalAlpha=alfa;
+      vx.translate(W/2,H/2);vx.scale(escIn*zoomExtra,escIn*zoomExtra);vx.translate(-W/2,-H/2);
+      vx.drawImage(base,0,0,W,H);vx.restore();
+      if(antesImg&&t2<600)badge('DEPOIS ✨',110,1-clamp(t2/600,0,1));
+      varre(t2,DEPOIS_DUR*.16,DEPOIS_DUR*.38);varre(t2,DEPOIS_DUR*.62,DEPOIS_DUR*.84);
+      POEIRA.forEach(pt=>{const y=((pt.y+pt.vy*(t2/1000))%(H*1.1)+H*1.1)%(H*1.1);
+        const tw=.4+.6*Math.abs(Math.sin(t2/1000*pt.vel+pt.fase));
+        vx.save();vx.globalAlpha=tw*.5;vx.fillStyle='#f4d58d';vx.beginPath();vx.arc(pt.x,y,pt.r,0,7);vx.fill();vx.restore();});
+      if(t2>DEPOIS_DUR*.75){const tc=(t2-DEPOIS_DUR*.75)/1000;
+        CONF.forEach(pt=>{const tt=tc-pt.atraso;if(tt<0)return;
+          const py=-30+pt.vy*tt,px2=pt.x0+pt.vx*tt;if(py>H+40)return;
+          vx.save();vx.globalAlpha=clamp(1.3-tt*.55,0,1);
+          vx.translate(px2,py);vx.rotate(pt.rot+pt.vr*tt);
+          vx.fillStyle=pt.cor;vx.fillRect(-pt.w/2,-pt.h/2,pt.w,pt.h);vx.restore();});}
+    }
   }
   rec.start(200);
   const ini=performance.now();

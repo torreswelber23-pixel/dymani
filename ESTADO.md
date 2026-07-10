@@ -59,6 +59,33 @@ do editor referenciava variáveis locais dentro de um `onclick` (que roda em
 escopo global) — corrigido usando `clienteAtual` + índice, mesmo padrão
 já usado nos outros botões da tela.
 
+### ✨ Antes/Depois com transição + motion mais caprichado (10/07/2026)
+
+Duas melhorias na sequência, a pedido do dono:
+
+**Foto de "antes" (opcional).** Depois de bater a foto do cartão (a "depois"),
+tanto na tela de resultado quanto no editor tem um widget pra adicionar uma
+foto de antes — câmera ou galeria, com preview e "Trocar"/"Remover". Fica
+salva em `at.fotoAntes` (mesmo jsonb do atendimento, sem migração no banco).
+Se a manicure não usar, nada muda — o vídeo sai igual antes.
+
+**Transição "pincelada de esmalte".** Quando existe foto de antes, o vídeo
+abre nela (rótulo "ANTES", ~1,3s), e faz uma pincelada diagonal dourada
+(recorte + brilho na borda) revelando o cartão pronto por baixo — rótulo
+"DEPOIS ✨" surgindo — antes de emendar na animação normal do cartão.
+
+**Motion mais caprichado** (aplicado sempre, com ou sem antes/depois): entrada
+com "estica e assenta" (overshoot, tipo mola) em vez de fade reto, zoom
+contínuo e sutil o vídeo inteiro (parallax vivo, não congela), e poeira
+dourada ambiente flutuando — sem precisar recriar a coreografia pra cada um
+dos 5 temas (o vídeo continua tratando a arte final como uma imagem só).
+
+Testado com Playwright: vídeo COM antes/depois saiu com 6,65s (confere:
+1300+650+4200+500 de folga) e o frame do meio da transição mostra a pincelada
+cortando exatamente no lugar certo; vídeo SEM antes/depois saiu com 4,66s
+(comportamento de antes, só com o motion novo) — os dois decodificam e
+tocam de volta. 0 erros de JS.
+
 ---
 
 ## 🎯 O objetivo (a estrela-guia)
