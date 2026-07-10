@@ -82,8 +82,8 @@
 <div class="container" id="app"><div class="carregando">💅<br>Carregando as manicures…</div></div>
 
 <script>
-const SUPA_URL='https://rhveqvlldliccalfsuea.supabase.co';
-const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJodmVxdmxsZGxpY2NhbGZzdWVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMjg5MjMsImV4cCI6MjA5NjcwNDkyM30.NrsH1optDK2IbOl8YUqBwUZaidvEk72lvrA4SEHPrVY';
+const SUPA_URL='https://jozjhdjfjcyvdkmwpkra.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpvempoZGpmamN5dmRrbXdwa3JhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3MDY0NDIsImV4cCI6MjA5OTI4MjQ0Mn0.i17NGLUyhIgHrrQQtXNxaIQv3q6Mb84bqGZSnZNxWRo';
 async function rpc(fn,args){
   const r=await fetch(SUPA_URL+'/rest/v1/rpc/'+fn,{method:'POST',
     headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY,'Content-Type':'application/json'},body:JSON.stringify(args||{})});

@@ -19,6 +19,14 @@ antes de considerar resolvido. `studio-demo` / PIN `1234` recriado com a
 cliente Gabriela (histórico e selos). **Qualquer dado real que existisse
 foi perdido** — não havia como recuperar.
 
+Durante a reconstrução apareceu um commit paralelo na `main` com uma
+feature nova em andamento — **Mapa Mulher** (marketplace de manicures,
+`mapa.html` + `ROTEIRO_MAPA_MULHER.md`, campos bairro/cidade no perfil).
+Mesclado sem perder nada; completei o que faltava pra ela funcionar no
+banco novo: colunas `bairro`/`cidade` em `cu_studios` e a função
+`cu_studios_listar()` (lista leve pro marketplace, testada e retornando
+o formato certo).
+
 ---
 
 ## 🎯 O objetivo (a estrela-guia)
