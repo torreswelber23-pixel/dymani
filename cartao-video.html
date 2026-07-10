@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0d0810">
+<title>Dymani · Cartão em Vídeo (teste)</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
+
+<!--
+  PÁGINA DE TESTE — separada do app oficial.
+  O Cartão da Unha vira um VÍDEO de ~5s: a foto ganha zoom de cinema,
+  a moldura dourada se desenha, o nome surge, as moedas acendem uma a
+  uma, um brilho varre o cartão e chove confete dourado no final.
+  Grava no próprio celular (canvas -> MediaRecorder) e compartilha.
+-->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+  :root{--ouro:#d9b36a;--ouro-claro:#f4d58d;--rose:#e2aab4;--fundo:#0d0810;--card:#1a1120;--borda:#3a2a42;
+    --texto:#f3e9ee;--muted:#b9a3ab}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  [hidden]{display:none!important}
+  body{background:var(--fundo);color:var(--texto);font-family:Georgia,'Times New Roman',serif;min-height:100vh}
+  .wrap{max-width:460px;margin:0 auto;padding:26px 18px calc(40px + env(safe-area-inset-bottom))}
+  h1{font-weight:400;font-size:1.45rem;text-align:center;letter-spacing:.5px}
+  h1 b{color:var(--rose)}
+  .sub{color:var(--muted);font-size:.88rem;text-align:center;margin:6px 0 14px;font-family:system-ui,sans-serif}
+  .aviso{background:rgba(217,179,106,.1);border:1px dashed #a87f35;border-radius:12px;
+    padding:9px 13px;font-size:.78rem;color:var(--ouro);text-align:center;margin-bottom:16px;font-family:system-ui,sans-serif}
+  canvas#palco{width:100%;border-radius:20px;border:1px solid var(--borda);box-shadow:0 14px 44px rgba(0,0,0,.6);display:block}
+  .btn{width:100%;margin-top:12px;padding:16px;border:none;border-radius:30px;cursor:pointer;
+    font-size:1.02rem;font-weight:700;font-family:system-ui,sans-serif;color:#2a1608;
+    background:linear-gradient(90deg,var(--ouro-claro),var(--ouro));box-shadow:0 8px 26px rgba(217,179,106,.35)}
+  .btn:active{transform:scale(.97)}
+  .btn:disabled{opacity:.55}
+  .btn.rose{background:linear-gradient(90deg,#f0cdd3,var(--rose));color:#3b1220;box-shadow:0 8px 26px rgba(226,170,180,.3)}
+  .btn.ghost{background:none;border:1.5px solid var(--borda);color:var(--texto);box-shadow:none}
+  .form{background:var(--card);border:1px solid var(--borda);border-radius:18px;padding:16px;margin-top:16px}
+  label{display:block;font-size:.76rem;color:var(--muted);margin:10px 2px 5px;font-family:system-ui,sans-serif;font-weight:600}
+  label:first-child{margin-top:0}
+  input{width:100%;background:#241627;border:1.5px solid var(--borda);border-radius:11px;color:var(--texto);
+    padding:11px 13px;font-size:.98rem;font-family:system-ui,sans-serif}
+  input:focus{outline:none;border-color:var(--ouro)}
+  .lado{display:flex;gap:10px}.lado>div{flex:1}
+  .grav{position:fixed;inset:0;background:rgba(8,3,10,.88);z-index:50;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:14px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+  .grav .anel{width:64px;height:64px;border-radius:50%;border:5px solid rgba(244,213,141,.25);border-top-color:var(--ouro-claro);
+    animation:gira 1s linear infinite}
+  @keyframes gira{to{transform:rotate(360deg)}}
+  .grav p{font-family:system-ui,sans-serif;font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Cartão em <b>Vídeo</b></h1>
+  <p class="sub">O cartão da cliente ganhando vida — pronto pro status ✨</p>
+  <div class="aviso">🧪 Página de teste — separada do app oficial</div>
+
+  <canvas id="palco" width="1080" height="1350"></canvas>
+
+  <button class="btn rose" id="b-gravar" onclick="gravarECompartilhar()">🎬 Gravar e compartilhar</button>
+  <button class="btn ghost" id="b-baixar" onclick="gravarEBaixar()">⬇️ Gravar e salvar no celular</button>
+
+  <div class="form">
+    <label>Nome da cliente</label>
+    <input id="f-nome" value="Gabriela Leão" oninput="reiniciar()">
+    <label>Serviço</label>
+    <input id="f-serv" value="Serviço Premium" oninput="reiniciar()">
+    <div class="lado">
+      <div><label>Selos</label><input id="f-selos" inputmode="numeric" value="7" oninput="reiniciar()"></div>
+      <div><label>Meta</label><input id="f-meta" inputmode="numeric" value="10" oninput="reiniciar()"></div>
+    </div>
+    <label>Foto da unha</label>
+    <label class="btn ghost" style="margin-top:4px;display:block;text-align:center;cursor:pointer">📷 Escolher da galeria
+      <input type="file" accept="image/*" style="display:none" onchange="trocarFoto(this)"></label>
+  </div>
+</div>
+
+<div class="grav" id="grav" hidden><div class="anel"></div><p id="grav-txt">Gravando seu vídeo… 🎬</p></div>
+
+<script>
+'use strict';
+const $=s=>document.querySelector(s);
+const W=1080,H=1350,DUR=5200,FADE=500;      // duração do filme + respiro do loop
+const cv=$('#palco'),x=cv.getContext('2d');
+const OURO='#d9b36a',OURO_CLARO='#f4d58d',OURO_ESC='#a87f35',ROSE='#e2aab4',ROSE_CL='#f0cdd3';
+const SERIF='"Playfair Display",Georgia,serif';
+
+/* ---------- gerador de QR (mesmo do app, byte mode nível M) ---------- */
+function qrMatrix(str){
+  const EXP=new Array(256),LOG=new Array(256);
+  for(let i=0,v=1;i<255;i++){EXP[i]=v;LOG[v]=i;v<<=1;if(v&0x100)v^=0x11d;}EXP[255]=EXP[0];
+  const mul=(a,b)=>(a===0||b===0)?0:EXP[(LOG[a]+LOG[b])%255];
+  function genPoly(n){let g=[1];for(let i=0;i<n;i++){const ng=new Array(g.length+1).fill(0);
+    for(let j=0;j<g.length;j++){ng[j]^=g[j];ng[j+1]^=mul(g[j],EXP[i]);}g=ng;}return g;}
+  function rsEcc(data,n){const gen=genPoly(n);const res=data.concat(new Array(n).fill(0));
+    for(let i=0;i<data.length;i++){const c=res[i];if(c)for(let j=0;j<gen.length;j++)res[i+j]^=mul(gen[j],c);}
+    return res.slice(data.length);}
+  const RS={1:[10,[[1,16]]],2:[16,[[1,28]]],3:[26,[[1,44]]],4:[18,[[2,32]]],5:[24,[[2,43]]],
+    6:[16,[[4,27]]],7:[18,[[4,31]]],8:[22,[[2,38],[2,39]]],9:[22,[[3,36],[2,37]]],10:[26,[[4,43],[1,44]]]};
+  const ALIGN={1:[],2:[6,18],3:[6,22],4:[6,26],5:[6,30],6:[6,34],7:[6,22,38],8:[6,24,42],9:[6,26,46],10:[6,28,50]};
+  const FORMAT_M=[0x5412,0x5125,0x5E7C,0x5B4B,0x45F9,0x40CE,0x4F97,0x4AA0];
+  const VER_INFO={7:0x07C94,8:0x085BC,9:0x09A99,10:0x0A4D3};
+  const utf8=[];for(const ch of str){let cp=ch.codePointAt(0);
+    if(cp<0x80)utf8.push(cp);else if(cp<0x800)utf8.push(0xC0|cp>>6,0x80|cp&63);
+    else if(cp<0x10000)utf8.push(0xE0|cp>>12,0x80|(cp>>6&63),0x80|cp&63);
+    else utf8.push(0xF0|cp>>18,0x80|(cp>>12&63),0x80|(cp>>6&63),0x80|cp&63);}
+  let ver=0,dataCwTotal=0;
+  for(let vv=1;vv<=10;vv++){const lb=vv<10?8:16,need=4+lb+8*utf8.length,total=RS[vv][1].reduce((s,[q,d])=>s+q*d,0);
+    if(need<=total*8){ver=vv;dataCwTotal=total;break;}}
+  if(!ver)throw new Error('grande demais');
+  const lenBits=ver<10?8:16,bits=[],push=(val,len)=>{for(let i=len-1;i>=0;i--)bits.push((val>>i)&1);};
+  push(0b0100,4);push(utf8.length,lenBits);for(const b of utf8)push(b,8);
+  const cap=dataCwTotal*8,term=Math.min(4,cap-bits.length);for(let i=0;i<term;i++)bits.push(0);
+  while(bits.length%8)bits.push(0);
+  const cw=[];for(let i=0;i<bits.length;i+=8){let v=0;for(let j=0;j<8;j++)v=(v<<1)|bits[i+j];cw.push(v);}
+  const pad=[0xEC,0x11];let pi=0;while(cw.length<dataCwTotal){cw.push(pad[pi&1]);pi++;}
+  const ecPer=RS[ver][0],blocks=[];let idx=0;
+  for(const[qtd,dlen] of RS[ver][1])for(let b=0;b<qtd;b++){const d=cw.slice(idx,idx+dlen);idx+=dlen;blocks.push({d,e:rsEcc(d,ecPer)});}
+  const maxD=Math.max(...blocks.map(b=>b.d.length)),finalCw=[];
+  for(let i=0;i<maxD;i++)for(const b of blocks)if(i<b.d.length)finalCw.push(b.d[i]);
+  for(let i=0;i<ecPer;i++)for(const b of blocks)finalCw.push(b.e[i]);
+  const MASK=[(r,c)=>(r+c)%2===0,(r,c)=>r%2===0,(r,c)=>c%3===0,(r,c)=>(r+c)%3===0,
+    (r,c)=>(Math.floor(r/2)+Math.floor(c/3))%2===0,(r,c)=>((r*c)%2+(r*c)%3)===0,
+    (r,c)=>(((r*c)%2+(r*c)%3)%2)===0,(r,c)=>(((r+c)%2+(r*c)%3)%2)===0];
+  const n=17+4*ver;
+  function build(mask){
+    const m=Array.from({length:n},()=>new Array(n).fill(null));
+    const finder=(r,c)=>{for(let dr=-1;dr<=7;dr++)for(let dc=-1;dc<=7;dc++){const rr=r+dr,cc=c+dc;
+      if(rr<0||rr>=n||cc<0||cc>=n)continue;
+      m[rr][cc]=(dr>=0&&dr<=6&&(dc===0||dc===6))||(dc>=0&&dc<=6&&(dr===0||dr===6))||(dr>=2&&dr<=4&&dc>=2&&dc<=4);}};
+    finder(0,0);finder(0,n-7);finder(n-7,0);
+    for(let i=8;i<n-8;i++){if(m[6][i]===null)m[6][i]=(i%2===0);if(m[i][6]===null)m[i][6]=(i%2===0);}
+    for(const r of ALIGN[ver])for(const c of ALIGN[ver]){
+      if((r<=7&&c<=7)||(r<=7&&c>=n-8)||(r>=n-8&&c<=7))continue;
+      for(let dr=-2;dr<=2;dr++)for(let dc=-2;dc<=2;dc++)m[r+dr][c+dc]=(Math.max(Math.abs(dr),Math.abs(dc))!==1);}
+    m[n-8][8]=true;
+    const fmt=FORMAT_M[mask];
+    for(let i=0;i<15;i++){const bit=((fmt>>i)&1)===1;
+      if(i<6)m[i][8]=bit;else if(i<8)m[i+1][8]=bit;else m[n-15+i][8]=bit;
+      if(i<8)m[8][n-1-i]=bit;else if(i<9)m[8][15-i-1+1]=bit;else m[8][15-i-1]=bit;}
+    if(ver>=7){const vi=VER_INFO[ver];for(let i=0;i<18;i++){const bit=((vi>>i)&1)===1;
+      m[Math.floor(i/3)][i%3+n-8-3]=bit;m[i%3+n-8-3][Math.floor(i/3)]=bit;}}
+    const mf=MASK[mask];let inc=-1,row=n-1,byteIndex=0,bitIndex=7;
+    for(let col=n-1;col>0;col-=2){if(col===6)col--;
+      while(true){for(let c=0;c<2;c++){const cc=col-c;if(m[row][cc]===null){
+        let dark=false;if(byteIndex<finalCw.length)dark=((finalCw[byteIndex]>>>bitIndex)&1)===1;
+        if(mf(row,cc))dark=!dark;m[row][cc]=dark;bitIndex--;if(bitIndex===-1){byteIndex++;bitIndex=7;}}}
+        row+=inc;if(row<0||row>=n){row-=inc;inc=-inc;break;}}}
+    return m;
+  }
+  function penalty(m){let p=0;
+    for(let r=0;r<n;r++)for(let c=0;c<n;c++){let same=0;const d=m[r][c];
+      for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){if(dr===0&&dc===0)continue;const rr=r+dr,cc=c+dc;
+        if(rr<0||rr>=n||cc<0||cc>=n)continue;if(m[rr][cc]===d)same++;}if(same>5)p+=(3+same-5);}
+    for(let r=0;r<n-1;r++)for(let c=0;c<n-1;c++){let cnt=0;if(m[r][c])cnt++;if(m[r+1][c])cnt++;if(m[r][c+1])cnt++;if(m[r+1][c+1])cnt++;if(cnt===0||cnt===4)p+=3;}
+    const pat=(a,b,c2,d,e,f,gg)=>a&&!b&&c2&&d&&e&&!f&&gg;
+    for(let r=0;r<n;r++)for(let c=0;c<n-6;c++)if(pat(m[r][c],m[r][c+1],m[r][c+2],m[r][c+3],m[r][c+4],m[r][c+5],m[r][c+6]))p+=40;
+    for(let c=0;c<n;c++)for(let r=0;r<n-6;r++)if(pat(m[r][c],m[r+1][c],m[r+2][c],m[r+3][c],m[r+4][c],m[r+5][c],m[r+6][c]))p+=40;
+    let dark=0;for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(m[r][c])dark++;
+    p+=Math.floor(Math.abs(100*dark/(n*n)-50)/5)*10;return p;}
+  let best=null,bestP=Infinity;
+  for(let mk=0;mk<8;mk++){const m=build(mk),pp=penalty(m);if(pp<bestP){bestP=pp;best=m;}}
+  return best.map(r=>r.map(v=>!!v));
+}
+function roundRect(c,a,b,w,h,r){c.beginPath();c.moveTo(a+r,b);c.arcTo(a+w,b,a+w,b+h,r);c.arcTo(a+w,b+h,a,b+h,r);
+  c.arcTo(a,b+h,a,b,r);c.arcTo(a,b,a+w,b,r);c.closePath();}
+
+/* ---------- utilidades de desenho ---------- */
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const fase=(t,a,b)=>clamp((t-a)/(b-a),0,1);
+const easeOut=t=>1-Math.pow(1-t,3);
+const backOut=t=>{const c=1.70158;return 1+(c+1)*Math.pow(t-1,3)+c*Math.pow(t-1,2);};
+function gradOuro(ax,ay,bx,by){const g=x.createLinearGradient(ax,ay,bx,by);
+  g.addColorStop(0,OURO_CLARO);g.addColorStop(.5,OURO);g.addColorStop(1,OURO_ESC);return g;}
+function txtEsp(s,px,py,esp){let cx=px;for(const ch of s){x.fillText(ch,cx,py);cx+=x.measureText(ch).width+esp;}return cx-esp;}
+function largEsp(s,esp){let w=0;for(const ch of s)w+=x.measureText(ch).width+esp;return w-esp;}
+function sparkle(cx,cy,r,al){x.save();x.fillStyle=`rgba(244,213,141,${al})`;x.beginPath();
+  x.moveTo(cx,cy-r);x.quadraticCurveTo(cx+r*.14,cy-r*.14,cx+r,cy);x.quadraticCurveTo(cx+r*.14,cy+r*.14,cx,cy+r);
+  x.quadraticCurveTo(cx-r*.14,cy+r*.14,cx-r,cy);x.quadraticCurveTo(cx-r*.14,cy-r*.14,cx,cy-r);x.closePath();x.fill();x.restore();}
+// moeda dourada com trevo em relevo (do cartão premium), com escala pra "pop"
+function moeda(cx,cy,r,k){
+  if(k<=0)return; x.save();x.translate(cx,cy);x.scale(k,k);
+  x.fillStyle='rgba(0,0,0,.35)';x.beginPath();x.ellipse(3,5,r,r*.92,0,0,7);x.fill();
+  const cg=x.createRadialGradient(-r*.35,-r*.4,3,0,0,r);
+  cg.addColorStop(0,'#fff1c0');cg.addColorStop(.4,'#efd189');cg.addColorStop(.75,'#c99a44');cg.addColorStop(1,'#8f6a1e');
+  x.fillStyle=cg;x.beginPath();x.arc(0,0,r,0,7);x.fill();
+  x.strokeStyle='rgba(94,68,15,.9)';x.lineWidth=r*.09;x.beginPath();x.arc(0,0,r-2,0,7);x.stroke();
+  x.strokeStyle='rgba(255,246,214,.75)';x.lineWidth=1.3;x.beginPath();x.arc(0,0,r-r*.16,0,7);x.stroke();
+  // trevo
+  const trevo=(cor,desl)=>{x.fillStyle=cor;
+    for(let p=0;p<4;p++){const a=p*Math.PI/2-Math.PI/4;
+      const px2=Math.cos(a)*r*.26,py2=desl+Math.sin(a)*r*.26,perp=a+Math.PI/2;
+      x.beginPath();x.arc(px2+Math.cos(perp)*r*.115,py2+Math.sin(perp)*r*.115,r*.165,0,7);x.fill();
+      x.beginPath();x.arc(px2-Math.cos(perp)*r*.115,py2-Math.sin(perp)*r*.115,r*.165,0,7);x.fill();}};
+  trevo('rgba(94,64,12,.55)',2);trevo('rgba(255,240,190,.6)',-1.5);trevo('#a87d28',0);
+  const sp=x.createRadialGradient(-r*.4,-r*.45,1,-r*.4,-r*.45,r*.42);
+  sp.addColorStop(0,'rgba(255,255,255,.5)');sp.addColorStop(1,'rgba(255,255,255,0)');
+  x.fillStyle=sp;x.beginPath();x.arc(-r*.4,-r*.45,r*.42,0,7);x.fill();
+  x.restore();
+}
+function desenharQR(url,qx,qy,qs,al){
+  let m;try{m=qrMatrix(url);}catch(e){return;}
+  x.save();x.globalAlpha=al;
+  const mods=m.length,cell=qs/(mods+8),pad=cell*4,rad=Math.round(qs*.08);
+  x.fillStyle='#faf3ec';roundRect(x,qx,qy,qs,qs,rad);x.fill();
+  x.strokeStyle='rgba(168,127,53,.4)';x.lineWidth=2;roundRect(x,qx,qy,qs,qs,rad);x.stroke();
+  x.fillStyle='#2a1420';
+  for(let r=0;r<mods;r++)for(let c=0;c<mods;c++)if(m[r][c])
+    x.fillRect(qx+pad+c*cell,qy+pad+r*cell,Math.ceil(cell),Math.ceil(cell));
+  x.restore();
+}
+
+/* ---------- dados + recursos ---------- */
+let dados={nome:'Gabriela Leão',serv:'SERVIÇO PREMIUM',selos:7,meta:10,
+  url:'https://dymani-git-main-convitefys-projects.vercel.app/portfolio?s=studio-demo'};
+let fotoImg=null, logoImg=null, prontos=null;
+function lerForm(){
+  dados.nome=$('#f-nome').value.trim()||'Sua Cliente';
+  dados.serv=($('#f-serv').value.trim()||'Serviço Premium').toUpperCase();
+  dados.meta=clamp(parseInt($('#f-meta').value)||10,1,10);
+  dados.selos=clamp(parseInt($('#f-selos').value)||0,0,dados.meta);
+}
+function preparar(){
+  if(prontos)return prontos;
+  const fontes=Promise.race([
+    Promise.all(['104px','italic 40px','600 40px','500 34px'].map(f=>document.fonts.load(`${f} "Playfair Display"`))),
+    new Promise(r=>setTimeout(r,3500))]).catch(()=>{});
+  const logo=new Promise(r=>{const im=new Image();im.onload=()=>{logoImg=im;r();};im.onerror=()=>r();im.src='dymani.jpg';});
+  prontos=Promise.all([fontes,logo]);return prontos;
+}
+function trocarFoto(inp){
+  const f=inp.files[0];if(!f)return;
+  const im=new Image();im.onload=()=>{fotoImg=im;reiniciar();};im.src=URL.createObjectURL(f);
+}
+
+/* ---------- O FILME (desenho 100% determinístico em função do tempo) ---------- */
+// partículas de confete com semente fixa (mesmo vídeo toda vez)
+const CONF=Array.from({length:110},(_, i)=>{const s=n=>{const v=Math.sin(i*127.1+n*311.7)*43758.5453;return v-Math.floor(v);};
+  return {x0:s(1)*W, vy:340+s(2)*420, vx:-60+s(3)*120, rot:s(4)*6.3, vr:-2+s(5)*4,
+    w:8+s(6)*9, h:6+s(7)*7, cor:['#f4d58d','#e2aab4','#d9b36a','#f0cdd3','#fff'][Math.floor(s(8)*5)], atraso:s(9)*.5};});
+
+function filme(T){
+  // T em ms, 0..DUR (+FADE de respiro)
+  x.clearRect(0,0,W,H);
+  x.fillStyle='#0b0510';x.fillRect(0,0,W,H);
+  x.textBaseline='alphabetic';x.textAlign='left';
+
+  /* 1) foto com zoom de cinema */
+  const aFoto=easeOut(fase(T,0,800));
+  if(fotoImg){
+    const zoom=1.06+0.09*(T/DUR);
+    const e=Math.max(W/fotoImg.width,H/fotoImg.height)*zoom;
+    x.save();x.globalAlpha=aFoto;
+    x.drawImage(fotoImg,W/2-fotoImg.width*e/2,H/2-fotoImg.height*e/2,fotoImg.width*e,fotoImg.height*e);
+    x.restore();
+  }else{
+    const pg=x.createLinearGradient(0,0,W,H);pg.addColorStop(0,'#2b1030');pg.addColorStop(1,'#12060f');
+    x.save();x.globalAlpha=aFoto;x.fillStyle=pg;x.fillRect(0,0,W,H);x.restore();
+  }
+
+  /* 2) vinheta + sombras de leitura */
+  x.save();x.globalAlpha=aFoto;
+  let g=x.createLinearGradient(0,0,0,520);
+  g.addColorStop(0,'rgba(10,4,12,.82)');g.addColorStop(1,'rgba(10,4,12,0)');x.fillStyle=g;x.fillRect(0,0,W,520);
+  g=x.createLinearGradient(0,H-620,0,H);
+  g.addColorStop(0,'rgba(10,4,12,0)');g.addColorStop(.45,'rgba(10,4,12,.58)');g.addColorStop(1,'rgba(10,4,12,.9)');
+  x.fillStyle=g;x.fillRect(0,H-620,W,620);
+  g=x.createRadialGradient(W/2,H/2,H*.34,W/2,H/2,H*.72);
+  g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(8,3,10,.5)');x.fillStyle=g;x.fillRect(0,0,W,H);
+  x.restore();
+
+  /* 3) moldura dourada se desenhando */
+  const pFrame=easeOut(fase(T,350,1400));
+  if(pFrame>0){
+    const per=2*((W-60)+(H-60));
+    x.save();x.strokeStyle=gradOuro(0,0,W,H);x.lineWidth=3;
+    x.setLineDash([per*pFrame,per]);roundRect(x,30,30,W-60,H-60,44);x.stroke();x.setLineDash([]);
+    if(pFrame>=1){x.strokeStyle='rgba(244,213,141,.22)';x.lineWidth=1.2;roundRect(x,42,42,W-84,H-84,36);x.stroke();}
+    x.restore();
+  }
+
+  /* 4) brilho varrendo o cartão (duas passadas) */
+  const varre=(t0,t1)=>{const p=fase(T,t0,t1);if(p<=0||p>=1)return;
+    const cx=-W*.4+(W*1.8)*p;
+    const gg=x.createLinearGradient(cx-160,0,cx+160,H);
+    gg.addColorStop(0,'rgba(255,244,214,0)');gg.addColorStop(.5,'rgba(255,244,214,.18)');gg.addColorStop(1,'rgba(255,244,214,0)');
+    x.save();x.globalCompositeOperation='lighter';x.fillStyle=gg;
+    x.translate(W/2,H/2);x.rotate(-.35);x.translate(-W/2,-H/2);x.fillRect(-W*.3,-H*.2,W*1.6,H*1.4);x.restore();};
+  varre(900,1900);varre(3600,4600);
+
+  /* 5) estrelinhas piscando (contínuas) */
+  const tw=(cx,cy,r,vel,off)=>{const a=.35+.6*Math.abs(Math.sin(T/1000*vel+off));
+    if(T>600)sparkle(cx,cy,r,a*fase(T,600,1200));};
+  tw(250,120,12,2.1,0);tw(300,164,7,2.9,2);tw(860,150,10,2.4,4);tw(140,320,8,1.8,1);tw(950,300,9,2.6,3);
+
+  /* 6) selo da marca (logo) */
+  const aSelo=easeOut(fase(T,700,1300));
+  if(aSelo>0){
+    const bx=W-176,by=214,br=112;
+    x.save();x.globalAlpha=aSelo;
+    x.fillStyle='rgba(12,5,14,.8)';x.beginPath();x.arc(bx,by,br,0,7);x.fill();
+    if(logoImg){x.save();x.beginPath();x.arc(bx,by,br-3,0,7);x.clip();
+      x.drawImage(logoImg,135,28,270,270,bx-74,by-102,148,148);x.restore();}
+    x.fillStyle='#f6e9ec';x.font=`500 28px ${SERIF}`;
+    const wD=largEsp('DYMANI',6);txtEsp('DYMANI',bx-wD/2,by+58,6);
+    x.fillStyle=OURO;x.font=`500 14px ${SERIF}`;
+    const wB=largEsp('BEAUTY & NAILS',3.5);txtEsp('BEAUTY & NAILS',bx-wB/2,by+84,3.5);
+    x.strokeStyle=gradOuro(bx-br,by-br,bx+br,by+br);x.lineWidth=3;x.beginPath();x.arc(bx,by,br,0,7);x.stroke();
+    x.restore();
+  }
+
+  /* 7) nome + serviço + data entrando */
+  const pNome=easeOut(fase(T,1150,1850));
+  if(pNome>0){
+    x.save();x.globalAlpha=pNome;x.translate(0,(1-pNome)*36);
+    const maxW=W-440;let linhas=[dados.nome];
+    x.font=`400 100px ${SERIF}`;
+    if(x.measureText(dados.nome).width>maxW){const pp=dados.nome.split(/\s+/),meio=Math.ceil(pp.length/2);
+      linhas=[pp.slice(0,meio).join(' '),pp.slice(meio).join(' ')].filter(Boolean);}
+    let fs=100;const cabe=()=>{x.font=`400 ${fs}px ${SERIF}`;return linhas.every(l=>x.measureText(l).width<=maxW);};
+    while(!cabe()&&fs>54)fs-=4;
+    const ng=x.createLinearGradient(0,120,0,150+linhas.length*fs);
+    ng.addColorStop(0,ROSE_CL);ng.addColorStop(1,ROSE);
+    x.fillStyle=ng;x.font=`400 ${fs}px ${SERIF}`;
+    let ny=126+fs*.9;for(const l of linhas){x.fillText(l,78,ny);ny+=fs*1.05;}
+    const pServ=fase(T,1550,2150);
+    if(pServ>0){x.globalAlpha=pNome*pServ;
+      x.fillStyle=OURO;x.font=`500 33px ${SERIF}`;txtEsp(dados.serv,80,ny+10,8);
+      x.strokeStyle='rgba(217,179,106,.5)';x.lineWidth=1.2;
+      const lw=Math.min(largEsp(dados.serv,8),420)*pServ;
+      x.beginPath();x.moveTo(80,ny+34);x.lineTo(80+lw,ny+34);x.stroke();
+      const hj=new Date(),dataBR=`${String(hj.getDate()).padStart(2,'0')}/${String(hj.getMonth()+1).padStart(2,'0')}/${hj.getFullYear()}`;
+      x.fillStyle='rgba(240,205,211,.85)';x.font=`italic 32px ${SERIF}`;x.fillText(dataBR,80,ny+86);}
+    x.restore();
+  }
+
+  /* 8) moedas acendendo uma a uma */
+  const coinR=38,step=100,x0=112,rows=Math.ceil(dados.meta/5),y0=H-330-(rows-1)*step;
+  for(let i=0;i<dados.meta;i++){
+    const cx2=x0+(i%5)*step,cy2=y0+Math.floor(i/5)*step;
+    const t0=2050+i*160;
+    if(i<dados.selos){
+      const k=backOut(fase(T,t0,t0+380));
+      moeda(cx2,cy2,coinR,k);
+      // anel de brilho no pop
+      const pr=fase(T,t0,t0+500);
+      if(pr>0&&pr<1){x.save();x.globalAlpha=(1-pr)*.7;x.strokeStyle=OURO_CLARO;x.lineWidth=3;
+        x.beginPath();x.arc(cx2,cy2,coinR*(1+pr*.9),0,7);x.stroke();x.restore();}
+    }else{
+      const a=fase(T,t0,t0+300);
+      if(a>0){x.save();x.globalAlpha=a;
+        x.setLineDash([6,7]);x.strokeStyle='rgba(228,192,128,.7)';x.lineWidth=2;
+        x.beginPath();x.arc(cx2,cy2,coinR-3,0,7);x.stroke();x.setLineDash([]);x.restore();}
+    }
+  }
+
+  /* 9) faltam X pra unha grátis */
+  const tFalta=2050+dados.meta*160+240;
+  const pF=easeOut(fase(T,tFalta,tFalta+500));
+  if(pF>0){
+    const faltam=dados.meta-dados.selos,fy=H-162;
+    x.save();x.globalAlpha=pF;x.translate(0,(1-pF)*20);
+    x.font=`600 38px ${SERIF}`;
+    const t1=faltam<=0?'PRÓXIMA UNHA GRÁTIS!':(faltam===1?'FALTA 1 PRA ':'FALTAM '+faltam+' PRA ');
+    if(faltam<=0){x.fillStyle=OURO_CLARO;txtEsp(t1,80,fy,4);}
+    else{x.fillStyle='#f2d7db';const c2=txtEsp(t1,80,fy,4)+10;
+      // dourado com brilho passando
+      const sh=x.createLinearGradient(c2,0,c2+330,0);
+      const ph=(T%1400)/1400;
+      sh.addColorStop(clamp(ph-.15,0,1),OURO);sh.addColorStop(ph,'#fff3c9');sh.addColorStop(clamp(ph+.15,0,1),OURO);
+      x.fillStyle=sh;txtEsp('UNHA GRÁTIS',c2,fy,4);}
+    x.restore();
+  }
+
+  /* 10) QR + convite */
+  const aQR=easeOut(fase(T,3300,3900));
+  if(aQR>0){
+    const qs=182,qx=W-64-qs,qy=H-64-qs;
+    desenharQR(dados.url,qx,qy,qs,aQR);
+    x.save();x.globalAlpha=aQR;
+    x.fillStyle='#f6e9ec';x.font=`italic 33px ${SERIF}`;x.textAlign='center';
+    x.fillText('Agende seu horário',qx+qs/2,qy-18);x.textAlign='left';
+    x.restore();
+  }
+
+  /* 11) confete dourado no gran finale */
+  const tConf=4300;
+  if(T>tConf){
+    const tc=(T-tConf)/1000;
+    x.save();
+    CONF.forEach(p=>{
+      const tt=tc-p.atraso;if(tt<0)return;
+      const py=-30+p.vy*tt, px2=p.x0+p.vx*tt;
+      if(py>H+40)return;
+      x.save();x.globalAlpha=clamp(1.4-tt*.55,0,1)*.95;
+      x.translate(px2,py);x.rotate(p.rot+p.vr*tt);
+      x.fillStyle=p.cor;x.fillRect(-p.w/2,-p.h/2,p.w,p.h);x.restore();});
+    x.restore();
+  }
+
+  /* 12) respiro do loop (só no preview; a gravação corta antes) */
+  if(T>DUR){const a=fase(T,DUR,DUR+FADE);x.fillStyle=`rgba(11,5,16,${a})`;x.fillRect(0,0,W,H);}
+}
+
+/* ---------- loop de preview ---------- */
+let t0=performance.now(), gravando=false;
+function loop(){
+  const T=(performance.now()-t0)%(DUR+FADE);
+  if(!gravando)filme(T);
+  requestAnimationFrame(loop);
+}
+function reiniciar(){lerForm();t0=performance.now();}
+
+/* ---------- gravação (canvas -> vídeo, no próprio aparelho) ---------- */
+function melhorMime(){
+  const ops=['video/mp4;codecs=avc1.42E01E','video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'];
+  return ops.find(m=>window.MediaRecorder&&MediaRecorder.isTypeSupported(m))||'';
+}
+async function gravar(){
+  lerForm();await preparar();
+  const mime=melhorMime();
+  if(!mime){alert('Esse navegador não grava vídeo 😢');throw 0;}
+  gravando=true;$('#grav').hidden=false;
+  const stream=cv.captureStream(30);
+  const rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:9e6});
+  const chunks=[];rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
+  const fim=new Promise(r=>rec.onstop=r);
+  rec.start(200);
+  // roda o filme do zero, em tempo real, desenhando direto
+  const ini=performance.now();
+  await new Promise(res=>{
+    (function passo(){
+      const T=performance.now()-ini;
+      filme(Math.min(T,DUR));                 // congela no frame final
+      if(T<DUR+600)requestAnimationFrame(passo); else res();
+    })();
+  });
+  rec.stop();await fim;
+  gravando=false;$('#grav').hidden=true;t0=performance.now();
+  const tipo=mime.startsWith('video/mp4')?'mp4':'webm';
+  return {blob:new Blob(chunks,{type:mime.split(';')[0]}),ext:tipo};
+}
+async function gravarECompartilhar(){
+  try{
+    const {blob,ext}=await gravar();
+    const file=new File([blob],'cartao-dymani.'+ext,{type:blob.type});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{await navigator.share({files:[file],title:'Cartão da Unha — Dymani'});return;}catch(e){}
+    }
+    baixarBlob(blob,ext);
+  }catch(e){}
+}
+async function gravarEBaixar(){
+  try{const {blob,ext}=await gravar();baixarBlob(blob,ext);}catch(e){}
+}
+function baixarBlob(blob,ext){
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='cartao-dymani.'+ext;a.click();
+}
+// ganchos de teste: renderiza um frame específico e grava o vídeo
+window._frame=(T)=>{filme(T);};
+window._gravarTest=async()=>{
+  const {blob,ext}=await gravar();
+  const b64=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result.split(',')[1]);fr.readAsDataURL(blob);});
+  return {ext,size:blob.size,b64};
+};
+
+preparar().then(()=>{lerForm();t0=performance.now();loop();});
+</script>
+</body>
+</html>
