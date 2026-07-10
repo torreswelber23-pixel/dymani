@@ -269,6 +269,20 @@
   .lc-shot span{width:54px;height:54px;border-radius:50%;background:#fff;box-shadow:inset 0 0 0 3px rgba(0,0,0,.15)}
   .lc-shot:active{transform:scale(.93)}
 
+  /* ---- vídeo do cartão (gerado a partir do #cartao já desenhado) ---- */
+  .btn.video{background:linear-gradient(90deg,#f4d58d,#d9b36a);color:#2a1608;box-shadow:0 6px 18px rgba(217,179,106,.32)}
+  .vidload{position:fixed;inset:0;z-index:998;background:rgba(8,3,10,.9);display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:14px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+  .vidload .anel{width:62px;height:62px;border-radius:50%;border:5px solid rgba(244,213,141,.25);
+    border-top-color:#f4d58d;animation:vidgira 1s linear infinite}
+  @keyframes vidgira{to{transform:rotate(360deg)}}
+  .vidload p{font-weight:700;color:#fff}
+  .vidresult{position:fixed;inset:0;z-index:998;background:rgba(8,3,10,.94);display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:12px;padding:20px calc(18px + env(safe-area-inset-right)) calc(20px + env(safe-area-inset-bottom)) calc(18px + env(safe-area-inset-left));
+    -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+  .vidresult video{width:100%;max-width:380px;border-radius:20px;box-shadow:0 14px 44px rgba(0,0,0,.6)}
+  .vidresult .vbtns{width:100%;max-width:380px}
+
   /* ---- login ---- */
   .auth{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:24px 20px calc(30px + env(safe-area-inset-bottom))}
   .brand{text-align:center;margin-bottom:22px}
@@ -973,7 +987,8 @@ function telaAtdResultado(){
     <h2 style="font-size:1.3rem;text-align:center">Ficou linda! 😍</h2>
     <p style="color:var(--muted);font-size:.86rem;text-align:center;margin-bottom:12px">O cartão da ${primeiro(cli.nome)} já está pronto</p>
     <canvas id="cartao" width="1080" height="1350"></canvas>
-    <button class="btn" onclick="enviarCartao('${primeiro(cli.nome).replace(/'/g,'')}')">${ic('send',19)} Compartilhar com a cliente</button>
+    <button class="btn" onclick="enviarCartao('${primeiro(cli.nome).replace(/'/g,'')}')">${ic('send',19)} Compartilhar foto</button>
+    <button class="btn video" onclick="fazerVideo(atd.savedCli,atd.savedCli.atend[atd.idx],'${primeiro(cli.nome).replace(/'/g,'')}')">${ic('sparkle',19)} Fazer vídeo 🎬</button>
     <button class="btn ghost" onclick="abrirCameraCartao()">${ic('camera',18)} Tirar outra</button>
     <button class="btn gold" onclick="telaEditor(${atd.idx})">${ic('sparkle',18)} Ajustar / trocar tema</button>
     <button class="link" onclick="irTab('clientes')" style="color:var(--muted);background:none;border:none;width:100%;margin-top:12px;cursor:pointer">Concluir e voltar ao início</button>
@@ -1016,7 +1031,8 @@ function telaEditor(idx){
         :`<label>Logo do studio</label><label class="filebtn">${ic('camera',18)} Escolher minha logo
           <input type="file" accept="image/*" onchange="comprimir(this.files[0],300,async d=>{await salvar({logo:d},'Logo salva!');telaEditor(${idx});})"></label>`}
     </div>
-    <button class="btn" onclick="enviarCartao('${primeiro(cli.nome).replace(/'/g,'')}')">${ic('send',19)} Enviar pra cliente</button>
+    <button class="btn" onclick="enviarCartao('${primeiro(cli.nome).replace(/'/g,'')}')">${ic('send',19)} Enviar foto pra cliente</button>
+    <button class="btn video" onclick="fazerVideo(clienteAtual,clienteAtual.atend[${idx}],'${primeiro(cli.nome).replace(/'/g,'')}')">${ic('sparkle',19)} Fazer vídeo 🎬</button>
     ${!at.postou?`<button class="btn gold" onclick="marcarPostou(${idx})">${ic('star',19)} Ela postou! (+1 selo)</button>`
       :`<div class="hint">⭐ Selo de postagem já dado nesse atendimento</div>`}
     <button class="btn ghost" onclick="baixarCartao()">${ic('download',19)} Salvar imagem</button>
@@ -1143,8 +1159,11 @@ function desenharQR(x,texto,cx,cy,size,corFundo,corMod,corBorda){
 /* ---- desenho do cartão (canvas) — 4 estilos, com QR de agendamento no canto ---- */
 let _cardGen=0;
 function desenharCartao(cli,at){
+  // devolve uma Promise que resolve quando o desenho (assíncrono por causa das imagens) termina —
+  // quem só quer disparar o desenho (telaEditor/telaAtdResultado) ignora o retorno numa boa
+  return new Promise(resolve=>{
   const p=prefs(), t=TEMAS[p.tema]||TEMAS.rosa, est=p.estilo||'foto';
-  const cv=$('#cartao'); if(!cv)return; const x=cv.getContext('2d');
+  const cv=$('#cartao'); if(!cv){resolve();return;} const x=cv.getContext('2d');
   const W=1080,H=1350, url=urlPortfolio();
   const gen=++_cardGen, viva=()=>gen===_cardGen; // ignora desenhos assíncronos velhos
   const cortar=s=>at.serv.length>s?at.serv.slice(0,s-1)+'…':at.serv;
@@ -1167,24 +1186,24 @@ function desenharCartao(cli,at){
     selos:selosAt(cli),meta:meta(),brinde:temBrinde(cli),url,studioNome:studio.nome,logoEl,foto:null});
   if(est==='classico'){ // ✨ Realeza — emoldurado e simétrico
     fontesPremium().then(()=>pzLoad([{k:'foto',src:at.foto},{k:'logo',src:studio.logo}],m=>{
-      if(!viva())return;const d=dadosCard(m.logo);d.foto=m.foto;cartaoRealeza(x,d);}));
+      if(!viva()){resolve();return;}const d=dadosCard(m.logo);d.foto=m.foto;cartaoRealeza(x,d);resolve();}));
   }
   else if(est==='polaroid'){ // ✨ Marfim — claro/creme premium
     fontesPremium().then(()=>pzLoad([{k:'foto',src:at.foto},{k:'logo',src:studio.logo}],m=>{
-      if(!viva())return;const d=dadosCard(m.logo);d.foto=m.foto;cartaoMarfim(x,d);}));
+      if(!viva()){resolve();return;}const d=dadosCard(m.logo);d.foto=m.foto;cartaoMarfim(x,d);resolve();}));
   }
   else if(est==='moderno'){ // ✨ Art Déco — foto cheia + enfeites
     fontesPremium().then(()=>pzLoad([{k:'foto',src:at.foto},{k:'logo',src:studio.logo}],m=>{
-      if(!viva())return;const d=dadosCard(m.logo);
+      if(!viva()){resolve();return;}const d=dadosCard(m.logo);
       if(m.foto){const e=Math.max(W/m.foto.width,H/m.foto.height);
         x.drawImage(m.foto,W/2-m.foto.width*e/2,H/2-m.foto.height*e/2,m.foto.width*e,m.foto.height*e);}
       else{const pg=x.createLinearGradient(0,0,W,H);pg.addColorStop(0,'#2b1030');pg.addColorStop(1,'#12060f');x.fillStyle=pg;x.fillRect(0,0,W,H);}
-      cartaoDeco(x,d);}));
+      cartaoDeco(x,d);resolve();}));
   }
   else if(est==='premium'){ // ✨ luxo: moldura dourada, serifada, moedas com relevo, logo do studio no selo
     fontesPremium().then(()=>{
       const desenhaTudo=(logoEl)=>{
-        if(!viva())return;
+        if(!viva()){resolve();return;}
         const base=(depois)=>{
           if(!at.foto){const pg=x.createLinearGradient(0,0,W,H);
             pg.addColorStop(0,'#2b1030');pg.addColorStop(1,'#12060f');
@@ -1194,10 +1213,10 @@ function desenharCartao(cli,at){
           const img=new Image();img.onload=()=>{const e=Math.max(W/img.width,H/img.height);
             x.drawImage(img,W/2-img.width*e/2,H/2-img.height*e/2,img.width*e,img.height*e);depois();};
           img.onerror=depois;img.src=at.foto;};
-        base(()=>premiumOverlay(x,W,H,{
+        base(()=>{premiumOverlay(x,W,H,{
           nome:cli.nome,serv:at.serv,data:dataBR(at.d),frase:p.frase,
           selos:selosAt(cli),meta:meta(),brinde:temBrinde(cli),url,
-          logoEl,studioNome:studio.nome}));
+          logoEl,studioNome:studio.nome});resolve();});
       };
       if(studio.logo){const li=new Image();li.onload=()=>desenhaTudo(li);li.onerror=()=>desenhaTudo(null);li.src=studio.logo;}
       else desenhaTudo(null);
@@ -1205,13 +1224,14 @@ function desenharCartao(cli,at){
   }
   else{ // ✨ Glam (padrão) — foto inteira com moldura, ornamentos e cor do tema
     fontesPremium().then(()=>pzLoad([{k:'foto',src:at.foto},{k:'logo',src:studio.logo}],m=>{
-      if(!viva())return;
+      if(!viva()){resolve();return;}
       if(m.foto){const e=Math.max(W/m.foto.width,H/m.foto.height);
         x.drawImage(m.foto,W/2-m.foto.width*e/2,H/2-m.foto.height*e/2,m.foto.width*e,m.foto.height*e);}
       else{const pg=x.createLinearGradient(0,0,W,H);pg.addColorStop(0,'#2b1030');pg.addColorStop(1,'#12060f');x.fillStyle=pg;x.fillRect(0,0,W,H);
         pzFlorC(x,W/2,H/2-40,80,'rgba(244,213,141,.35)',3);}
-      const d=dadosCard(m.logo);d.cor=[t.acc,t.grad[0]];glamOverlay(x,W,H,d);}));
+      const d=dadosCard(m.logo);d.cor=[t.acc,t.grad[0]];glamOverlay(x,W,H,d);resolve();}));
   }
+  });
 }
 function estrelaPath(x,cx,cy,r){x.beginPath();
   for(let i=0;i<10;i++){const ang=-Math.PI/2+i*Math.PI/5,rr=i%2?r*0.42:r;
@@ -1740,6 +1760,101 @@ async function enviarCartao(nome){
       await navigator.share({files:[file],text:`Suas unhas ficaram lindas, ${nome}! 💅✨ Posta no status e ganha +1 selo!`});return;}
   }catch(e){}
   baixarCartao();
+}
+
+/* ================= Cartão em vídeo (o mesmo cartão já desenhado, animado) =================
+   Não redesenha nada — pega a arte final que já está no #cartao (seja qual for o
+   tema escolhido: Premium/Glam/Realeza/Marfim/Art Déco) e transforma num filme de
+   ~4.5s: zoom de entrada, brilho varrendo e confete no final. Roda 100% no aparelho. */
+function melhorMimeVideo(){
+  const ops=['video/mp4;codecs=avc1.42E01E','video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'];
+  return ops.find(m=>window.MediaRecorder&&MediaRecorder.isTypeSupported(m))||'';
+}
+async function gerarVideoCartao(cli,at,onProgresso){
+  await desenharCartao(cli,at); // garante a arte final pronta no tema atual
+  const base=$('#cartao'); if(!base)throw new Error('sem cartão');
+  const mime=melhorMimeVideo();
+  if(!mime)throw new Error('sem suporte a vídeo neste navegador');
+  const W=1080,H=1350,DUR=4400;
+  const vc=document.createElement('canvas');vc.width=W;vc.height=H;const vx=vc.getContext('2d');
+  const stream=vc.captureStream(30);
+  const rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:9e6});
+  const chunks=[];rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
+  const fim=new Promise(res=>rec.onstop=res);
+  // confete com semente fixa (mesmo visual em toda geração)
+  const CONF=Array.from({length:90},(_,i)=>{const s=n=>{const v=Math.sin(i*127.1+n*311.7)*43758.5453;return v-Math.floor(v);};
+    return{x0:s(1)*W,vy:340+s(2)*420,vx:-60+s(3)*120,rot:s(4)*6.3,vr:-2+s(5)*4,
+      w:8+s(6)*9,h:6+s(7)*7,cor:['#f4d58d','#e2aab4','#d9b36a','#f0cdd3','#fff'][Math.floor(s(8)*5)],atraso:s(9)*.4};});
+  const easeOut=t=>1-Math.pow(1-t,3);
+  const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+  function frame(T){
+    vx.clearRect(0,0,W,H);vx.fillStyle='#0b0510';vx.fillRect(0,0,W,H);
+    const p1=easeOut(clamp(T/700,0,1)),esc=1.05-0.05*p1;
+    vx.save();vx.globalAlpha=p1;
+    vx.translate(W/2,H/2);vx.scale(esc,esc);vx.translate(-W/2,-H/2);
+    vx.drawImage(base,0,0,W,H);vx.restore();
+    const varre=(t0,t1)=>{const p=clamp((T-t0)/(t1-t0),0,1);if(p<=0||p>=1)return;
+      const cx=-W*.4+(W*1.8)*p;
+      const gg=vx.createLinearGradient(cx-160,0,cx+160,H);
+      gg.addColorStop(0,'rgba(255,244,214,0)');gg.addColorStop(.5,'rgba(255,244,214,.22)');gg.addColorStop(1,'rgba(255,244,214,0)');
+      vx.save();vx.globalCompositeOperation='lighter';vx.fillStyle=gg;
+      vx.translate(W/2,H/2);vx.rotate(-.35);vx.translate(-W/2,-H/2);
+      vx.fillRect(-W*.3,-H*.2,W*1.6,H*1.4);vx.restore();};
+    varre(1000,2000);varre(2900,3700);
+    if(T>3300){const tc=(T-3300)/1000;
+      CONF.forEach(pt=>{const tt=tc-pt.atraso;if(tt<0)return;
+        const py=-30+pt.vy*tt,px2=pt.x0+pt.vx*tt;if(py>H+40)return;
+        vx.save();vx.globalAlpha=clamp(1.3-tt*.55,0,1);
+        vx.translate(px2,py);vx.rotate(pt.rot+pt.vr*tt);
+        vx.fillStyle=pt.cor;vx.fillRect(-pt.w/2,-pt.h/2,pt.w,pt.h);vx.restore();});}
+  }
+  rec.start(200);
+  const ini=performance.now();
+  await new Promise(res=>{(function passo(){
+    const T=performance.now()-ini;
+    frame(Math.min(T,DUR));
+    if(onProgresso)onProgresso(clamp(T/DUR,0,1));
+    if(T<DUR+500)requestAnimationFrame(passo);else res();
+  })();});
+  rec.stop();await fim;
+  const tipo=mime.startsWith('video/mp4')?'mp4':'webm';
+  return{blob:new Blob(chunks,{type:mime.split(';')[0]}),ext:tipo};
+}
+async function fazerVideo(cli,at,nome){
+  if(!(window.MediaRecorder&&$('#cartao')?.captureStream)){toast('Seu navegador não grava vídeo 😢 — atualiza o app pra tentar de novo');return;}
+  const ov=document.createElement('div');ov.className='vidload';
+  ov.innerHTML=`<div class="anel"></div><p id="vidload-p">Gerando o vídeo… 🎬</p>`;
+  document.body.appendChild(ov);
+  try{
+    const{blob,ext}=await gerarVideoCartao(cli,at,p=>{const el=ov.querySelector('#vidload-p');if(el)el.textContent=`Gerando o vídeo… ${Math.round(p*100)}% 🎬`;});
+    ov.remove();
+    mostrarVideoPronto(blob,ext,nome);
+  }catch(e){ov.remove();toast('Não consegui gerar o vídeo 😢 — tenta de novo');}
+}
+function mostrarVideoPronto(blob,ext,nome){
+  const url=URL.createObjectURL(blob);
+  const ov=document.createElement('div');ov.className='vidresult';
+  ov.innerHTML=`
+    <video src="${url}" autoplay loop muted playsinline></video>
+    <div class="vbtns">
+      <button class="btn video" onclick="compartilharVideoCartao('${url}','${ext}','${(nome||'').replace(/'/g,'')}')">${ic('send',19)} Compartilhar vídeo</button>
+      <button class="btn ghost" onclick="baixarVideoCartao('${url}','${ext}')">${ic('download',19)} Salvar no celular</button>
+      <button class="btn ghost" onclick="this.closest('.vidresult').remove()">${ic('x',18)} Fechar</button>
+    </div>`;
+  document.body.appendChild(ov);
+  window._videoBlob=blob; // pra compartilhar/baixar sem re-buscar o blob URL
+}
+async function compartilharVideoCartao(url,ext,nome){
+  try{
+    const blob=window._videoBlob||await (await fetch(url)).blob();
+    const file=new File([blob],'cartao-dymani.'+ext,{type:blob.type});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],text:nome?`Suas unhas ficaram lindas, ${nome}! 💅✨ Posta no status e ganha +1 selo!`:undefined});return;}
+  }catch(e){}
+  baixarVideoCartao(url,ext);
+}
+function baixarVideoCartao(url,ext){
+  const a=document.createElement('a');a.href=url;a.download='cartao-dymani.'+ext;a.click();toast('Vídeo salvo! 🎬');
 }
 
 /* ================= Quem chamar hoje ================= */

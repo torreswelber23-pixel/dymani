@@ -29,6 +29,38 @@ o formato certo).
 
 ---
 
+## 🎬 Cartão em Vídeo — integrado no painel (10/07/2026)
+
+O motor de animação do experimento `cartao-video.html` foi portado pro
+**painel de verdade**, usando os dados reais e o tema que a manicure
+escolheu (Premium/Glam/Realeza/Marfim/Art Déco) — não um layout fixo.
+
+**Decisão de UX** (a pedido do dono): **não pergunta antes**. A foto sai
+na hora (instantânea) na tela "Ficou linda!" (fim da câmera ao vivo) e no
+editor de cartão; do lado do "Compartilhar foto" tem um botão **"Fazer
+vídeo 🎬"** — só quem quiser espera os ~5s. Foto sempre disponível pra
+quem tá com pressa; vídeo é o upgrade opcional.
+
+**Como funciona por baixo:** em vez de recriar a animação pra cada um dos
+5 temas (caro), o vídeo pega a arte **já finalizada** no canvas `#cartao`
+(seja qual for o tema) e aplica uma animação universal: zoom de entrada,
+brilho varrendo em 2 passadas, confete dourado no final. `desenharCartao`
+agora devolve uma `Promise` (resolve quando o desenho assíncrono termina
+de verdade) — mudança que os outros lugares que já chamavam a função
+ignoram numa boa, sem quebrar nada.
+
+Gravação 100% no aparelho (`canvas.captureStream` + `MediaRecorder`, MP4
+quando o navegador suporta, senão webm), com Compartilhar (Web Share) ou
+Salvar. Testado com Playwright: a Promise resolvendo nos 5 temas, o fluxo
+completo desde "Novo atendimento" → câmera ao vivo → resultado → vídeo, e
+o MP4 real gravado e **reproduzido de volta** (decodifica, ~4.9s,
+1080×1350) — 0 erros. Um bug real foi pego e corrigido pelo teste: o botão
+do editor referenciava variáveis locais dentro de um `onclick` (que roda em
+escopo global) — corrigido usando `clienteAtual` + índice, mesmo padrão
+já usado nos outros botões da tela.
+
+---
+
 ## 🎯 O objetivo (a estrela-guia)
 
 Criar um sistema **tão bom que ter Dymani vira obrigação** pra manicure — igual ela ter WhatsApp. Não é "mais um app", é a ferramenta que ela **não consegue mais viver sem**.
